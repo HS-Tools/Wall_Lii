@@ -2,6 +2,9 @@ from leaderboardSnapshot import getLeaderboardSnapshot
 import threading
 import time
 import schedule
+import os
+from sys import exit
+from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
 currentLeaderboard = {}
@@ -12,8 +15,7 @@ def updateDict():
     currentLeaderboard = getLeaderboardSnapshot()
     print('Finished fetching leaderboard')
 
-def updateThreaded():
-    thread = threading.Thread(target=updateDict)
+def updateThreaded(thread):
     thread.start()
 
 def getResponseText(tag):
@@ -35,14 +37,43 @@ def getResponseText(tag):
 
     return text
 
+bot = commands.Bot(
+    irc_token=os.environ['TMI_TOKEN'],
+    client_id=os.environ['CLIENT_ID'],
+    nick=os.environ['BOT_NICK'],
+    prefix=os.environ['BOT_PREFIX'],
+    initial_channels=[os.environ['CHANNEL']]
+)
+
+@bot.event
+async def event_ready():
+    ws = bot._ws
+
+@bot.command(name='bgrank')
+async def getRank(ctx):
+    global currentLeaderboard
+
+    if len(ctx.content.split(' ')) > 1:
+        tag = ctx.content.split(' ')[1]
+        response = getResponseText(tag)
+
+        await ctx.send(response)
+
+# Run a thread for the bot
+botThread = threading.Thread(target=bot.run)
+botThread.daemon = True
+botThread.start()
+
 # Get leaderboards on start
 updateDict()
 
-tag = ''
-schedule.every(10).minutes.do(updateThreaded)
+# Update leaderboards dict every 10 mins
+schedulerThread = threading.Thread(target=updateDict)
+schedulerThread.daemon = True
+schedule.every(10).minutes.do(updateThreaded, schedulerThread)
 
-while tag != "exit":
+while True:
     schedule.run_pending()
+    # So CPU usage isn't hogged
     time.sleep(1)
-    tag = input("Enter tag: ")
-    print(getResponseText(tag))
+    

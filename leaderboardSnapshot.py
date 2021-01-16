@@ -20,10 +20,6 @@ def getLeaderboardSnapshot():
 
             driver.get(url)
 
-            rankColumns = driver.find_elements_by_class_name('col-rank')
-            tagColumns = driver.find_elements_by_class_name('col-battletag')
-            ratingColumns = driver.find_elements_by_class_name('col-rating')
-
             rankCols = driver.find_elements_by_class_name('col-rank')
             tagCols = driver.find_elements_by_class_name('col-battletag')
             ratingCols = driver.find_elements_by_class_name('col-rating')
