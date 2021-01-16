@@ -1,6 +1,7 @@
 from leaderboardSnapshot import getLeaderboardSnapshot
 import threading
 import time
+import schedule
 
 regions = ['US', 'EU', 'AP']
 currentLeaderboard = {}
@@ -10,6 +11,10 @@ def updateDict():
 
     currentLeaderboard = getLeaderboardSnapshot()
     print('Finished fetching leaderboard')
+
+def updateThreaded():
+    thread = threading.Thread(target=updateDict)
+    thread.start()
 
 def getResponseText(tag):
     global regions
@@ -30,10 +35,14 @@ def getResponseText(tag):
 
     return text
 
-updates = threading.Thread(target=updateDict)
-updates.start()
+# Get leaderboards on start
+updateDict()
 
-tag = ""
+tag = ''
+schedule.every(10).minutes.do(updateThreaded)
+
 while tag != "exit":
+    schedule.run_pending()
+    time.sleep(1)
     tag = input("Enter tag: ")
     print(getResponseText(tag))
