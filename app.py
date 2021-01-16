@@ -10,49 +10,52 @@ regions = ['US', 'EU', 'AP']
 currentLeaderboard = {}
 record = []
 startRating = 0
+currentRating = 0
 
 def updateDict():
     global currentLeaderboard
     global record
     global startRating
+    global currentRating
 
-    oldRating = 0
-
-    if currentLeaderboard:
-        try:
-            oldRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
-        except KeyError:
-            print('failed to find lii')
-            exit()
+    newRating = 0
 
     currentLeaderboard = getLeaderboardSnapshot()
     try:
         newRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
         if startRating == 0:
             startRating = newRating
+            currentRating = newRating
+            writeToFile(newRating)
+
+        if newRating != currentRating:
+            delta = int(newRating) - int(currentRating)
+
+            if delta > 0:
+                deltaText = "+" + str(delta)
+            elif delta < 0:
+                deltaText = str(delta)
+            else:
+                deltaText = ''
+
+            if deltaText:
+                record.append(deltaText)
+
+            writeToFile(newRating)
+
+        print([currentLeaderboard['US'][i]['rank'] for i in currentLeaderboard['US'].keys()])
     except KeyError:
         print('failed to find lii')
-        exit()
 
-    if oldRating:
-        delta = int(newRating) - int(oldRating)
-
-        if delta > 0:
-            deltaText = "+" + str(delta)
-        elif delta < 0:
-            deltaText = str(delta)
-        else:
-            deltaText = ''
-
-        if deltaText:
-            record.append(deltaText)
-
-    writeToFile(newRating)
-    print('Finished fetching leaderboard')
+    t = threading.Timer(60, updateDict)
+    t.start()
 
 def writeToFile(mmr):
     global record
     global startRating
+
+    if mmr == 0:
+        return
 
     wr = open('record.txt', 'w')
     wr.write('Start: {}\n'.format(startRating))
@@ -111,14 +114,4 @@ botThread = threading.Thread(target=bot.run)
 botThread.daemon = True
 botThread.start()
 
-# Get leaderboards on start
 updateDict()
-
-# Update leaderboards dict every 10 mins
-schedule.every(1).minutes.do(updateThreaded)
-
-while True:
-    schedule.run_pending()
-    # So CPU usage isn't hogged
-    time.sleep(1)
-    
