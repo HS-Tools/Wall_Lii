@@ -43,7 +43,7 @@ def updateDict():
 
             writeToFile(newRating)
 
-        print([currentLeaderboard['US'][i]['rank'] for i in currentLeaderboard['US'].keys()])
+        print('total people fetched in the us ' + str(len(currentLeaderboard['US'].keys())))
     except KeyError:
         print('failed to find lii')
 
