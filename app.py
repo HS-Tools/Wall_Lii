@@ -8,15 +8,62 @@ from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
 currentLeaderboard = {}
+record = []
+startRating = 0
 
 def updateDict():
     global currentLeaderboard
+    global record
+    global startRating
+
+    oldRating = 0
+
+    if currentLeaderboard:
+        try:
+            oldRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
+        except KeyError:
+            print('failed to find lii')
+            exit()
 
     currentLeaderboard = getLeaderboardSnapshot()
+    try:
+        newRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
+        if startRating == 0:
+            startRating = newRating
+    except KeyError:
+        print('failed to find lii')
+        exit()
+
+    if oldRating:
+        delta = int(newRating) - int(oldRating)
+
+        if delta > 0:
+            deltaText = "+" + str(delta)
+        elif delta < 0:
+            deltaText = str(delta)
+        else:
+            deltaText = ''
+
+        if deltaText:
+            record.append(deltaText)
+
+    writeToFile(newRating)
     print('Finished fetching leaderboard')
 
-def updateThreaded(thread):
-    thread.start()
+def writeToFile(mmr):
+    global record
+    global startRating
+
+    wr = open('record.txt', 'w')
+    wr.write('Start: {}\n'.format(startRating))
+    wr.write('Current: {}\n\nRecord:\n'.format(mmr))
+    for r in record:
+        wr.write(r + '\n')
+
+def updateThreaded():
+    global updateDict
+    schedulerThread = threading.Thread(target=updateDict)
+    schedulerThread.daemon = True
 
 def getResponseText(tag):
     global regions
@@ -54,7 +101,7 @@ async def getRank(ctx):
     global currentLeaderboard
 
     if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1]
+        tag = ctx.content.split(' ')[1].lower()
         response = getResponseText(tag)
 
         await ctx.send(response)
@@ -68,9 +115,7 @@ botThread.start()
 updateDict()
 
 # Update leaderboards dict every 10 mins
-schedulerThread = threading.Thread(target=updateDict)
-schedulerThread.daemon = True
-schedule.every(10).minutes.do(updateThreaded, schedulerThread)
+schedule.every(1).minutes.do(updateThreaded)
 
 while True:
     schedule.run_pending()
