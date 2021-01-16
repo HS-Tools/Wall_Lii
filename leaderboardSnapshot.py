@@ -1,6 +1,8 @@
 from selenium import webdriver
 
-driver = webdriver.Chrome()
+option = webdriver.ChromeOptions()
+option.add_argument('headless')
+driver = webdriver.Chrome(options=option)
 baseUrl = 'https://playhearthstone.com/en-us/community/leaderboards/'
 
 currentSeason = 2
