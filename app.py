@@ -7,6 +7,7 @@ from sys import exit
 from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
+channels = ['LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays']
 currentLeaderboard = {}
 record = []
 startRating = 0
@@ -30,6 +31,7 @@ def updateDict():
 
         if newRating != currentRating:
             delta = int(newRating) - int(currentRating)
+            currentRating = newRating
 
             if delta > 0:
                 deltaText = "+" + str(delta)
@@ -58,7 +60,7 @@ def writeToFile(mmr):
         return
 
     wr = open('record.txt', 'w')
-    wr.write('Start: {}\n'.format(startRating))
+    wr.write('Start: {}\n\n'.format(startRating))
     wr.write('Current: {}\n\nRecord:\n'.format(mmr))
     for r in record:
         wr.write(r + '\n')
@@ -92,12 +94,15 @@ bot = commands.Bot(
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
-    initial_channels=[os.environ['CHANNEL']]
+    initial_channels=channels
 )
 
 @bot.event
-async def event_ready():
-    ws = bot._ws
+async def event_message(ctx):
+    # make sure the bot ignores itself and the streamer
+    if ctx.author.name.lower() == os.environ['BOT_NICK'].lower():
+        return
+    bot.handle_commands(ctx)
 
 @bot.command(name='bgrank')
 async def getRank(ctx):
