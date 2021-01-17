@@ -102,7 +102,7 @@ async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
     if ctx.author.name.lower() == os.environ['BOT_NICK'].lower():
         return
-    bot.handle_commands(ctx)
+    await bot.handle_commands(ctx)
 
 @bot.command(name='bgrank')
 async def getRank(ctx):
