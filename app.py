@@ -7,7 +7,13 @@ from sys import exit
 from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
-channels = ['LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays']
+channels = ['LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays', 'MrIncredibleHS']
+alias = {
+    'waterloo': 'waterloooooo',
+    'jeef': 'jeffispro',
+    'jeff': 'jeffispro',
+    'victor': 'diyingli'
+}
 currentLeaderboard = {}
 record = []
 startRating = 0
@@ -75,6 +81,13 @@ def getResponseText(tag):
     global currentLeaderboard
 
     highestRank = 9999
+    #only changes if an alias is used
+    originalTag = tag
+
+    if tag in alias:
+        tag = alias[tag]
+        originalTag = tag
+
     encodedTag = tag.encode('utf-8')
     text = "{} is not on any BG leaderboards".format(tag)
     for region in regions:
@@ -85,7 +98,7 @@ def getResponseText(tag):
             if int(rank) < highestRank:
                 highestRank = int(rank)
                 text = "{} is rank {} in {} with {} mmr" \
-                .format(tag, rank, region, rating)
+                .format(originalTag, rank, region, rating)
 
     return text
 
@@ -110,6 +123,7 @@ async def getRank(ctx):
 
     if len(ctx.content.split(' ')) > 1:
         tag = ctx.content.split(' ')[1].lower()
+
         response = getResponseText(tag)
 
         await ctx.send(response)
