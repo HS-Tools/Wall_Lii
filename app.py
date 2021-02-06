@@ -1,5 +1,4 @@
 from leaderboardSnapshot import getLeaderboardSnapshot
-from ws import set_background
 import threading
 import time
 import json
@@ -93,7 +92,6 @@ def getResponseText(tag):
     
     if tag == 'nina' or tag == 'ninaisnoob':
         return 'SALAMI'
-
 
     encodedTag = tag.encode('utf-8')
     text = "{} is not on any BG leaderboards".format(tag)
