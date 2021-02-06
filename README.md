@@ -7,3 +7,5 @@ Does leaderboard scraping and then does stuff with that data
 3. Put Chromedriver in PATH
 4. Download pipenv and populate .env
 5. Run with ```pipenv run python app.py```
+
+# Test:
