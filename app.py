@@ -1,18 +1,21 @@
 from leaderboardSnapshot import getLeaderboardSnapshot
+from ws import set_background
 import threading
 import time
+import json
 import schedule
 import os
 from sys import exit
 from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
-channels = ['LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays', 'MrIncredibleHS']
+channels = ['IamTehShadow', 'DominickStarcraft', 'Xixo', 'LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays', 'Blirby', 'MrIncredibleHS', 'VendettaHSB', 'Jkirek_', 'DeathItselfHS']
 alias = {
     'waterloo': 'waterloooooo',
     'jeef': 'jeffispro',
     'jeff': 'jeffispro',
-    'victor': 'diyingli'
+    'victor': 'diyingli',
+    'sleepy': 'foreversleep'
 }
 currentLeaderboard = {}
 record = []
@@ -55,7 +58,7 @@ def updateDict():
     except KeyError:
         print('failed to find lii')
 
-    t = threading.Timer(60, updateDict)
+    t = threading.Timer(150, updateDict)
     t.start()
 
 def writeToFile(mmr):
@@ -87,6 +90,10 @@ def getResponseText(tag):
     if tag in alias:
         tag = alias[tag]
         originalTag = tag
+    
+    if tag == 'nina' or tag == 'ninaisnoob':
+        return 'SALAMI'
+
 
     encodedTag = tag.encode('utf-8')
     text = "{} is not on any BG leaderboards".format(tag)
@@ -125,6 +132,10 @@ async def getRank(ctx):
         tag = ctx.content.split(' ')[1].lower()
 
         response = getResponseText(tag)
+
+        await ctx.send(response)
+    else :
+        response = getResponseText('lii')
 
         await ctx.send(response)
 
