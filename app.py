@@ -1,5 +1,4 @@
 from leaderboardSnapshot import getLeaderboardSnapshot
-from ws import set_background
 import threading
 import time
 import json
