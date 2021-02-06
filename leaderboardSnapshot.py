@@ -24,13 +24,13 @@ def getLeaderboardSnapshot():
             driver.get(url)
 
             try:
-                rankCols = WebDriverWait(driver, 15).until(
+                rankCols = WebDriverWait(driver, 20).until(
                     EC.presence_of_all_elements_located((By.CLASS_NAME, "col-rank"))
                 )
-                tagCols = WebDriverWait(driver, 15).until(
+                tagCols = WebDriverWait(driver, 20).until(
                     EC.presence_of_all_elements_located((By.CLASS_NAME, "col-battletag"))
                 )
-                ratingCols = WebDriverWait(driver, 15).until(
+                ratingCols = WebDriverWait(driver, 20).until(
                     EC.presence_of_all_elements_located((By.CLASS_NAME, "col-rating"))
                 )
                 for i in range(len(rankCols)):

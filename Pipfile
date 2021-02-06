@@ -7,6 +7,9 @@ name = "pypi"
 twitchio = "*"
 selenium = "*"
 schedule = "*"
+simpleobsws = "*"
+asyncio = "*"
+pyslobs = "*"
 
 [dev-packages]
 
