@@ -1,0 +1,17 @@
+Loading .env environment variables...
+Ignoring exception in command: 'US':
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 526, in handle_commands
+    await ctx.command._callback(ctx, *ctx.args, **ctx.kwargs)
+  File "app.py", line 133, in getRank
+    response = getResponseText(tag)
+  File "app.py", line 100, in getResponseText
+    if encodedTag in currentLeaderboard[region]:
+KeyError: 'US'
+Web driver timed out
+Traceback (most recent call last):
+  File "app.py", line 146, in <module>
+    updateDict()
+  File "app.py", line 34, in updateDict
+    newRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
+TypeError: 'NoneType' object is not subscriptable
