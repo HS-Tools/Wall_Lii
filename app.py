@@ -8,7 +8,7 @@ from sys import exit
 from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
-channels = ['IamTehShadow', 'DominickStarcraft', 'Xixo', 'LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays', 'Blirby', 'MrIncredibleHS', 'VendettaHSB', 'Jkirek_', 'DeathItselfHS']
+channels = ['IamTehShadow', 'DominickStarcraft', 'Xixo', 'LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays', 'Blirby', 'MrIncredibleHS', 'VendettaHSB', 'Jkirek_', 'DeathItselfHS', 'Livvylive']
 alias = {
     'waterloo': 'waterloooooo',
     'jeef': 'jeffispro',
@@ -95,7 +95,7 @@ def getResponseText(tag):
 
 
     encodedTag = tag.encode('utf-8')
-    text = "{} is not on any BG leaderboards".format(tag)
+    text = "{} is not on any BG leaderboards liiCat".format(tag)
     for region in regions:
         if encodedTag in currentLeaderboard[region]:
             rank = currentLeaderboard[region][encodedTag]['rank']
@@ -103,7 +103,7 @@ def getResponseText(tag):
 
             if int(rank) < highestRank:
                 highestRank = int(rank)
-                text = "{} is rank {} in {} with {} mmr" \
+                text = "{} is rank {} in {} with {} mmr liiHappyCat" \
                 .format(originalTag, rank, region, rating)
 
     return text
