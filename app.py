@@ -1,4 +1,4 @@
-from leaderboardSnapshot import getLeaderboardSnapshot
+from api import getLeaderboardSnapshot
 import threading
 import time
 import json
@@ -91,8 +91,7 @@ def getResponseText(tag):
         originalTag = tag
     
     if tag == 'nina' or tag == 'ninaisnoob':
-        return 'SALAMI'
-
+        return '{} is rank 69 in Antartica with 16969 mmr liiSwag'
 
     encodedTag = tag.encode('utf-8')
     text = "{} is not on any BG leaderboards liiCat".format(tag)

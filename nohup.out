@@ -15,3 +15,49 @@ Traceback (most recent call last):
   File "app.py", line 34, in updateDict
     newRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
 TypeError: 'NoneType' object is not subscriptable
+Loading .env environment variables...
+Ignoring exception in command: <slots> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <slots> was not found.
+total people fetched in the us 200
+Ignoring exception in command: <slots> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <slots> was not found.
+Ignoring exception in command: <boat> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <boat> was not found.
+Ignoring exception in command: <slots> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <slots> was not found.
+Exception in thread Thread-5:
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/threading.py", line 917, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.7/threading.py", line 1166, in run
+    self.function(*self.args, **self.kwargs)
+  File "app.py", line 32, in updateDict
+    currentLeaderboard = getLeaderboardSnapshot()
+  File "/home/jim/git/HS-BG-Leaderboards-Bot/leaderboardSnapshot.py", line 25, in getLeaderboardSnapshot
+    driver.get(url)
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/selenium/webdriver/remote/webdriver.py", line 333, in get
+    self.execute(Command.GET, {'url': url})
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/selenium/webdriver/remote/webdriver.py", line 321, in execute
+    self.error_handler.check_response(response)
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/selenium/webdriver/remote/errorhandler.py", line 242, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.WebDriverException: Message: chrome not reachable
+  (Session info: headless chrome=78.0.3904.108)
+  (Driver info: chromedriver=2.35 (0),platform=Linux 4.19.97-v7l+ armv7l)
+
+
+total people fetched in the us 200
+total people fetched in the us 200
+total people fetched in the us 199
