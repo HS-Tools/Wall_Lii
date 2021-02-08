@@ -1,4 +1,4 @@
-from leaderboardSnapshot import getLeaderboardSnapshot
+from api import getLeaderboardSnapshot
 import threading
 import time
 import json
