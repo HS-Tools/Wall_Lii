@@ -91,7 +91,7 @@ def getResponseText(tag):
         originalTag = tag
     
     if tag == 'nina' or tag == 'ninaisnoob':
-        return '{} is rank 69 in Antartica with 16969 mmr liiSwag'
+        return '{} is rank 69 in Antartica with 16969 mmr liiSwag'.format(tag)
 
     encodedTag = tag.encode('utf-8')
     text = "{} is not on any BG leaderboards liiCat".format(tag)
