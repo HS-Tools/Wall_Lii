@@ -16,9 +16,7 @@ def getLeaderboardSnapshot():
         accounts = json.loads(r.text)['leaderboard']['rows']
 
         for account in accounts:
-            ratingsDict[region][account['accountid'].lower()] = {'rank': account['rank'], 'rating': ['rating']}
+            name = account['accountid'].encode('utf-8').lower()
+            ratingsDict[region][name] = {'rank': account['rank'], 'rating': account['rating']}
 
-    print(ratingsDict)
     return ratingsDict
-
-getLeaderboardSnapshot()
