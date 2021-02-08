@@ -10,6 +10,7 @@ schedule = "*"
 simpleobsws = "*"
 asyncio = "*"
 pyslobs = "*"
+requests = "*"
 
 [dev-packages]
 
