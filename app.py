@@ -1,4 +1,5 @@
 from api import getLeaderboardSnapshot
+import requests
 import threading
 import time
 import json
@@ -28,8 +29,12 @@ def updateDict():
     global currentRating
 
     newRating = 0
-
-    currentLeaderboard = getLeaderboardSnapshot()
+    
+    try:
+        currentLeaderboard = getLeaderboardSnapshot()
+    except requests.ConnectionError as e:
+        print(str(e))
+        
     try:
         newRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
         if startRating == 0:
@@ -136,6 +141,10 @@ async def getRank(ctx):
         response = getResponseText('lii')
 
         await ctx.send(response)
+
+@bot.command(name='goodbot')
+async def goodBot(ctx):
+    await ctx.send('MrDestructoid Just doing my job MrDestructoid')
 
 # Run a thread for the bot
 botThread = threading.Thread(target=bot.run)
