@@ -45,8 +45,4 @@ def getLeaderboardSnapshot():
                 print('Web driver timed out')
                 return None
 
-            # rankCols = driver.find_elements_by_class_name('col-rank')
-            # tagCols = driver.find_elements_by_class_name('col-battletag')
-            # ratingCols = driver.find_elements_by_class_name('col-rating')
-
     return ratingsDict
