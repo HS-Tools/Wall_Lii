@@ -1,4 +1,5 @@
 from api import getLeaderboardSnapshot
+from currentDay import getCurrentDay
 import requests
 import threading
 import time
@@ -34,10 +35,25 @@ alias = {
     'victor': 'diyingli',
     'sleepy': 'foreversleep'
 }
+
+currentDay = getCurrentDay()
 currentLeaderboard = {}
+dailyStats = {}
 record = []
 startRating = 0
 currentRating = 0
+
+def checkIfNewDay():
+    global currentDay
+
+    if getCurrentDay() != currentDay:
+        currentDay = getCurrentDay()
+        return True
+
+    return False
+
+# def updateDailyStats():
+#     for key in currentLeaderboard
 
 def updateDict():
     global currentLeaderboard
