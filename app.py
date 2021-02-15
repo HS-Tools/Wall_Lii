@@ -54,14 +54,25 @@ class LeaderBoardBot:
         return False
 
     def updateDailyStats(self):
-        return
-        # for key in self.currentLeaderboard:
+        # I will need to account for people that have the same account name multiple times in the leaderboard in the future
 
+        for region in regions:    
+            for tag in self.currentLeaderboard[region].keys():
+                currentRating = self.currentLeaderboard[region][tag]['rating']
+                if tag in self.dailyStats and region in self.dailyStats[tag]:
+                    lastRating = self.dailyStats[tag][region][-1]
+                    if lastRating != currentRating:
+                        self.dailyStats[tag][region].append(currentRating)
+                elif tag in self.dailyStats and region not in self.dailyStats[tag]:
+                    self.dailyStats[tag][region] = [currentRating]
+                elif tag not in self.dailyStats:
+                    self.dailyStats[tag] = {region: [currentRating]}
+                
     def updateDict(self):
         try:
             self.currentLeaderboard = getLeaderboardSnapshot()
+            self.updateDailyStats()
             print('Fetched {} people in the US'.format(str(len(self.currentLeaderboard['US'].keys()))))
-
         except requests.ConnectionError as e:
             print(str(e))
 
@@ -72,23 +83,17 @@ class LeaderBoardBot:
         schedulerThread = threading.Thread(target=self.updateDict)
         schedulerThread.daemon = True
 
-    def getResponseText(self, tag):
+    def getRankText(self, tag):
         highestRank = 9999
-        #only changes if an alias is used
-        originalTag = tag
 
-        if tag in alias:
-            tag = alias[tag]
-            originalTag = tag
-        
         if tag == 'nina' or tag == 'ninaisnoob':
             return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
 
         if tag == 'gomez':
             return '{} is a cat, cats do not play BG'.format(tag)
 
-        encodedTag = tag.encode('utf-8')
-        text = "{} is not on any BG leaderboards liiCat".format(tag)
+        encodedTag = self.getEncodedTag(tag)
+        text = "{} is not on any BG leaderboards liiCat".format(encodedTag.decode())
         for region in regions:
             if encodedTag in self.currentLeaderboard[region]:
                 rank = self.currentLeaderboard[region][encodedTag]['rank']
@@ -97,9 +102,15 @@ class LeaderBoardBot:
                 if int(rank) < highestRank:
                     highestRank = int(rank)
                     text = "{} is rank {} in {} with {} mmr liiHappyCat" \
-                    .format(originalTag, rank, region, rating)
+                    .format(encodedTag.decode(), rank, region, rating)
 
         return text
+
+    def getEncodedTag(self, tag):
+        if tag in alias:
+            tag = alias[tag]
+        
+        return tag.encode('utf-8')
 
 leaderboardBot = LeaderBoardBot()
 
@@ -123,11 +134,11 @@ async def getRank(ctx):
     if len(ctx.content.split(' ')) > 1:
         tag = ctx.content.split(' ')[1].lower()
 
-        response = leaderboardBot.getResponseText(tag)
+        response = leaderboardBot.getRankText(tag)
 
         await ctx.send(response)
     else :
-        response = leaderboardBot.getResponseText(channels[ctx.channel.name])
+        response = leaderboardBot.getRankText(channels[ctx.channel.name])
 
         await ctx.send(response)
 
