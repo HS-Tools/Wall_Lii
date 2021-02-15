@@ -36,119 +36,74 @@ alias = {
     'sleepy': 'foreversleep'
 }
 
-currentDay = getCurrentDay()
-currentLeaderboard = {}
-dailyStats = {}
-record = []
-startRating = 0
-currentRating = 0
+class LeaderBoardBot:
+    currentDay = None
+    currentLeaderboard = {}
+    dailyStats = {}
+    record = []
 
-def checkIfNewDay():
-    global currentDay
+    def __init__(self):
+        self.currentDay = getCurrentDay()
+        self.updateDict()
 
-    if getCurrentDay() != currentDay:
-        currentDay = getCurrentDay()
-        return True
+    def checkIfNewDay(self):
+        if getCurrentDay() != self.currentDay:
+            self.currentDay = getCurrentDay()
+            return True
 
-    return False
+        return False
 
-# def updateDailyStats():
-#     for key in currentLeaderboard
-
-def updateDict():
-    global currentLeaderboard
-    global record
-    global startRating
-    global currentRating
-
-    newRating = 0
-    
-    try:
-        currentLeaderboard = getLeaderboardSnapshot()
-    except requests.ConnectionError as e:
-        print(str(e))
-        
-    try:
-        newRating = currentLeaderboard['US']['lii'.encode('utf-8')]['rating']
-        if startRating == 0:
-            startRating = newRating
-            currentRating = newRating
-            writeToFile(newRating)
-
-        if newRating != currentRating:
-            delta = int(newRating) - int(currentRating)
-            currentRating = newRating
-
-            if delta > 0:
-                deltaText = "+" + str(delta)
-            elif delta < 0:
-                deltaText = str(delta)
-            else:
-                deltaText = ''
-
-            if deltaText:
-                record.append(deltaText)
-
-            writeToFile(newRating)
-
-        print('total people fetched in the us ' + str(len(currentLeaderboard['US'].keys())))
-    except KeyError:
-        print('failed to find lii')
-
-    t = threading.Timer(150, updateDict)
-    t.start()
-
-def writeToFile(mmr):
-    global record
-    global startRating
-
-    if mmr == 0:
+    def updateDailyStats(self):
         return
+        # for key in self.currentLeaderboard:
 
-    wr = open('record.txt', 'w')
-    wr.write('Start: {}\n\n'.format(startRating))
-    wr.write('Current: {}\n\nRecord:\n'.format(mmr))
-    for r in record:
-        wr.write(r + '\n')
+    def updateDict(self):
+        try:
+            self.currentLeaderboard = getLeaderboardSnapshot()
+            print('Fetched {} people in the US'.format(str(len(self.currentLeaderboard['US'].keys()))))
 
-def updateThreaded():
-    global updateDict
-    schedulerThread = threading.Thread(target=updateDict)
-    schedulerThread.daemon = True
+        except requests.ConnectionError as e:
+            print(str(e))
 
-def getResponseText(tag):
-    global regions
-    global currentLeaderboard
+        t = threading.Timer(150, self.updateDict)
+        t.start()
 
-    highestRank = 9999
-    #only changes if an alias is used
-    originalTag = tag
+    def updateThreaded(self):
+        schedulerThread = threading.Thread(target=self.updateDict)
+        schedulerThread.daemon = True
 
-    if tag in alias:
-        tag = alias[tag]
+    def getResponseText(self, tag):
+        highestRank = 9999
+        #only changes if an alias is used
         originalTag = tag
-    
-    if tag == 'nina' or tag == 'ninaisnoob':
-        return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
 
-    if tag == 'gomez':
-        return '{} is a cat, cats do not play BG'.format(tag)
+        if tag in alias:
+            tag = alias[tag]
+            originalTag = tag
+        
+        if tag == 'nina' or tag == 'ninaisnoob':
+            return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
 
-    encodedTag = tag.encode('utf-8')
-    text = "{} is not on any BG leaderboards liiCat".format(tag)
-    for region in regions:
-        if encodedTag in currentLeaderboard[region]:
-            rank = currentLeaderboard[region][encodedTag]['rank']
-            rating = currentLeaderboard[region][encodedTag]['rating']
+        if tag == 'gomez':
+            return '{} is a cat, cats do not play BG'.format(tag)
 
-            if int(rank) < highestRank:
-                highestRank = int(rank)
-                text = "{} is rank {} in {} with {} mmr liiHappyCat" \
-                .format(originalTag, rank, region, rating)
+        encodedTag = tag.encode('utf-8')
+        text = "{} is not on any BG leaderboards liiCat".format(tag)
+        for region in regions:
+            if encodedTag in self.currentLeaderboard[region]:
+                rank = self.currentLeaderboard[region][encodedTag]['rank']
+                rating = self.currentLeaderboard[region][encodedTag]['rating']
 
-    return text
+                if int(rank) < highestRank:
+                    highestRank = int(rank)
+                    text = "{} is rank {} in {} with {} mmr liiHappyCat" \
+                    .format(originalTag, rank, region, rating)
 
-bot = commands.Bot(
+        return text
+
+leaderboardBot = LeaderBoardBot()
+
+twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
@@ -156,35 +111,31 @@ bot = commands.Bot(
     initial_channels=channels.keys()
 )
 
-@bot.event
+@twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
     if ctx.author.name.lower() == os.environ['BOT_NICK'].lower():
         return
-    await bot.handle_commands(ctx)
+    await twitchBot.handle_commands(ctx)
 
-@bot.command(name='bgrank')
+@twitchBot.command(name='bgrank')
 async def getRank(ctx):
-    global currentLeaderboard
-
     if len(ctx.content.split(' ')) > 1:
         tag = ctx.content.split(' ')[1].lower()
 
-        response = getResponseText(tag)
+        response = leaderboardBot.getResponseText(tag)
 
         await ctx.send(response)
     else :
-        response = getResponseText(channels[ctx.channel.name])
+        response = leaderboardBot.getResponseText(channels[ctx.channel.name])
 
         await ctx.send(response)
 
-@bot.command(name='goodbot')
+@twitchBot.command(name='goodbot')
 async def goodBot(ctx):
     await ctx.send('MrDestructoid Just doing my job MrDestructoid')
 
 # Run a thread for the bot
-botThread = threading.Thread(target=bot.run)
-botThread.daemon = True
-botThread.start()
-
-updateDict()
+twitchBotThread = threading.Thread(target=twitchBot.run)
+twitchBotThread.daemon = True
+twitchBotThread.start()
