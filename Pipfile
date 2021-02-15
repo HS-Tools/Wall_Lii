@@ -11,6 +11,7 @@ simpleobsws = "*"
 asyncio = "*"
 pyslobs = "*"
 requests = "*"
+pytz = "*"
 
 [dev-packages]
 
