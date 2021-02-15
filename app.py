@@ -9,7 +9,24 @@ from sys import exit
 from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
-channels = ['IamTehShadow', 'DominickStarcraft', 'Xixo', 'LiiHS', 'Hapabear', 'ninaisnoob', 'PockyPlays', 'Blirby', 'MrIncredibleHS', 'VendettaHSB', 'Jkirek_', 'DeathItselfHS', 'Livvylive']
+channels = {'iamtehshadow': 'tehshadow', 
+'dominickstarcraft': 'Dom2805',
+'rolferolferolfe': 'rolfe',
+'jeeeeeeef': 'jeef',
+'xixo': 'xixo',
+'liihs': 'lii', 
+'endozoa': 'endozoa',
+'hapabear': 'hapabear',
+'ninaisnoob': 'ninaisnoob',
+'pockyplays': 'pocky',
+'blirby': 'blirby',
+'mrincrediblehs': 'mrincredible',
+'vendettahsb': 'vendetta',
+'jkirek_': 'jkirek',
+'deathitselfhs': 'deathitself',
+'livvylive': 'livvy',
+'bofur_hs': 'bofur'}
+
 alias = {
     'waterloo': 'waterloooooo',
     'jeef': 'jeffispro',
@@ -96,7 +113,10 @@ def getResponseText(tag):
         originalTag = tag
     
     if tag == 'nina' or tag == 'ninaisnoob':
-        return '{} is rank 69 in Antartica with 16969 mmr liiSwag'.format(tag)
+        return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
+
+    if tag == 'gomez':
+        return '{} is a cat, cats do not play BG'.format(tag)
 
     encodedTag = tag.encode('utf-8')
     text = "{} is not on any BG leaderboards liiCat".format(tag)
@@ -117,7 +137,7 @@ bot = commands.Bot(
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
-    initial_channels=channels
+    initial_channels=channels.keys()
 )
 
 @bot.event
@@ -138,7 +158,7 @@ async def getRank(ctx):
 
         await ctx.send(response)
     else :
-        response = getResponseText('lii')
+        response = getResponseText(channels[ctx.channel.name])
 
         await ctx.send(response)
 
