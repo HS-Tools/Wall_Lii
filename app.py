@@ -49,6 +49,8 @@ class LeaderBoardBot:
     def checkIfNewDay(self):
         if getCurrentDay() != self.currentDay:
             self.currentDay = getCurrentDay()
+
+            self.dailyStats = {}
             return True
 
         return False
@@ -79,9 +81,43 @@ class LeaderBoardBot:
         t = threading.Timer(150, self.updateDict)
         t.start()
 
-    def updateThreaded(self):
-        schedulerThread = threading.Thread(target=self.updateDict)
-        schedulerThread.daemon = True
+    # def updateThreaded(self):
+    #     schedulerThread = threading.Thread(target=self.updateDict)
+    #     schedulerThread.daemon = True
+    #     schedulerThread.start()
+
+    def getDailyStatsText(self, tag):
+        longestRecordLength = 1
+
+        encodedTag = self.getEncodedTag(tag)
+        
+        if encodedTag not in self.dailyStats:
+            return "{} is not on any BG leaderboards liiCat".format(encodedTag.decode())
+
+        text = "{} has not played any games today liiCat".format(encodedTag.decode())
+
+        for region in regions:
+            if region in self.dailyStats[encodedTag]:
+                ratings = self.dailyStats[encodedTag][region]
+
+                if len(ratings) > longestRecordLength:
+                    longestRecordLength = len(ratings)
+                    text = "{} started the day at {} mmr in {} and this is their record: {}".format(encodedTag.decode(), ratings[0], region, self.getDeltas(ratings))
+
+        return text
+
+    # This should only get called if ratings has more than 1 entry
+    def getDeltas(self, ratings):
+        lastRating = ratings[0]
+        deltas = []
+        
+        for rating in ratings[1:]:
+            deltas.append('{0:+d}'.format(rating - lastRating))
+
+            lastRating = rating
+
+        return deltas
+            
 
     def getRankText(self, tag):
         highestRank = 9999
@@ -139,6 +175,19 @@ async def getRank(ctx):
         await ctx.send(response)
     else :
         response = leaderboardBot.getRankText(channels[ctx.channel.name])
+
+        await ctx.send(response)
+
+@twitchBot.command(name='bgdaily')
+async def getDailyStats(ctx):
+    if len(ctx.content.split(' ')) > 1:
+        tag = ctx.content.split(' ')[1].lower()
+
+        response = leaderboardBot.getDailyStatsText(tag)
+
+        await ctx.send(response)
+    else :
+        response = leaderboardBot.getDailyStatsText(channels[ctx.channel.name])
 
         await ctx.send(response)
 
