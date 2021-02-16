@@ -96,7 +96,7 @@ class LeaderBoardBot:
         if encodedTag not in self.dailyStats:
             return "{} is not on any BG leaderboards liiCat".format(encodedTag.decode())
 
-        text = "{} and has not played any games today liiCat".format(getRankText(tag))
+        text = "{} and has not played any games today liiCat".format(self.getRankText(tag))
 
         for region in regions:
             if region in self.dailyStats[encodedTag]:
