@@ -3,6 +3,6 @@ from pytz import timezone
 
 def getCurrentDay():
     fmt = '%Y-%m-%d'
-    tz = timezone('EST')
+    tz = timezone('US/Eastern')
 
     return datetime.now(tz).strftime(fmt)

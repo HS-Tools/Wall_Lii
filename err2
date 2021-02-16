@@ -1,0 +1,167 @@
+Loading .env environment variables...
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb58cded0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+Ignoring exception in command: <dance> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dance> was not found.
+Ignoring exception in command: <15k> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <15k> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46b6890>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <bets> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <bets> was not found.
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46693d0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <15k> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <15k> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46d9cb0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Task exception was never retrieved
+future: <Task finished coro=<WebsocketConnection.auth_seq() done, defined at /home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py:200> exception=TimeoutError('Request to join the "iamtehshadow" channel has timed out. Make sure the channel exists.')>
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 280, in _join_channel
+    await asyncio.wait_for(fut, timeout=10)
+  File "/usr/lib/python3.7/asyncio/tasks.py", line 423, in wait_for
+    raise futures.TimeoutError()
+concurrent.futures._base.TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 228, in auth_seq
+    await self.join_channels(*channels)
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 271, in join_channels
+    await asyncio.gather(*[self._join_channel(x) for x in channels])
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 285, in _join_channel
+    f'Request to join the "{channel}" channel has timed out. Make sure the channel exists.')
+concurrent.futures._base.TimeoutError: Request to join the "iamtehshadow" channel has timed out. Make sure the channel exists.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb3cb34b0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb32f4d70>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46b64b0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb3c6c3b0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Task exception was never retrieved
+future: <Task finished coro=<WebsocketConnection.auth_seq() done, defined at /home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py:200> exception=ConnectionClosedError('code = 1006 (connection closed abnormally [internal]), no reason')>
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 228, in auth_seq
+    await self.join_channels(*channels)
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 271, in join_channels
+    await asyncio.gather(*[self._join_channel(x) for x in channels])
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/websocket.py", line 275, in _join_channel
+    await self._websocket.send(f'JOIN #{channel}\r\n')
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/websockets/protocol.py", line 555, in send
+    await self.ensure_open()
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/websockets/protocol.py", line 803, in ensure_open
+    raise self.connection_closed_exc()
+websockets.exceptions.ConnectionClosedError: code = 1006 (connection closed abnormally [internal]), no reason
