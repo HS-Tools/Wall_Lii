@@ -78,7 +78,7 @@ class LeaderBoardBot:
         except requests.ConnectionError as e:
             print(str(e))
 
-        t = threading.Timer(150, self.updateDict)
+        t = threading.Timer(180, self.updateDict)
         t.start()
 
     # def updateThreaded(self):
@@ -116,7 +116,7 @@ class LeaderBoardBot:
 
             lastRating = rating
 
-        return deltas
+        return ', '.join(deltas)
             
 
     def getRankText(self, tag):
