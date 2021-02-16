@@ -74,6 +74,7 @@ class LeaderBoardBot:
         try:
             self.currentLeaderboard = getLeaderboardSnapshot()
             self.updateDailyStats()
+            self.checkIfNewDay()
             print('Fetched {} people in the US'.format(str(len(self.currentLeaderboard['US'].keys()))))
         except requests.ConnectionError as e:
             print(str(e))
