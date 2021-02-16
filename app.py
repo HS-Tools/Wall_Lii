@@ -15,6 +15,7 @@ channels = {'iamtehshadow': 'tehshadow',
 'rolferolferolfe': 'rolfe',
 'jeeeeeeef': 'jeef',
 'xixo': 'xixo',
+'terry_tsang_gaming': 'terrytsang',
 'liihs': 'lii', 
 'endozoa': 'endozoa',
 'hapabear': 'hapabear',
@@ -95,7 +96,7 @@ class LeaderBoardBot:
         if encodedTag not in self.dailyStats:
             return "{} is not on any BG leaderboards liiCat".format(encodedTag.decode())
 
-        text = "{} has not played any games today liiCat".format(encodedTag.decode())
+        text = "{} and has not played any games today liiCat".format(getRankText(tag))
 
         for region in regions:
             if region in self.dailyStats[encodedTag]:
@@ -103,7 +104,7 @@ class LeaderBoardBot:
 
                 if len(ratings) > longestRecordLength:
                     longestRecordLength = len(ratings)
-                    text = "{} started the day at {} mmr in {} and this is their record: {}".format(encodedTag.decode(), ratings[0], region, self.getDeltas(ratings))
+                    text = "{} started the day at {} mmr in {} and is currently {} mmr. Their record is: {}".format(encodedTag.decode(), ratings[0], region, self.currentLeaderboard[region][encodedTag]['rating'], self.getDeltas(ratings))
 
         return text
 
