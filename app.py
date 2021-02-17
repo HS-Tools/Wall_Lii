@@ -6,7 +6,10 @@ import time
 import json
 import schedule
 import os
+from multiprocessing import Process
 from sys import exit
+import discord
+import asyncio
 from twitchio.ext import commands
 
 regions = ['US', 'EU', 'AP']
@@ -44,7 +47,6 @@ class LeaderBoardBot:
 
     def __init__(self):
         self.currentDay = getCurrentDay()
-        self.updateDict()
 
     def checkIfNewDay(self):
         if getCurrentDay() != self.currentDay:
@@ -78,7 +80,7 @@ class LeaderBoardBot:
         except requests.ConnectionError as e:
             print(str(e))
 
-        t = threading.Timer(180, self.updateDict)
+        t = threading.Timer(150, self.updateDict)
         t.start()
 
     # def updateThreaded(self):
@@ -148,8 +150,6 @@ class LeaderBoardBot:
         
         return tag.encode('utf-8')
 
-leaderboardBot = LeaderBoardBot()
-
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
@@ -195,7 +195,41 @@ async def getDailyStats(ctx):
 async def goodBot(ctx):
     await ctx.send('MrDestructoid Just doing my job MrDestructoid')
 
-# Run a thread for the bot
-twitchBotThread = threading.Thread(target=twitchBot.run)
-twitchBotThread.daemon = True
-twitchBotThread.start()
+leaderboardBot = LeaderBoardBot()
+discordBot = discord.Client()
+
+@discordBot.event
+async def on_ready():
+    print('{} connected to discord'.format(discordBot.user))
+
+@discordBot.event
+async def on_message(message):
+    if message.author == discordBot.user:
+        return
+
+    if message.content == '99!':
+        await message.channel.send('hi')
+
+# loop = asyncio.get_event_loop()
+# loop.create_task(leaderboardBot.updateDict())
+# loop.create_task(twitchBot.start())
+# loop.create_task(discordBot.run(os.environ['DISCORD_TOKEN']))
+# loop.run_forever()
+
+# threading.Thread(target=leaderboardBot.updateDict).start()
+# threading.Thread(target=discordBot.run, args=(os.environ['DISCORD_TOKEN'])).start()
+# threading.Thread(target=twitchBot.run).start()
+
+# threading.Thread(target=discordBot.run, args=[os.environ['DISCORD_TOKEN']]).start()
+twitchThread = threading.Thread(target=twitchBot.run)
+twitchThread.setDaemon(True)
+twitchThread.start()
+leaderboardThread = threading.Thread(target=leaderboardBot.updateDict)
+leaderboardThread.setDaemon(True)
+leaderboardThread.start()
+discordThread = threading.Thread(target=discordBot.run, args=[os.environ['DISCORD_TOKEN']])
+discordThread.setDaemon(True)
+discordThread.start()
+
+while True:
+    pass
