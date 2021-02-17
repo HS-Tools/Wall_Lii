@@ -1,36 +1,9 @@
 from api import getLeaderboardSnapshot
 from currentDay import getCurrentDay
-import requests
 import threading
-import time
-import json
-import schedule
-import os
-from multiprocessing import Process
-from sys import exit
-import discord
-import asyncio
-from twitchio.ext import commands
+import requests
 
 regions = ['US', 'EU', 'AP']
-channels = {'iamtehshadow': 'tehshadow', 
-'dominickstarcraft': 'Dom2805',
-'rolferolferolfe': 'rolfe',
-'jeeeeeeef': 'jeef',
-'xixo': 'xixo',
-'terry_tsang_gaming': 'terrytsang',
-'liihs': 'lii', 
-'endozoa': 'endozoa',
-'hapabear': 'hapabear',
-'ninaisnoob': 'ninaisnoob',
-'pockyplays': 'pocky',
-'blirby': 'blirby',
-'mrincrediblehs': 'mrincredible',
-'vendettahsb': 'vendetta',
-'jkirek_': 'jkirek',
-'deathitselfhs': 'deathitself',
-'livvylive': 'livvy',
-'bofur_hs': 'bofur'}
 
 alias = {
     'waterloo': 'waterloooooo',
@@ -84,11 +57,6 @@ class LeaderBoardBot:
 
         t = threading.Timer(150, self.updateDict)
         t.start()
-
-    # def updateThreaded(self):
-    #     schedulerThread = threading.Thread(target=self.updateDict)
-    #     schedulerThread.daemon = True
-    #     schedulerThread.start()
 
     def getDailyStatsText(self, tag):
         longestRecordLength = 1
@@ -151,87 +119,3 @@ class LeaderBoardBot:
             tag = alias[tag]
         
         return tag.encode('utf-8')
-
-twitchBot = commands.Bot(
-    irc_token=os.environ['TMI_TOKEN'],
-    client_id=os.environ['CLIENT_ID'],
-    nick=os.environ['BOT_NICK'],
-    prefix=os.environ['BOT_PREFIX'],
-    initial_channels=channels.keys()
-)
-
-@twitchBot.event
-async def event_message(ctx):
-    # make sure the bot ignores itself and the streamer
-    if ctx.author.name.lower() == os.environ['BOT_NICK'].lower():
-        return
-    await twitchBot.handle_commands(ctx)
-
-@twitchBot.command(name='bgrank')
-async def getRank(ctx):
-    if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1].lower()
-
-        response = leaderboardBot.getRankText(tag)
-
-        await ctx.send(response)
-    else :
-        response = leaderboardBot.getRankText(channels[ctx.channel.name])
-
-        await ctx.send(response)
-
-@twitchBot.command(name='bgdaily')
-async def getDailyStats(ctx):
-    if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1].lower()
-
-        response = leaderboardBot.getDailyStatsText(tag)
-
-        await ctx.send(response)
-    else :
-        response = leaderboardBot.getDailyStatsText(channels[ctx.channel.name])
-
-        await ctx.send(response)
-
-@twitchBot.command(name='goodbot')
-async def goodBot(ctx):
-    await ctx.send('MrDestructoid Just doing my job MrDestructoid')
-
-leaderboardBot = LeaderBoardBot()
-discordBot = discord.Client()
-
-@discordBot.event
-async def on_ready():
-    print('{} connected to discord'.format(discordBot.user))
-
-@discordBot.event
-async def on_message(message):
-    if message.author == discordBot.user:
-        return
-
-    if message.content == '99!':
-        await message.channel.send('hi')
-
-# loop = asyncio.get_event_loop()
-# loop.create_task(leaderboardBot.updateDict())
-# loop.create_task(twitchBot.start())
-# loop.create_task(discordBot.run(os.environ['DISCORD_TOKEN']))
-# loop.run_forever()
-
-# threading.Thread(target=leaderboardBot.updateDict).start()
-# threading.Thread(target=discordBot.run, args=(os.environ['DISCORD_TOKEN'])).start()
-# threading.Thread(target=twitchBot.run).start()
-
-# threading.Thread(target=discordBot.run, args=[os.environ['DISCORD_TOKEN']]).start()
-twitchThread = threading.Thread(target=twitchBot.run)
-twitchThread.setDaemon(True)
-twitchThread.start()
-leaderboardThread = threading.Thread(target=leaderboardBot.updateDict)
-leaderboardThread.setDaemon(True)
-leaderboardThread.start()
-discordThread = threading.Thread(target=discordBot.run, args=[os.environ['DISCORD_TOKEN']])
-discordThread.setDaemon(True)
-discordThread.start()
-
-while True:
-    pass

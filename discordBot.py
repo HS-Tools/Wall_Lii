@@ -17,6 +17,12 @@ async def on_message(message):
     if message.content == '99!':
         await message.channel.send('hi')
 
+
+discordThread = threading.Thread(target=discordBot.run, args=[os.environ['DISCORD_TOKEN']])
+discordThread.setDaemon(True)
+discordThread.start()
+
+
 # discordBot.run(os.environ['DISCORD_TOKEN'])
 
 # # Run a thread for the discord bot
