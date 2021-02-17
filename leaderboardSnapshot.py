@@ -5,6 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 
 option = webdriver.ChromeOptions()
 option.add_argument('headless')
+option.add_argument('--disable-features=VizDisplayCompositor')
+option.add_argument('--no-sandbox')
 driver = webdriver.Chrome(options=option)
 baseUrl = 'https://playhearthstone.com/en-us/community/leaderboards/'
 
@@ -42,9 +44,5 @@ def getLeaderboardSnapshot():
             except:
                 print('Web driver timed out')
                 return None
-
-            # rankCols = driver.find_elements_by_class_name('col-rank')
-            # tagCols = driver.find_elements_by_class_name('col-battletag')
-            # ratingCols = driver.find_elements_by_class_name('col-rating')
 
     return ratingsDict
