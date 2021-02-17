@@ -1,0 +1,2096 @@
+Loading .env environment variables...
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46cee90>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <:)> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <:)> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46a7470>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb3ca2950>
+transport: <_SelectorSocketTransport fd=7 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <Emma> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Emma> was not found.
+Ignoring exception in command: <animeclub> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <animeclub> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <Emma> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Emma> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <emma> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <emma> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb4669650>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <mmr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mmr> was not found.
+Ignoring exception in command: <youtube> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <youtube> was not found.
+Ignoring exception in command: <feet> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <feet> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb3cfe850>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb46d6310>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb4687650>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <Command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Command> was not found.
+Ignoring exception in command: <Rules> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Rules> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <flo> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <flo> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+Ignoring exception in command: <dumpling> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dumpling> was not found.
+Ignoring exception in command: <dumping> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dumping> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <rules> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <rules> was not found.
+Ignoring exception in command: <youtube> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <youtube> was not found.
+Ignoring exception in command: <uwu> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uwu> was not found.
+Ignoring exception in command: <uwu> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uwu> was not found.
+Ignoring exception in command: <polarbear> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <polarbear> was not found.
+Ignoring exception in command: <zofo> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <zofo> was not found.
+Ignoring exception in command: <polarbear> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <polarbear> was not found.
+Ignoring exception in command: <mean> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mean> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <SummonAaron> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <SummonAaron> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <give> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <give> was not found.
+Ignoring exception in command: <points> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <points> was not found.
+Ignoring exception in command: <give> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <give> was not found.
+Ignoring exception in command: <Give> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Give> was not found.
+Ignoring exception in command: <rank> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <rank> was not found.
+Ignoring exception in command: <take> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <take> was not found.
+Ignoring exception in command: <joke> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <joke> was not found.
+Ignoring exception in command: <steal> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <steal> was not found.
+Ignoring exception in command: <steal> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <steal> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <steal> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <steal> was not found.
+Ignoring exception in command: <steal> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <steal> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <tierlist> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <tierlist> was not found.
+Ignoring exception in command: <Zofo> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Zofo> was not found.
+Ignoring exception in command: <paige> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <paige> was not found.
+Ignoring exception in command: <nina> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nina> was not found.
+Ignoring exception in command: <Dom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Dom> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <dom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dom> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <give> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <give> was not found.
+Ignoring exception in command: <givepoints> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <givepoints> was not found.
+Ignoring exception in command: <steal> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <steal> was not found.
+Ignoring exception in command: <points> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <points> was not found.
+Ignoring exception in command: <points> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <points> was not found.
+Ignoring exception in command: <givepoints> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <givepoints> was not found.
+Ignoring exception in command: <give> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <give> was not found.
+Ignoring exception in command: <give> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <give> was not found.
+Ignoring exception in command: <points> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <points> was not found.
+Ignoring exception in command: <bet> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <bet> was not found.
+Ignoring exception in command: <bet> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <bet> was not found.
+Ignoring exception in command: <points> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <points> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <hello> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hello> was not found.
+Ignoring exception in command: <seppuku> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <seppuku> was not found.
+Ignoring exception in command: <sudoku> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sudoku> was not found.
+Ignoring exception in command: <emz> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <emz> was not found.
+Ignoring exception in command: <ezw> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ezw> was not found.
+Ignoring exception in command: <sjb2> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sjb2> was not found.
+Ignoring exception in command: <firestone> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <firestone> was not found.
+Ignoring exception in command: <noob> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <noob> was not found.
+Ignoring exception in command: <her> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <her> was not found.
+Ignoring exception in command: <hair> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hair> was not found.
+Ignoring exception in command: <refund> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <refund> was not found.
+Ignoring exception in command: <Lies> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Lies> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <Paige> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Paige> was not found.
+Ignoring exception in command: <unlurk> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <unlurk> was not found.
+Ignoring exception in command: <first> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <first> was not found.
+Ignoring exception in command: <FIRST> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <FIRST> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <unliished> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <unliished> was not found.
+Ignoring exception in command: <raffle> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <raffle> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <slots> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <slots> was not found.
+Ignoring exception in command: <slots> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <slots> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <raffle> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <raffle> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <unliished> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <unliished> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <fights> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fights> was not found.
+Ignoring exception in command: <coinflips> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <coinflips> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <demons> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <demons> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <gamble> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gamble> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <fights> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fights> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <shoutout> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <shoutout> was not found.
+Ignoring exception in command: <shoutout> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <shoutout> was not found.
+Ignoring exception in command: <shoutout> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <shoutout> was not found.
+Ignoring exception in command: <facial> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <facial> was not found.
+Ignoring exception in command: <golf> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <golf> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <keith> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <keith> was not found.
+Ignoring exception in command: <fasteddie> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fasteddie> was not found.
+Ignoring exception in command: <alucard> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <alucard> was not found.
+Ignoring exception in command: <ixxdeee> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ixxdeee> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <shadow> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <shadow> was not found.
+Ignoring exception in command: <pocky> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <pocky> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <lii> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <lii> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <eedwards226> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <eedwards226> was not found.
+Ignoring exception in command: <ixxdeee> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ixxdeee> was not found.
+Ignoring exception in command: <sleepy> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sleepy> was not found.
+Ignoring exception in command: <alucard> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <alucard> was not found.
+Ignoring exception in command: <keith> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <keith> was not found.
+Ignoring exception in command: <quinnabr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <quinnabr> was not found.
+Ignoring exception in command: <fasteddie> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fasteddie> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <hapa> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hapa> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <hapadiscord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hapadiscord> was not found.
+Ignoring exception in command: <hapa> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hapa> was not found.
+Ignoring exception in command: <animeclub> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <animeclub> was not found.
+Ignoring exception in command: <shadow> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <shadow> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <ostrichalert> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ostrichalert> was not found.
+Ignoring exception in command: <commands> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <commands> was not found.
+Ignoring exception in command: <sleepy> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sleepy> was not found.
+Ignoring exception in command: <add> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <add> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <sleepy> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sleepy> was not found.
+Ignoring exception in command: <sleepy> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sleepy> was not found.
+Ignoring exception in command: <Hapa> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Hapa> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <hapa> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hapa> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <fasteddie> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fasteddie> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <keith> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <keith> was not found.
+Ignoring exception in command: <ixxdeee> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ixxdeee> was not found.
+Ignoring exception in command: <!!!!!!!> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <!!!!!!!> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <wrongsong> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wrongsong> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <Wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <Wheel> was not found.
+Ignoring exception in command: <song> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <song> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <karaokecounter> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <karaokecounter> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <!!!> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <!!!> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <uptime> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uptime> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <command> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <CAM> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <CAM> was not found.
+Ignoring exception in command: <SONGREQUEST> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <SONGREQUEST> was not found.
+Ignoring exception in command: <lurk> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <lurk> was not found.
+Ignoring exception in command: <song> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <song> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <song> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <song> was not found.
+Ignoring exception in command: <animeclub> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <animeclub> was not found.
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+Ignoring exception in command: <heychat> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <heychat> was not found.
+Ignoring exception in command: <heychat> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <heychat> was not found.
+Ignoring exception in command: <SONGREQUEST> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <SONGREQUEST> was not found.
+Ignoring exception in command: <song> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <song> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <discord> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <discord> was not found.
+Ignoring exception in command: <wheel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <wheel> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <song> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <song> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <patch> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <patch> was not found.
+Ignoring exception in command: <promise> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <promise> was not found.
+Ignoring exception in command: <patch> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <patch> was not found.
+SSL error in data received
+protocol: <asyncio.sslproto.SSLProtocol object at 0xb3cfe2b0>
+transport: <_SelectorSocketTransport fd=6 read=polling write=<idle, bufsize=0>>
+Traceback (most recent call last):
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 526, in data_received
+    ssldata, appdata = self._sslpipe.feed_ssldata(data)
+  File "/usr/lib/python3.7/asyncio/sslproto.py", line 207, in feed_ssldata
+    self._sslobj.unwrap()
+  File "/usr/lib/python3.7/ssl.py", line 767, in unwrap
+    return self._sslobj.shutdown()
+ssl.SSLError: [SSL: KRB5_S_INIT] application data after close notify (_ssl.c:2609)
+Ignoring exception in command: <twitter> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <twitter> was not found.
+Ignoring exception in command: <chad> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <chad> was not found.
+Ignoring exception in command: <khad> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <khad> was not found.
+Ignoring exception in command: <twitter> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <twitter> was not found.
+Ignoring exception in command: <twitter> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <twitter> was not found.
+Ignoring exception in command: <nerf> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nerf> was not found.
+Ignoring exception in command: <mmr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mmr> was not found.
+Ignoring exception in command: <twitter> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <twitter> was not found.
+Ignoring exception in command: <help> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <help> was not found.
+Ignoring exception in command: <patch> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <patch> was not found.
+Ignoring exception in command: <khad> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <khad> was not found.
+Ignoring exception in command: <nerf> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nerf> was not found.
+Ignoring exception in command: <birthday!> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday!> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <daniel> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <daniel> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <gut> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gut> was not found.
+Ignoring exception in command: <ameliebc> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ameliebc> was not found.
+Ignoring exception in command: <sr> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sr> was not found.
+Ignoring exception in command: <whatarethese> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <whatarethese> was not found.
+Ignoring exception in command: <gut> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gut> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <birthdy> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthdy> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <bob\> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <bob\> was not found.
+Ignoring exception in command: <bob> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <bob> was not found.
+Ignoring exception in command: <in> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <in> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <gut> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gut> was not found.
+Ignoring exception in command: <?!> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <?!> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <gut> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <gut> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <mukla> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mukla> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <First?> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <First?> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <?> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <?> was not found.
+Ignoring exception in command: <mute> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mute> was not found.
+Ignoring exception in command: <mute> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mute> was not found.
+Ignoring exception in command: <uwu> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uwu> was not found.
+Ignoring exception in command: <nina> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nina> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <8ball> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <8ball> was not found.
+Ignoring exception in command: <8ball> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <8ball> was not found.
+Ignoring exception in command: <8ball> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <8ball> was not found.
+Ignoring exception in command: <first> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <first> was not found.
+Ignoring exception in command: <8ball> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <8ball> was not found.
+Ignoring exception in command: <8ball> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <8ball> was not found.
+Ignoring exception in command: <8ball> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <8ball> was not found.
+Ignoring exception in command: <ron> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ron> was not found.
+Ignoring exception in command: <vegan> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <vegan> was not found.
+Ignoring exception in command: <nomi> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nomi> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <in> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <in> was not found.
+Ignoring exception in command: <:)> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <:)> was not found.
+Ignoring exception in command: <ameliebc> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ameliebc> was not found.
+Ignoring exception in command: <class> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <class> was not found.
+Ignoring exception in command: <addcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <addcom> was not found.
+Ignoring exception in command: <class> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <class> was not found.
+Ignoring exception in command: <class> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <class> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <class> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <class> was not found.
+Ignoring exception in command: <ban> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ban> was not found.
+Ignoring exception in command: <bob> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <bob> was not found.
+Ignoring exception in command: <class> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <class> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <fights> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fights> was not found.
+Ignoring exception in command: <fights> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fights> was not found.
+Ignoring exception in command: <boat> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <boat> was not found.
+Ignoring exception in command: <saphire> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <saphire> was not found.
+Ignoring exception in command: <playlist> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <playlist> was not found.
+Ignoring exception in command: <ostrichalert> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ostrichalert> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <commands> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <commands> was not found.
+Ignoring exception in command: <facial> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <facial> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <fasteddie> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fasteddie> was not found.
+Ignoring exception in command: <nate> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nate> was not found.
+Ignoring exception in command: <nate123> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nate123> was not found.
+Ignoring exception in command: <nate> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nate> was not found.
+Ignoring exception in command: <nate> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <nate> was not found.
+Ignoring exception in command: <sleepy> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <sleepy> was not found.
+Ignoring exception in command: <pair> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <pair> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <fights> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fights> was not found.
+Ignoring exception in command: <hmc> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hmc> was not found.
+Ignoring exception in command: <jeef> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jeef> was not found.
+Ignoring exception in command: <jkirek> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <jkirek> was not found.
+Ignoring exception in command: <dicks> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <dicks> was not found.
+Ignoring exception in command: <in> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <in> was not found.
+Ignoring exception in command: <mukla> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <mukla> was not found.
+Ignoring exception in command: <raffle> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <raffle> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <join> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <join> was not found.
+Ignoring exception in command: <uptime> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uptime> was not found.
+Ignoring exception in command: <lurk> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <lurk> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <twlevewins> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <twlevewins> was not found.
+Ignoring exception in command: <lurk> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <lurk> was not found.
+Ignoring exception in command: <fasteddie> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <fasteddie> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <commands> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <commands> was not found.
+Ignoring exception in command: <addnotbirthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <addnotbirthday> was not found.
+Ignoring exception in command: <alert> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <alert> was not found.
+Ignoring exception in command: <notbirthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <notbirthday> was not found.
+Ignoring exception in command: <notbirthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <notbirthday> was not found.
+Ignoring exception in command: <editcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <editcom> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <so> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <so> was not found.
+Ignoring exception in command: <editcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <editcom> was not found.
+Ignoring exception in command: <notbirthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <notbirthday> was not found.
+Ignoring exception in command: <birthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <birthday> was not found.
+Ignoring exception in command: <editcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <editcom> was not found.
+Ignoring exception in command: <delcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <delcom> was not found.
+Ignoring exception in command: <royale> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <royale> was not found.
+Ignoring exception in command: <editcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <editcom> was not found.
+Ignoring exception in command: <notbirthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <notbirthday> was not found.
+Ignoring exception in command: <editcom> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <editcom> was not found.
+Ignoring exception in command: <notbirthday> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <notbirthday> was not found.
+Ignoring exception in command: <uptime> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uptime> was not found.
+Ignoring exception in command: <uptime> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uptime> was not found.
+Ignoring exception in command: <naicha> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <naicha> was not found.
+Ignoring exception in command: <boomer> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <boomer> was not found.
+Ignoring exception in command: <uptime> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uptime> was not found.
+Ignoring exception in command: <naicha> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <naicha> was not found.
+Ignoring exception in command: <cats> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <cats> was not found.
+Ignoring exception in command: <uptime> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <uptime> was not found.
+Ignoring exception in command: <ama> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <ama> was not found.
+Ignoring exception in command: <hurry> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <hurry> was not found.
+Ignoring exception in command: <criteria> was not found.:
+Traceback (most recent call last):
+  File "/home/jim/.local/share/virtualenvs/HS-BG-Leaderboards-Bot-XbyRpwbq/lib/python3.7/site-packages/twitchio/ext/commands/bot.py", line 494, in handle_commands
+    raise CommandNotFound(f'<{command}> was not found.')
+twitchio.ext.commands.errors.CommandNotFound: <criteria> was not found.
+Ignoring exception in command: <command> was not found.:
+Traceback (most recent call last):
