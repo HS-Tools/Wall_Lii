@@ -1,31 +1,59 @@
 import threading
 import os
 import discord
-from currentDay import getCurrentDay
+from discord.ext import commands
+from leaderboardBot import LeaderBoardBot
 
 discordBot = discord.Client()
+bot = commands.Bot(command_prefix='!')
 
-@discordBot.event
-async def on_ready():
-    print('{} connected to discord'.format(discordBot.user))
+emotes = [
+    'liiHappyCat',
+    'liiCat',
+    'ninaisFEESH'
+]
 
-@discordBot.event
-async def on_message(message):
-    if message.author == discordBot.user:
+def removeTwitchEmotes(s):
+    for key in emotes:
+        s = s.replace(key, '')
+
+    return s
+
+@bot.command()
+async def bgrank(ctx, *args):
+    if len(args) == 0:
+        response = leaderboardBot.getRankText('lii')
+        await ctx.send(removeTwitchEmotes(response))
+
         return
 
-    if message.content == '99!':
-        await message.channel.send('hi')
+    response = leaderboardBot.getRankText(args[0])
 
+    await ctx.send(removeTwitchEmotes(response))
 
-discordThread = threading.Thread(target=discordBot.run, args=[os.environ['DISCORD_TOKEN']])
+@bot.command()
+async def bgdaily(ctx, *args):
+    if len(args) == 0:
+        response = leaderboardBot.getDailyStatsText('lii')
+        await ctx.send(removeTwitchEmotes(response))
+
+        return
+
+    response = leaderboardBot.getDailyStatsText(args[0])
+    
+    await ctx.send(removeTwitchEmotes(response))
+
+@bot.command()
+async def goodbot(ctx):
+    await ctx.send(':robot: Just doing my job :robot:')
+
+discordThread = threading.Thread(target=bot.run, args=[os.environ['DISCORD_TOKEN']])
 discordThread.setDaemon(True)
 discordThread.start()
+leaderboardBot = LeaderBoardBot()
+leaderboardThread = threading.Thread(target=leaderboardBot.updateDict)
+leaderboardThread.setDaemon(True)
+leaderboardThread.start()
 
-
-# discordBot.run(os.environ['DISCORD_TOKEN'])
-
-# # Run a thread for the discord bot
-# discordBotThread = threading.Thread(target=discordBot.run, args=(os.environ['DISCORD_TOKEN']))
-# # discordBotThread.daemon = True
-# discordBotThread.start()
+while True:
+    pass
