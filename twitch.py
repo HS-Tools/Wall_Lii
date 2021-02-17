@@ -20,6 +20,7 @@ channels = {'iamtehshadow': 'tehshadow',
 'jkirek_': 'jkirek',
 'deathitselfhs': 'deathitself',
 'livvylive': 'livvy',
+'Duhbbleyou': 'theletterw',
 'bofur_hs': 'bofur'}
 
 twitchBot = commands.Bot(
@@ -58,7 +59,7 @@ async def getDailyStats(ctx):
         response = leaderboardBot.getDailyStatsText(tag)
 
         await ctx.send(response)
-    else :
+    else:
         response = leaderboardBot.getDailyStatsText(channels[ctx.channel.name])
 
         await ctx.send(response)
