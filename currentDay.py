@@ -3,6 +3,6 @@ from pytz import timezone
 
 def getCurrentDay():
     fmt = '%Y-%m-%d'
-    tz = timezone('US/Eastern')
+    tz = timezone('US/Pacific')
 
     return datetime.now(tz).strftime(fmt)
