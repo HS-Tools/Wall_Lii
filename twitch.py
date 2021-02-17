@@ -20,7 +20,7 @@ channels = {'iamtehshadow': 'tehshadow',
 'jkirek_': 'jkirek',
 'deathitselfhs': 'deathitself',
 'livvylive': 'livvy',
-'Duhbbleyou': 'theletterw',
+'duhbbleyou': 'theletterw',
 'bofur_hs': 'bofur'}
 
 twitchBot = commands.Bot(
