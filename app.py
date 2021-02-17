@@ -104,7 +104,7 @@ class LeaderBoardBot:
 
                 if len(ratings) > longestRecordLength:
                     longestRecordLength = len(ratings)
-                    text = "{} started the day at {} mmr in {} and is currently {} mmr. Their record is: {}".format(encodedTag.decode(), ratings[0], region, self.currentLeaderboard[region][encodedTag]['rating'], self.getDeltas(ratings))
+                    text = "{} started today at {} in {} and is now {} with {} games played. Their record is: {}".format(encodedTag.decode(), ratings[0], region, self.currentLeaderboard[region][encodedTag]['rating'], len(ratings)-1, self.getDeltas(ratings))
 
         return text
 
