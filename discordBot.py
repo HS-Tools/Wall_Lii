@@ -4,7 +4,6 @@ import discord
 from discord.ext import commands
 from leaderboardBot import LeaderBoardBot
 
-discordBot = discord.Client()
 bot = commands.Bot(command_prefix='!')
 
 emotes = [
@@ -47,13 +46,15 @@ async def bgdaily(ctx, *args):
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
-discordThread = threading.Thread(target=bot.run, args=[os.environ['DISCORD_TOKEN']])
-discordThread.setDaemon(True)
-discordThread.start()
+#discordThread = threading.Thread(target=bot.run, args=[os.environ['DISCORD_TOKEN']])
+#discordThread.setDaemon(True)
+#discordThread.start()
 leaderboardBot = LeaderBoardBot()
 leaderboardThread = threading.Thread(target=leaderboardBot.updateDict)
 leaderboardThread.setDaemon(True)
 leaderboardThread.start()
+
+bot.run(os.environ['DISCORD_TOKEN'])
 
 while True:
     pass
