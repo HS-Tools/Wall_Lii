@@ -12,6 +12,8 @@ asyncio = "*"
 pyslobs = "*"
 requests = "*"
 pytz = "*"
+"discord.py" = "*"
+datetime = "*"
 
 [dev-packages]
 
