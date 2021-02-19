@@ -41,6 +41,9 @@ class LeaderBoardBot:
                     lastRating = self.dailyStats[tag][region][-1]
                     if lastRating != currentRating:
                         self.dailyStats[tag][region].append(currentRating)
+
+                        # Delete duplicate scores in case of api requests giving bad data
+                        self.dailyStats[tag][region] = self.deleteDup(self.dailyStats[tag][region])
                 elif tag in self.dailyStats and region not in self.dailyStats[tag]:
                     self.dailyStats[tag][region] = [currentRating]
                 elif tag not in self.dailyStats:
@@ -113,6 +116,14 @@ class LeaderBoardBot:
                     .format(encodedTag.decode(), rank, region, rating)
 
         return text
+
+    def deleteDup(self, lst):
+        if len(lst) > 3:
+            if lst[-1] == lst[-3]:
+                lst = lst[: len(lst) - 2]
+
+                return lst
+        return lst
 
     def getEncodedTag(self, tag):
         if tag in alias:
