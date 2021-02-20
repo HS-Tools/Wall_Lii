@@ -118,7 +118,7 @@ class LeaderBoardBot:
         return text
 
     def deleteDup(self, lst):
-        if len(lst) > 3:
+        if len(lst) > 2:
             if lst[-1] == lst[-3]:
                 lst = lst[: len(lst) - 2]
 
