@@ -41,7 +41,7 @@ async def event_message(ctx):
 @twitchBot.command(name='bgrank')
 async def getRank(ctx):
     if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1].lower()
+        tag = ctx.content.split(' ')[1]
 
         response = leaderboardBot.getRankText(tag)
 
@@ -54,7 +54,7 @@ async def getRank(ctx):
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
     if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1].lower()
+        tag = ctx.content.split(' ')[1]
 
         response = leaderboardBot.getDailyStatsText(tag)
 

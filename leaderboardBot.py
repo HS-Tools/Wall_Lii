@@ -115,6 +115,8 @@ class LeaderBoardBot:
         return text
 
     def getEncodedTag(self, tag):
+        tag = tag.lower()
+
         if tag in alias:
             tag = alias[tag]
         
