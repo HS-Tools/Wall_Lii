@@ -2,8 +2,8 @@
 Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to enable users to get the current rank of a player and to fetch their daily record of games.
 
 # Commands:
-!bgrank {battletag}: Gets the rank and mmr of a player in their highest rated region
-!bgdaily {battletag}: Gets the starting mmr, current mmr and the list of mmr changes from all games played during the day. This resets at midnight PST time
+* !bgrank {battletag}: Gets the rank and mmr of a player in their highest rated region
+* !bgdaily {battletag}: Gets the starting mmr, current mmr and the list of mmr changes from all games played during the day. This resets at midnight PST time
 
 # Webscraping with chromium:
 This project was initially done by scraping the hearthstone leaderboards with chromium. I have since changed to using the official api due to excessive resource requirements that my raspberry pi could not support. The following instructions are for using leaderboardSnapshot.py
