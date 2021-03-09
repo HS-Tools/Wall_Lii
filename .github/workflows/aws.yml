@@ -1,0 +1,41 @@
+name: Cloudformation CI
+
+on:
+  push:
+    branches:
+    - master
+    - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Package and Deploy to AWS CloudFormation
+        run: |
+          aws cloudformation package --template-file lambda-loader/template.yaml \
+            --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
+            --region ${{ secrets.REGION }} \
+            --output-template-file processed.template.yaml
+          aws cloudformation deploy --template-file processed.template.yaml \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --region ${{ secrets.REGION }} \
+            --capabilities CAPABILITY_IAM
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks --exclude '*' --include 'template.yaml'
+        env:
+          AWS_S3_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.REGION }}
+          DEST_DIR: /
