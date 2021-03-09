@@ -17,7 +17,6 @@ class LeaderBoardBot:
     currentDay = None
     currentLeaderboard = {}
     dailyStats = {}
-    record = []
 
     def __init__(self):
         self.currentDay = getCurrentDay()
