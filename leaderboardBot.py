@@ -1,9 +1,9 @@
 from api import getLeaderboardSnapshot
 from currentDay import getCurrentDay
+from parseRegion import REGIONS, parseRegion
 import threading
 import requests
 
-regions = ['US', 'EU', 'AP']
 
 alias = {
     'waterloo': 'waterloooooo',
@@ -34,7 +34,7 @@ class LeaderBoardBot:
     def updateDailyStats(self):
         # I will need to account for people that have the same account name multiple times in the leaderboard in the future
 
-        for region in regions:    
+        for region in REGIONS:    
             for tag in self.currentLeaderboard[region].keys():
                 currentRating = self.currentLeaderboard[region][tag]['rating']
                 if tag in self.dailyStats and region in self.dailyStats[tag]:
@@ -71,13 +71,13 @@ class LeaderBoardBot:
 
         text = "{} and has not played any games today liiCat".format(self.getRankText(tag))
 
-        for region in regions:
+        for region in REGIONS:
             if region in self.dailyStats[encodedTag]:
                 ratings = self.dailyStats[encodedTag][region]
 
                 if len(ratings) > longestRecordLength:
                     longestRecordLength = len(ratings)
-                    text = "{} started today at {} in {} and is now {} with {} games played. Their record is: {}".format(encodedTag.decode(), ratings[0], region, self.currentLeaderboard[region][encodedTag]['rating'], len(ratings)-1, self.getDeltas(ratings))
+                    text = f"{encodedTag.decode()} started today at {ratings[0]} in {region} and is now {self.currentLeaderboard[region][encodedTag]['rating']} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
 
         return text
 
@@ -92,19 +92,32 @@ class LeaderBoardBot:
             lastRating = rating
 
         return ', '.join(deltas)
+    
+
             
 
-    def getRankText(self, tag):
-        highestRank = 9999
-
+    def getRankText(self, tag, region = ""):
+        
         if tag == 'nina' or tag == 'ninaisnoob':
             return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
 
         if tag == 'gomez':
             return '{} is a cat, cats do not play BG'.format(tag)
 
+        # Resolve alias if aliased, returns None if region is invalid.
+        region = parseRegion(region)
+        
+        if region is not None:
+            specified_region = True
+            regions = [region]
+        else:
+            specified_region = False
+            regions = REGIONS
+
+        highestRank = 9999
+
         encodedTag = self.getEncodedTag(tag)
-        text = "{} is not on any BG leaderboards liiCat".format(encodedTag.decode())
+        text = f"{encodedTag.decode()} is not on {region if specified_region else 'any BG'} leaderboards liiCat"
         for region in regions:
             if encodedTag in self.currentLeaderboard[region]:
                 rank = self.currentLeaderboard[region][encodedTag]['rank']
@@ -120,7 +133,7 @@ class LeaderBoardBot:
     def deleteDup(self, lst):
         if len(lst) > 2:
             if lst[-1] == lst[-3]:
-                lst = lst[: len(lst) - 2]
+                lst = lst[-2:]
 
                 return lst
         return lst
