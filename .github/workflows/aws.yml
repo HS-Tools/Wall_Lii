@@ -23,6 +23,9 @@ jobs:
           aws-region: us-east-1
       - name: Package and Deploy to AWS CloudFormation
         run: |
+          mkdir dist
+          cp src/* dist/
+          pip3 install -r requirements.txt -t dist/
           aws cloudformation package --template-file lambda-loader/template.yaml \
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
             --region ${{ secrets.REGION }} \
