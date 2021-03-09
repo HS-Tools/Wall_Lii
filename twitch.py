@@ -2,6 +2,7 @@ import os
 import threading
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
+from parseRegion import parseRegion
 
 channels = {'iamtehshadow': 'tehshadow', 
 'dominickstarcraft': 'Dom2805',
@@ -48,15 +49,19 @@ async def event_message(ctx):
 @twitchBot.command(name='bgrank')
 async def getRank(ctx):
     if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1]
+        args = ctx.content.split(' ')[1:3]
+    else:
+        args = [channels[ctx.channel.name]]
 
-        response = leaderboardBot.getRankText(tag)
+    response = leaderboardBot.getRankText(*args)
 
-        await ctx.send(response)
-    else :
-        response = leaderboardBot.getRankText(channels[ctx.channel.name])
+    # Add error message if region was invalid
+    if len(args) == 2:
+        region = args[1]
+        if parseRegion(region) is None:
+            response = f"Invalid region '{region}'.      " + response
 
-        await ctx.send(response)
+    await ctx.send(response)
 
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
