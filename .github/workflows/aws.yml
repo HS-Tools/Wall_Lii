@@ -19,7 +19,7 @@ jobs:
           aws-region: us-east-1
       - name: Package and Deploy to AWS CloudFormation
         run: |
-          aws cloudformation package --template-file template.yaml \
+          aws cloudformation package --template-file lambda-loader/template.yaml \
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
             --region ${{ secrets.REGION }} \
             --output-template-file processed.template.yaml
