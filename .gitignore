@@ -130,3 +130,6 @@ dmypy.json
 
 # Record keeping txt
 /record.txt
+
+# Error documents
+**/err*
