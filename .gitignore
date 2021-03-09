@@ -132,5 +132,4 @@ dmypy.json
 /record.txt
 
 # Error documents
-err
-errDisc.txt
+**/err*
