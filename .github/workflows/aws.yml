@@ -46,3 +46,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.REGION }}
           DEST_DIR: /
+

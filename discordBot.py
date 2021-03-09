@@ -3,6 +3,7 @@ import os
 import discord
 from discord.ext import commands
 from leaderboardBot import LeaderBoardBot
+from parseRegion import parseRegion
 
 bot = commands.Bot(command_prefix='!')
 
@@ -12,6 +13,7 @@ emotes = [
     'ninaisFEESH'
 ]
 
+
 def removeTwitchEmotes(s):
     for key in emotes:
         s = s.replace(key, '')
@@ -20,15 +22,19 @@ def removeTwitchEmotes(s):
 
 @bot.command()
 async def bgrank(ctx, *args):
-    if len(args) == 0:
-        response = leaderboardBot.getRankText('lii')
-        await ctx.send(removeTwitchEmotes(response))
+    
+    invalid_region = False
+    args = args or ['lii']
+    args = args[:2]
 
-        return
+    response = removeTwitchEmotes(leaderboardBot.getRankText(*args))
 
-    response = leaderboardBot.getRankText(args[0])
-
-    await ctx.send(removeTwitchEmotes(response))
+    if len(args) >= 2:
+        region = args[1]
+        if parseRegion(region) is None:
+            response = "Invalid region provided.\n" + response
+        
+    await ctx.send(response)
 
 @bot.command()
 async def bgdaily(ctx, *args):
