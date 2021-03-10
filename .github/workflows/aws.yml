@@ -26,6 +26,7 @@ jobs:
           mkdir -p lambda-loader/dist
           cp -r lambda-loader/src/ lambda-loader/dist/
           pip3 install -r lambda-loader/requirements.txt -t lambda-loader/dist/
+          ls -R lambda-loader/dist/ 
           aws cloudformation package --template-file ./lambda-loader/template.yaml \
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
             --region ${{ secrets.REGION }} \
