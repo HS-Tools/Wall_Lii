@@ -24,7 +24,7 @@ jobs:
       - name: Package and Deploy to AWS CloudFormation
         run: |
           mkdir dist
-          cp /home/runner/work/HS-BG-Leaderboards-Bot/HS-BG-Leaderboards-Bot dist/
+          cp -r /home/runner/work/HS-BG-Leaderboards-Bot/HS-BG-Leaderboards-Bot dist/
           pip3 install -r requirements.txt -t dist/
           aws cloudformation package --template-file lambda-loader/template.yaml \
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
