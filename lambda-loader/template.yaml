@@ -6,6 +6,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: LeaderboardFetchFunction
+      CodeUri: dist/src/
       Handler: handler.handler
       Timeout: 180 #Three minutes. This seems like overkill,.
       AutoPublishAlias: live
