@@ -44,7 +44,7 @@ Resources:
         -
           AttributeName: "Region"
           KeyType: "RANGE" # Sort Key
-      TableName: rank-hourly-table
+      TableName: daily-rating-record-table
       
       
       
