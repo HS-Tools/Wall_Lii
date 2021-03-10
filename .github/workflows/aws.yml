@@ -20,13 +20,10 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.REGION }}
       - name: Package and Deploy to AWS CloudFormation
         run: |
-          mkdir dist
-          cp -r /home/runner/work/HS-BG-Leaderboards-Bot/HS-BG-Leaderboards-Bot dist/
-          pip3 install -r requirements.txt -t dist/
-          aws cloudformation package --template-file lambda-loader/template.yaml \
+          aws cloudformation package --template-file ./lambda-loader/template.yaml \
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
             --region ${{ secrets.REGION }} \
             --output-template-file processed.template.yaml
