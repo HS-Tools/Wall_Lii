@@ -18,6 +18,33 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: rate(3 minutes) #DELETEME This should work.
+
+  CompositeKeyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "Region"
+          AttributeType: "S"
+        -
+          AttributeName: "PlayerName"
+          AttributeType: "S"
+      # DynamoDB Free Tier:
+      # 25 GB of Storage
+      # 25 provisioned Write Capacity Units (WCU)
+      # 25 provisioned Read Capacity Units (RCU)
+      BillingMode: PROVISIONED 
+      ProvisionedThroughput: # We should adjust based on usage.
+        ReadCapacityUnits: 10 
+        WriteCapacityUnits: 10
+      KeySchema: # Composite Key
+        -
+          AttributeName: "Region"
+          KeyType: "RANGE" # Sort Key
+        -
+          AttributeName: "PlayerName"
+          KeyType: "HASH" # Partition Key
+      TableName: rank-hourly-table
       
       
       
