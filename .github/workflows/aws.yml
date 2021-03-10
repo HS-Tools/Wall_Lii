@@ -23,6 +23,7 @@ jobs:
           aws-region: ${{ secrets.REGION }}
       - name: Package and Deploy to AWS CloudFormation
         run: |
+          chmod 644 lambda-loader/src/handler.py
           mkdir -p lambda-loader/dist
           cp -r lambda-loader/src/ lambda-loader/dist/
           aws cloudformation package --template-file ./lambda-loader/template.yaml \
