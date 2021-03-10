@@ -24,10 +24,10 @@ Resources:
     Properties:
       AttributeDefinitions:
         -
-          AttributeName: "Region"
+          AttributeName: "PlayerName"
           AttributeType: "S"
         -
-          AttributeName: "PlayerName"
+          AttributeName: "Region"
           AttributeType: "S"
       # DynamoDB Free Tier:
       # 25 GB of Storage
@@ -39,11 +39,11 @@ Resources:
         WriteCapacityUnits: 10
       KeySchema: # Composite Key
         -
-          AttributeName: "Region"
-          KeyType: "RANGE" # Sort Key
-        -
           AttributeName: "PlayerName"
           KeyType: "HASH" # Partition Key
+        -
+          AttributeName: "Region"
+          KeyType: "RANGE" # Sort Key
       TableName: rank-hourly-table
       
       
