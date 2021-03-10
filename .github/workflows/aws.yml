@@ -23,6 +23,8 @@ jobs:
           aws-region: ${{ secrets.REGION }}
       - name: Package and Deploy to AWS CloudFormation
         run: |
+          mkdir dist
+          cp -r src/ dist/
           aws cloudformation package --template-file ./lambda-loader/template.yaml \
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
             --region ${{ secrets.REGION }} \
@@ -43,4 +45,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.REGION }}
           DEST_DIR: /
-
