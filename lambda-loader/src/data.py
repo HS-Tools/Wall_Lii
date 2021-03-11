@@ -17,7 +17,7 @@ class RankingDatabaseClient:
     '''
     TODO pydoc TTL
     '''
-    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="ttl"):
+    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL"):
         try:
             response = self.table.get_item(Key={
                 region_name:region,
