@@ -1,4 +1,4 @@
-import boto3
+dynimport boto3
 import os
 import time
 '''
@@ -16,7 +16,7 @@ class RankingDatabaseClient:
     '''
     TODO pydoc TTL
     '''
-    def get_item(self,region,player,region_name="Region",player_name="PlayerName",ranks_name="Ranks"):
+    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings"):
         try:
             response = self.table.get_item(Key={
                 region_name:region,
@@ -29,16 +29,16 @@ class RankingDatabaseClient:
             return {
                 region_name:region,
                 player_name:player,
-                ranks_name:[]
+                rating_name:[]
             }
 
     '''
     TODO pydoc
     '''
-    def put_item(self,region,player,rank,region_name="Region",player_name="PlayerName"):
+    def put_item(self,region,player,rating,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
-        rank = int(rank)
-        item = self._append_rank_to_list(rank,item)
+        rating = int(rating)
+        item = self._append_rating_to_list(rating,item)
         self.table.put_item(Item=item)
 
     '''
@@ -53,7 +53,7 @@ class RankingDatabaseClient:
 
     TODO pydoc
     '''
-    def _append_rank_to_list(self,rank,item):
-        item.ranks.append(rank) 
+    def _append_rating_to_list(self,rating,item):
+        item.ratings.append(rating) 
         return item
 
