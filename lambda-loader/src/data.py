@@ -54,6 +54,9 @@ class RankingDatabaseClient:
     TODO pydoc
     '''
     def _append_rating_to_list(self,rating,item):
-        item.ratings.append(rating) 
+        if 'Ratings' in item.keys():
+            item['Ratings'].append(rating) 
+        else:
+            item['Ratings'] = [rating]
         return item
 
