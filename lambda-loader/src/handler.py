@@ -1,6 +1,6 @@
-import api #DELETEME: I always mess these imports up.
+import api 
 
 def handler(event, context):
-    print(api.getLeaderboardSnapshot()) #DELETEME: This should work.
+    print(api.getLeaderboardSnapshot()) 
 
     return 
