@@ -1,6 +1,7 @@
 import boto3
 import os
 import time
+import getMidnight
 '''
 RankingDatabaseClient provides a wrapper for interacting with DyanmoDB and Player objects therein.
 
@@ -16,7 +17,7 @@ class RankingDatabaseClient:
     '''
     TODO pydoc TTL
     '''
-    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings"):
+    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="ttl"):
         try:
             response = self.table.get_item(Key={
                 region_name:region,
@@ -29,6 +30,7 @@ class RankingDatabaseClient:
             return {
                 region_name:region,
                 player_name:player,
+                ttl_name: getMidnight.getMidnightTTL(),
                 rating_name:[]
             }
 
