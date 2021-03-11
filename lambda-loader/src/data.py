@@ -16,7 +16,7 @@ class RankingDatabaseClient:
     '''
     TODO pydoc TTL
     '''
-    def get_item(self,region,player,region_name="Region",player_name="PlayerName"):
+    def get_item(self,region,player,region_name="Region",player_name="PlayerName",ranks_name="Ranks"):
         try:
             response = self.table.get_item(Key={
                 region_name:region,
@@ -29,7 +29,7 @@ class RankingDatabaseClient:
             return {
                 region_name:region,
                 player_name:player,
-                ranks:[]
+                ranks_name:[]
             }
 
     '''
@@ -38,7 +38,7 @@ class RankingDatabaseClient:
     def put_item(self,region,player,rank,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
         rank = int(rank)
-        item = _append_rank_to_list(rank,item)
+        item = self._append_rank_to_list(rank,item)
         self.table.put_item(Item=item)
 
     '''
@@ -53,7 +53,7 @@ class RankingDatabaseClient:
 
     TODO pydoc
     '''
-    def _append_rank_to_list(rank,item):
+    def _append_rank_to_list(self,rank,item):
         item.ranks.append(rank) 
         return item
 
