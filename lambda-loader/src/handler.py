@@ -11,5 +11,7 @@ def handler(event, context):
     for region in REGIONS:
         for player in snapshot[region].keys(): # ???
             rating = snapshot[region][player]['rating']
+            database.put_item(region, player, rating)
             print(player.decode('utf-8'),region,rating)
             #database.put_item(region=region,player=player,rank=rating)
+
