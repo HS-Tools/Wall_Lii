@@ -14,7 +14,7 @@ class RankingDatabaseClient:
         resource = boto3.resource('dynamodb')
         self.table = resource.Table(table)
     '''
-    TODO pydoc
+    TODO pydoc TTL
     '''
     def get_item(self,region,player,region_name="Region",player_name="PlayerName"):
         try:
