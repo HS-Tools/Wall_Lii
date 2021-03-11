@@ -17,7 +17,7 @@ Resources:
         ThreeMinuteInvoke:
           Type: Schedule
           Properties:
-            Schedule: rate(3 minutes) #DELETEME This should work.
+            Schedule: rate(3 minutes) 
 
   CompositeKeyTable:
     Type: AWS::DynamoDB::Table
