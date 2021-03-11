@@ -23,6 +23,7 @@ class RankingDatabaseClient:
                 player_name:player
             })
             time.sleep(.01)
+            print(response['Item'])
             return response['Item']
         except Exception as e:
             print(e)
