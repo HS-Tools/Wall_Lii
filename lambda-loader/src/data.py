@@ -55,7 +55,8 @@ class RankingDatabaseClient:
     '''
     def _append_rating_to_list(self,rating,item):
         if 'Ratings' in item.keys():
-            item['Ratings'].append(rating) 
+            if item['Ratings'][-1] != rating:
+                item['Ratings'].append(rating) 
         else:
             item['Ratings'] = [rating]
         return item
