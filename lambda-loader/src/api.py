@@ -16,7 +16,7 @@ def getLeaderboardSnapshot():
         accounts = json.loads(r.text)['leaderboard']['rows']
 
         for account in accounts:
-            name = account['accountid'].encode('utf-8').lower()
+            name = account['accountid'].encode('utf-8').lower() # Why is this converted to bytes?
             ratingsDict[region][name] = {'rank': account['rank'], 'rating': account['rating']}
 
     return ratingsDict
