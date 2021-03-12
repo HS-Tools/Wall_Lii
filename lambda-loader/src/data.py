@@ -1,7 +1,9 @@
 import boto3
 import os
 import time
-import getMidnight
+from datetime import datetime, date, time
+from pytz import timezone
+
 '''
 RankingDatabaseClient provides a wrapper for interacting with DyanmoDB and Player objects therein.
 
@@ -30,7 +32,7 @@ class RankingDatabaseClient:
             return {
                 region_name:region,
                 player_name:player,
-                ttl_name: getMidnight.getMidnightTTL(),
+                ttl_name: self.__getMidnightTTL(),
                 rating_name:[]
             }
 
@@ -40,7 +42,7 @@ class RankingDatabaseClient:
     def put_item(self,region,player,rating,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
         rating = int(rating)
-        item = self._append_rating_to_list(rating,item)
+        item = self.__append_rating_to_list(rating,item)
         self.table.put_item(Item=item)
 
     '''
@@ -55,7 +57,7 @@ class RankingDatabaseClient:
 
     TODO pydoc
     '''
-    def _append_rating_to_list(self,rating,item):
+    def __append_rating_to_list(self,rating,item):
         if type(rating) != int:
             raise Exception("Rating:",rating,"was expected to be of type int, but was type",type(rating),".")
 
@@ -67,4 +69,13 @@ class RankingDatabaseClient:
 
         item['Ratings'].append(rating) 
         return item # Return isn't strictly neccessary, but it is nice for readability.
+
+    def __getMidnightTTL(self):
+        tz = timezone('US/Pacific')
+        currentDate = date.today()
+        midnight_without_tzinfo = datetime.combine(currentDate, time())
+        midnight_with_tzinfo = tz.localize(midnight_without_tzinfo)
+        midnight_as_epoch = int(midnight_with_tzinfo.timestamp())
+
+        return midnight_as_epoch
 
