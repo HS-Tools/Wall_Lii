@@ -13,5 +13,5 @@ def handler(event, context):
             rating = snapshot[region][player]['rating']
             database.put_item(region, player.decode('utf-8'), rating)
             print(player.decode('utf-8'),region,rating)
-            #database.put_item(region=region,player=player,rank=rating)
+            database.put_item(region=region,player=player,rating=rating)
 
