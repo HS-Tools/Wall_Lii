@@ -56,12 +56,15 @@ class RankingDatabaseClient:
     TODO pydoc
     '''
     def _append_rating_to_list(self,rating,item):
-        if 'Ratings' in item.keys():
-            if len(item['Ratings']) > 0 and item['Ratings'][-1] != rating:
-                item['Ratings'].append(rating)
-            if len(item['Ratings']) < 1:
-                item['Ratings'].append(rating) 
-        else:
-            item['Ratings'] = [rating]
-        return item
+        if type(rating) != int:
+            raise Exception("Rating:",rating,"was expected to be of type int, but was type",type(rating),".")
+
+        if 'Ratings' not in item or type(item['Ratings']) is not list: # Key check and type check.
+            item['Ratings'] = []
+
+        if item['Ratings'] and item['Ratings'][-1] == rating: # List is not empty and No updates to ratings list, return.
+            return item 
+
+        item['Ratings'].append(rating) 
+        return item # Return isn't strictly neccessary, but it is nice for readability.
 
