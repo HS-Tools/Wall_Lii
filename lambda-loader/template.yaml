@@ -10,7 +10,7 @@ Resources:
       Handler: handler.handler
       Timeout: 180 #Three minutes. This seems like overkill,.
       AutoPublishAlias: live
-      MemorySize: 512
+      MemorySize: 384
       DeploymentPreference:
         Type: AllAtOnce
       Runtime: python3.8 #Latest. 3.9 is live but not on Lambda.
