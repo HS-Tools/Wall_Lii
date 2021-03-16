@@ -1,7 +1,7 @@
 import boto3
 import os
 import time
-from datetime import datetime, date, time
+from datetime import datetime, date
 from pytz import timezone
 
 '''
