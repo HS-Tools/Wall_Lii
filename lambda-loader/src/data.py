@@ -80,7 +80,7 @@ class RankingDatabaseClient:
     def __getMidnightTTL(self):
         tz = timezone('US/Pacific')
         today = date.today()
-        midnight_without_tzinfo = datetime.combine(tomorrow, dtime())
+        midnight_without_tzinfo = datetime.combine(today, dtime())
         midnight_with_tzinfo = tz.localize(midnight_without_tzinfo)
         midnight_as_epoch = int(midnight_with_tzinfo.timestamp())
 
