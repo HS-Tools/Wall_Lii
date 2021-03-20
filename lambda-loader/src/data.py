@@ -1,7 +1,7 @@
 import boto3
 import os
 import time
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from datetime import time as dtime
 from pytz import timezone
 
@@ -79,7 +79,7 @@ class RankingDatabaseClient:
 
     def __getMidnightTTL(self):
         tz = timezone('US/Pacific')
-        tomorrow = date.today() + datetime.timedelta(days=1)
+        today = date.today()
         midnight_without_tzinfo = datetime.combine(tomorrow, dtime())
         midnight_with_tzinfo = tz.localize(midnight_without_tzinfo)
         midnight_as_epoch = int(midnight_with_tzinfo.timestamp())
