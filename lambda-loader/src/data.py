@@ -84,5 +84,5 @@ class RankingDatabaseClient:
         midnight_with_tzinfo = tz.localize(midnight_without_tzinfo)
         midnight_as_epoch = int(midnight_with_tzinfo.timestamp())
 
-        return midnight_as_epoch
+        return midnight_as_epoch + 86400
 
