@@ -20,7 +20,7 @@ class RankingDatabaseClient:
     '''
     TODO pydoc TTL
     '''
-    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL"):
+    def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
         try:
             response = self.table.get_item(Key={
                 region_name:region,
@@ -38,15 +38,17 @@ class RankingDatabaseClient:
                 region_name:region,
                 player_name:player,
                 ttl_name: self.__getMidnightTTL(),
-                rating_name:[]
+                rating_name:[],
+                rank_name: -1
             }
 
     '''
     TODO pydoc
     '''
-    def put_item(self,region,player,rating,region_name="Region",player_name="PlayerName"):
+    def put_item(self,region,player,rating,rank,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
         rating = int(rating)
+        item['Rank'] = rank
         item = self.__append_rating_to_list(rating,item)
         self.table.put_item(Item=item)
 
