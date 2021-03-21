@@ -1,9 +1,8 @@
-from api import getLeaderboardSnapshot
-from currentDay import getCurrentDay
+import boto3
 from parseRegion import REGIONS, parseRegion
 import threading
 import requests
-
+import os
 
 alias = {
     'waterloo': 'waterloooooo',
@@ -14,51 +13,10 @@ alias = {
 }
 
 class LeaderBoardBot:
-    currentDay = None
-    currentLeaderboard = {}
-    dailyStats = {}
+    db = None
 
     def __init__(self):
-        self.currentDay = getCurrentDay()
-
-    def checkIfNewDay(self):
-        if getCurrentDay() != self.currentDay:
-            self.currentDay = getCurrentDay()
-
-            self.dailyStats = {}
-            return True
-
-        return False
-
-    def updateDailyStats(self):
-        # I will need to account for people that have the same account name multiple times in the leaderboard in the future
-
-        for region in REGIONS:    
-            for tag in self.currentLeaderboard[region].keys():
-                currentRating = self.currentLeaderboard[region][tag]['rating']
-                if tag in self.dailyStats and region in self.dailyStats[tag]:
-                    lastRating = self.dailyStats[tag][region][-1]
-                    if lastRating != currentRating:
-                        self.dailyStats[tag][region].append(currentRating)
-
-                        # Delete duplicate scores in case of api requests giving bad data
-                        self.dailyStats[tag][region] = self.deleteDup(self.dailyStats[tag][region])
-                elif tag in self.dailyStats and region not in self.dailyStats[tag]:
-                    self.dailyStats[tag][region] = [currentRating]
-                elif tag not in self.dailyStats:
-                    self.dailyStats[tag] = {region: [currentRating]}
-                
-    def updateDict(self):
-        try:
-            self.currentLeaderboard = getLeaderboardSnapshot()
-            self.updateDailyStats()
-            self.checkIfNewDay()
-            print('Fetched {} people in the US'.format(str(len(self.currentLeaderboard['US'].keys()))))
-        except requests.ConnectionError as e:
-            print(str(e))
-
-        t = threading.Timer(150, self.updateDict)
-        t.start()
+        self.db = boto3.client('dynamodb', aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'], aws_secret_access_key=os.environ['AWS_ACCESS_KEY'], region_name=os.environ['REGION'])
 
     def getDailyStatsText(self, tag):
         longestRecordLength = 1
