@@ -49,6 +49,7 @@ class LeaderBoardBot:
 
     def getRankText(self, tag, region=None):
 
+        region = parseRegion(region)
         tag = self.getFormattedTag(tag)
         items = self.getPlayerData(tag, region)
 
@@ -84,6 +85,7 @@ class LeaderBoardBot:
 
     def getDailyStatsText(self, tag, region=None):
 
+        region = parseRegion(region)
         tag = self.getFormattedTag(tag)
         items = self.getPlayerData(tag, region)
         longestRecord = 1
@@ -114,9 +116,4 @@ class LeaderBoardBot:
             lastRating = rating
 
         return ', '.join(deltas)
-
-lb = LeaderBoardBot()
-print(lb.getDailyStatsText('Xixo'))
-print(lb.getRankText('nina'))
-
 

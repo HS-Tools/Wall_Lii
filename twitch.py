@@ -71,15 +71,18 @@ async def getRank(ctx):
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
     if len(ctx.content.split(' ')) > 1:
-        tag = ctx.content.split(' ')[1]
-
-        response = leaderboardBot.getDailyStatsText(tag)
-
-        await ctx.send(response)
+        args = ctx.content.split(' ')[1:3]
     else:
-        response = leaderboardBot.getDailyStatsText(channels[ctx.channel.name])
+        args = [channels[ctx.channel.name]]
 
-        await ctx.send(response)
+    response = leaderboardBot.getDailyStatsText(*args)
+
+    if len(args) == 2:
+        region = args[1]
+        if parseRegion(region) is None:
+            response = f"Invalid region '{region}'.      " + response
+
+    await ctx.send(response)
 
 @twitchBot.command(name='goodbot')
 async def goodBot(ctx):
@@ -90,9 +93,6 @@ leaderboardBot = LeaderBoardBot()
 twitchThread = threading.Thread(target=twitchBot.run)
 twitchThread.setDaemon(True)
 twitchThread.start()
-leaderboardThread = threading.Thread(target=leaderboardBot.updateDict)
-leaderboardThread.setDaemon(True)
-leaderboardThread.start()
 
 while True:
     pass
