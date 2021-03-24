@@ -55,6 +55,13 @@ class LeaderBoardBot:
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
 
+        # Easter eggs
+        if tag == 'nina' or tag == 'ninaisnoob':
+            text = '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
+
+        if tag == 'gomez':
+            text = '{} is a cat, cats do not play BG'.format(tag)
+
         for item in items:
             if item['Rank'] < highestRank:
                 highestRank = item['Rank']
@@ -64,12 +71,6 @@ class LeaderBoardBot:
                 
                 text = "{} is rank {} in {} with {} mmr liiHappyCat" \
                     .format(tag, rank, region, rating)
-        
-        # if tag == 'nina' or tag == 'ninaisnoob':
-        #     return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
-
-        # if tag == 'gomez':
-        #     return '{} is a cat, cats do not play BG'.format(tag)
 
         return text
 
@@ -81,85 +82,41 @@ class LeaderBoardBot:
 
         return tag
 
+    def getDailyStatsText(self, tag, region=None):
+
+        tag = self.getFormattedTag(tag)
+        items = self.getPlayerData(tag, region)
+        longestRecord = 1
+
+        if len(items) == 0:
+            return f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
+
+        text = "{} and has not played any games today liiCat".format(self.getRankText(tag, region))
+
+        for item in items:
+            if len(item['Ratings']) > longestRecord:
+                longestRecord = len(item['Ratings'])
+                ratings = item['Ratings']
+                region = item['Region']
+
+                text = f"{tag} started today at {ratings[0]} in {region} and is now {ratings[-1]} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
+
+        return text
+
+    # This should only get called if ratings has more than 1 entry
+    def getDeltas(self, ratings):
+        lastRating = ratings[0]
+        deltas = []
+        
+        for rating in ratings[1:]:
+            deltas.append('{0:+d}'.format(int(rating - lastRating)))
+
+            lastRating = rating
+
+        return ', '.join(deltas)
+
 lb = LeaderBoardBot()
-print(lb.getRankText('waterloo', 'EU'))
-
-
-    # def getDailyStatsText(self, tag):
-    #     longestRecordLength = 1
-
-    #     encodedTag = self.getEncodedTag(tag)
-        
-    #     if encodedTag not in self.dailyStats:
-    #         return "{} is not on any BG leaderboards liiCat".format(encodedTag.decode())
-
-    #     text = "{} and has not played any games today liiCat".format(self.getRankText(tag))
-
-    #     for region in REGIONS:
-    #         if region in self.dailyStats[encodedTag]:
-    #             ratings = self.dailyStats[encodedTag][region]
-
-    #             if len(ratings) > longestRecordLength:
-    #                 longestRecordLength = len(ratings)
-    #                 text = f"{encodedTag.decode()} started today at {ratings[0]} in {region} and is now {self.currentLeaderboard[region][encodedTag]['rating']} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
-
-    #     return text
-
-    # # This should only get called if ratings has more than 1 entry
-    # def getDeltas(self, ratings):
-    #     lastRating = ratings[0]
-    #     deltas = []
-        
-    #     for rating in ratings[1:]:
-    #         deltas.append('{0:+d}'.format(rating - lastRating))
-
-    #         lastRating = rating
-
-    #     return ', '.join(deltas)
-    
-
-            
-
-    # def getRankText(self, tag, region = ""):
-        
-    #     if tag == 'nina' or tag == 'ninaisnoob':
-    #         return '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
-
-    #     if tag == 'gomez':
-    #         return '{} is a cat, cats do not play BG'.format(tag)
-
-    #     # Resolve alias if aliased, returns None if region is invalid.
-    #     region = parseRegion(region)
-        
-    #     if region is not None:
-    #         specified_region = True
-    #         regions = [region]
-    #     else:
-    #         specified_region = False
-    #         regions = REGIONS
-
-    #     highestRank = 9999
-
-    #     encodedTag = self.getEncodedTag(tag)
-    #     text = f"{encodedTag.decode()} is not on {region if specified_region else 'any BG'} leaderboards liiCat"
-    #     for region in regions:
-    #         if encodedTag in self.currentLeaderboard[region]:
-    #             rank = self.currentLeaderboard[region][encodedTag]['rank']
-    #             rating = self.currentLeaderboard[region][encodedTag]['rating']
-
-    #             if int(rank) < highestRank:
-    #                 highestRank = int(rank)
-    #                 text = "{} is rank {} in {} with {} mmr liiHappyCat" \
-    #                 .format(encodedTag.decode(), rank, region, rating)
-
-    #     return text
-
-    # def deleteDup(self, lst):
-    #     if len(lst) > 2:
-    #         if lst[-1] == lst[-3]:
-    #             lst = lst[-2:]
-
-    #             return lst
-    #     return lst
+print(lb.getDailyStatsText('Xixo'))
+print(lb.getRankText('nina'))
 
 
