@@ -13,7 +13,6 @@ emotes = [
     'ninaisFEESH'
 ]
 
-
 def removeTwitchEmotes(s):
     for key in emotes:
         s = s.replace(key, '')
@@ -22,8 +21,6 @@ def removeTwitchEmotes(s):
 
 @bot.command()
 async def bgrank(ctx, *args):
-    
-    invalid_region = False
     args = args or ['lii']
     args = args[:2]
 
@@ -38,13 +35,15 @@ async def bgrank(ctx, *args):
 
 @bot.command()
 async def bgdaily(ctx, *args):
-    if len(args) == 0:
-        response = leaderboardBot.getDailyStatsText('lii')
-        await ctx.send(removeTwitchEmotes(response))
+    args = args or ['lii']
+    args = args[:2]
 
-        return
+    response = leaderboardBot.getDailyStatsText(*args)
 
-    response = leaderboardBot.getDailyStatsText(args[0])
+    if len(args) >= 2:
+        region = args[1]
+        if parseRegion(region) is None:
+            response = "Invalid region provided.\n" + response
     
     await ctx.send(removeTwitchEmotes(response))
 
@@ -52,13 +51,7 @@ async def bgdaily(ctx, *args):
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
-#discordThread = threading.Thread(target=bot.run, args=[os.environ['DISCORD_TOKEN']])
-#discordThread.setDaemon(True)
-#discordThread.start()
 leaderboardBot = LeaderBoardBot()
-leaderboardThread = threading.Thread(target=leaderboardBot.updateDict)
-leaderboardThread.setDaemon(True)
-leaderboardThread.start()
 
 bot.run(os.environ['DISCORD_TOKEN'])
 

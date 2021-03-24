@@ -8,7 +8,8 @@ REGION_ALIASES = {
 }
 
 def parseRegion(region):
-    region = region.upper()
+    if type(region) == str:
+        region = region.upper()
 
     region = REGION_ALIASES.get(region, region)
     if region in REGIONS:
