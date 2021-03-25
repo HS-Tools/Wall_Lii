@@ -68,7 +68,9 @@ async def getRank(ctx):
         if parseRegion(region) is None:
             response = f"Invalid region '{region}'.      " + response
 
-    await ctx.send(response)
+            
+    if ctx.channel.name != 'ixxdeee':
+        await ctx.send(response)
 
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
