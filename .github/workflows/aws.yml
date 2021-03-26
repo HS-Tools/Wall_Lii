@@ -35,7 +35,7 @@ jobs:
           --stack-name ${{ secrets.STACK_NAME }} \
           --region ${{ secrets.REGION }} \
           --capabilities CAPABILITY_IAM
-    - uses: docker://ghcr.io/kciter/aws-ecr-action:latest
+    - uses: kciter/aws-ecr-action@v2
       with:
         access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         secret_access_key: ${{ secrets.AWS_SECRET_KEY }}
