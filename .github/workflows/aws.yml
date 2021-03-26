@@ -38,7 +38,7 @@ jobs:
     - uses: kciter/aws-ecr-action@v2
       with:
         access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        secret_access_key: ${{ secrets.AWS_SECRET_KEY }}
+        secret_access_key: ${{ secrets.AWS_ACCESS_KEY }}
         account_id: ${{ secrets.AWS_ACCOUNT_ID }},
         repo: hs_leaderboards_discord
         region: us-east-1
