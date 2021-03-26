@@ -40,7 +40,7 @@ jobs:
         access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         secret_access_key: ${{ secrets.AWS_ACCESS_KEY }}
         account_id: ${{ secrets.AWS_ACCOUNT_ID }},
-        repo: hs_leaderboards_discord
+        repo: ${{ secrets.ECR_TWITCH_REPO }}
         region: us-east-1
-        tags: latest,${{ github.sha }}
+        tags: latest, ${{ github.sha }}
         create_repo: true
