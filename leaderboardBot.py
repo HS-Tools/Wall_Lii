@@ -9,7 +9,7 @@ alias = {
     'jeef': 'jeffispro',
     'jeff': 'jeffispro',
     'victor': 'diyingli',
-    'sleepy': 'foreversleep'
+    'sleepy': 'foreversleep',
     'dogdog': 'dog',
     'pockyplays': 'pocky',
     'liihs': 'lii'
