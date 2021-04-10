@@ -42,11 +42,15 @@ class RankingDatabaseClient:
     '''
     TODO pydoc
     '''
-    def put_item(self,region,player,rating,rank,region_name="Region",player_name="PlayerName"):
+    def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
-        rating = int(rating)
-        item['Rank'] = rank
-        item = self.__append_rating_to_list(rating,item)
+
+        if ('LastUpdate' not in item.keys or lastUpdate > item['LastUpdate']):
+            rating = int(rating)
+            item['Rank'] = rank
+            item = self.__append_rating_to_list(rating,item)
+
+        item['LastUpdate'] = lastUpdate
         self.table.put_item(Item=item)
 
     '''
