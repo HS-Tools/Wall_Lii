@@ -44,16 +44,20 @@ class RankingDatabaseClient:
     '''
     def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
+        # To get only the 
+        currentTimeUTC = datetime.datetime.utcnow().split(' ')[1].split('.')[0]
 
         try: 
             if (lastUpdate > item['LastUpdate']):
                 rating = int(rating)
                 item['Rank'] = rank
                 item = self.__append_rating_to_list(rating,item)
+            else:
+                item['LastUpdate'] = currentTimeUTC
         except Exception as e:
             print(e)
+            item['LastUpdate'] = currentTimeUTC
 
-        item['LastUpdate'] = lastUpdate
         self.table.put_item(Item=item)
 
     '''
