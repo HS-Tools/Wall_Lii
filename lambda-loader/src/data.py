@@ -26,13 +26,10 @@ class RankingDatabaseClient:
                 region_name:region,
                 player_name:player
             })
-            print(f"{response} fetched from DDB")
             time.sleep(.01)
             return response['Item']
         except Exception as e:
             print(e)
-
-            print(f"{player} was not fetched and is being created now")
 
             return {
                 region_name:region,
@@ -76,7 +73,6 @@ class RankingDatabaseClient:
 
         item['Ratings'].append(rating)
 
-        print(f"{item} was appended on")
         return item # Return isn't strictly neccessary, but it is nice for readability.
 
     def __getMidnightTTL(self):
