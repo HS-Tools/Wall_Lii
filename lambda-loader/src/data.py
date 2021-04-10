@@ -45,10 +45,13 @@ class RankingDatabaseClient:
     def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
 
-        if ('LastUpdate' not in item.keys or lastUpdate > item['LastUpdate']):
-            rating = int(rating)
-            item['Rank'] = rank
-            item = self.__append_rating_to_list(rating,item)
+        try: 
+            if (lastUpdate > item['LastUpdate']):
+                rating = int(rating)
+                item['Rank'] = rank
+                item = self.__append_rating_to_list(rating,item)
+        except Exception as e:
+            print(e)
 
         item['LastUpdate'] = lastUpdate
         self.table.put_item(Item=item)
