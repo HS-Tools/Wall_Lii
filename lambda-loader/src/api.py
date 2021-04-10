@@ -16,9 +16,9 @@ def getLeaderboardSnapshot():
         accounts = json.loads(r.text)['leaderboard']['rows']
         lastUpdated = json.loads(r.text)['leaderboard']['metadata']['last_updated_time']
         # To get UTC Time
-
-        print(f'{region} fetched at {lastUpdated}')
         lastUpdated = lastUpdated.split(' ')[1].split('.')[0]
+        
+        print(f'{region} fetched at {lastUpdated}')
 
         for account in accounts:
             name = account['accountid'].encode('utf-8').lower() # Why is this converted to bytes?
