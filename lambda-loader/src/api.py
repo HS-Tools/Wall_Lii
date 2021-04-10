@@ -14,7 +14,7 @@ def getLeaderboardSnapshot():
         r = requests.get(apiUrl)
 
         accounts = json.loads(r.text)['leaderboard']['rows']
-        lastUpdated = r['leaderboard']['metadata']['last_updated_time']
+        lastUpdated = json.loads(r.text)['leaderboard']['metadata']['last_updated_time']
 
         for account in accounts:
             name = account['accountid'].encode('utf-8').lower() # Why is this converted to bytes?
