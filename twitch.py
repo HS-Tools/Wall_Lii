@@ -37,6 +37,7 @@ channels = {'iamtehshadow': 'tehshadow',
 'duhbbleyou': 'theletterw',
 'purple_hs': 'purple',
 'hmcnation': 'hurrymycurry',
+'wumbostyle': 'wumbostyle',
 'bofur_hs': 'bofur'}
 
 twitchBot = commands.Bot(
