@@ -7,11 +7,15 @@ REGIONS = ['US','EU','AP']
 database = data.RankingDatabaseClient(TABLE_NAME)
 
 def handler(event, context):
-    snapshot = api.getLeaderboardSnapshot()
+    tup = api.getLeaderboardSnapshot()
+    snapshot = tup[0]
+    lastUpdated = tup[1]
+
     for region in REGIONS:
         for player in snapshot[region].keys(): # ???
             rating = snapshot[region][player]['rating']
             rank = snapshot[region][player]['rank']
             player = player.decode('utf-8')
-            database.put_item(region=region,player=player,rating=rating,rank=rank)
+            database.put_item(region=region,player=player,rating=rating,rank=rank, lastUpdate=lastUpdated)
 
+    
