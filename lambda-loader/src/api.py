@@ -14,9 +14,7 @@ def getLeaderboardSnapshot():
         r = requests.get(apiUrl)
 
         accounts = json.loads(r.text)['leaderboard']['rows']
-        lastUpdated = json.loads(r.text)['leaderboard']['metadata']['last_updated_time']
-        # To get UTC Time
-        lastUpdated = lastUpdated.split(' ')[1].split('.')[0]
+        lastUpdated = " ".join(json.loads(r.text)['leaderboard']['metadata']['last_updated_time'].split(' ')[0:2])
         
         print(f'{region} fetched at {lastUpdated}')
 

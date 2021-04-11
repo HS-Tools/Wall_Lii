@@ -3,6 +3,7 @@ from parseRegion import REGIONS, parseRegion
 import threading
 import requests
 import os
+from datetime import datetime
 
 alias = {
     'waterloo': 'waterloooooo',
@@ -73,9 +74,13 @@ class LeaderBoardBot:
                 rank = item['Rank']
                 region = item['Region']
                 rating = item['Ratings'][-1]
-                
-                text = "{} is rank {} in {} with {} mmr liiHappyCat" \
-                    .format(tag, rank, region, rating)
+                time = item['LastUpdate']
+
+                if self.checkIfTimeIs15MinutesInThePast(time):
+                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier today liiCat'
+                else:
+                    text = "{} is rank {} in {} with {} mmr liiHappyCat" \
+                        .format(tag, rank, region, rating)
 
         return text
 
@@ -121,3 +126,14 @@ class LeaderBoardBot:
 
         return ', '.join(deltas)
 
+    def checkIfTimeIs15MinutesInThePast(self, time):
+        currentTime = datetime.utcnow()
+        try:
+            time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
+        except:
+            return True
+
+        delta = (currentTime - time)
+        minuteDifference = delta.total_seconds() / 60
+
+        return minuteDifference > 15
