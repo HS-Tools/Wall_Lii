@@ -42,11 +42,23 @@ class RankingDatabaseClient:
     '''
     TODO pydoc
     '''
-    def put_item(self,region,player,rating,rank,region_name="Region",player_name="PlayerName"):
+    def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
-        rating = int(rating)
-        item['Rank'] = rank
-        item = self.__append_rating_to_list(rating,item)
+        # To get only the time in 24 hour format.
+        currentTimeUTC = str(datetime.utcnow()).split(' ')[1].split('.')[0]
+
+        try: 
+            if (lastUpdate > item['LastUpdate']):
+                rating = int(rating)
+                item['Rank'] = rank
+                item = self.__append_rating_to_list(rating,item)
+                item['LastUpdate'] = lastUpdate
+            else:
+                item['LastUpdate'] = currentTimeUTC
+        except:
+            print("CurrentTime was not found ")
+            item['LastUpdate'] = currentTimeUTC
+
         self.table.put_item(Item=item)
 
     '''
