@@ -12,6 +12,7 @@ alias = {
     'sleepy': 'foreversleep',
     'dogdog': 'dog',
     'pockyplays': 'pocky',
+    'nina': 'ninaisnoob',
     'liihs': 'lii'
 }
 
@@ -60,7 +61,7 @@ class LeaderBoardBot:
         highestRank = 9999
 
         # Easter eggs
-        if tag == 'nina' or tag == 'ninaisnoob':
+        if tag == 'salami':
             text = '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
 
         if tag == 'gomez':
