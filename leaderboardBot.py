@@ -76,7 +76,7 @@ class LeaderBoardBot:
                 rating = item['Ratings'][-1]
                 time = item['LastUpdate']
 
-                if self.checkIfTimeIs15MinutesInThePast(time):
+                if self.checkIfTimeIs30MinutesInThePast(time):
                     text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier today liiCat'
                 else:
                     text = "{} is rank {} in {} with {} mmr liiHappyCat" \
@@ -126,7 +126,7 @@ class LeaderBoardBot:
 
         return ', '.join(deltas)
 
-    def checkIfTimeIs15MinutesInThePast(self, time):
+    def checkIfTimeIs30MinutesInThePast(self, time):
         currentTime = datetime.utcnow()
         try:
             time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
@@ -136,4 +136,4 @@ class LeaderBoardBot:
         delta = (currentTime - time)
         minuteDifference = delta.total_seconds() / 60
 
-        return minuteDifference > 15
+        return minuteDifference > 30
