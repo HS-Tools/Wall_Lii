@@ -131,7 +131,7 @@ class LeaderBoardBot:
         try:
             time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
         except:
-            return True
+            return False
 
         delta = (currentTime - time)
         minuteDifference = delta.total_seconds() / 60
