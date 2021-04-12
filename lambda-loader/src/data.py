@@ -49,15 +49,16 @@ class RankingDatabaseClient:
 
         try: 
             if (lastUpdate > item['LastUpdate']):
-                rating = int(rating)
-                item['Rank'] = rank
-                item = self.__append_rating_to_list(rating,item)
                 item['LastUpdate'] = lastUpdate
             else:
                 item['LastUpdate'] = currentTimeUTC
         except:
             print("CurrentTime was not found ")
             item['LastUpdate'] = currentTimeUTC
+
+        rating = int(rating)
+        item['Rank'] = rank
+        item = self.__append_rating_to_list(rating,item)
 
         self.table.put_item(Item=item)
 
