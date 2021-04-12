@@ -73,6 +73,10 @@ class LeaderBoardBot:
                 highestRank = item['Rank']
                 rank = item['Rank']
                 region = item['Region']
+                
+                if len(item['Ratings'] <= 0):
+                    break
+    
                 rating = item['Ratings'][-1]
                 time = item['LastUpdate']
 
