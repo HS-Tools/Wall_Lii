@@ -74,7 +74,7 @@ class LeaderBoardBot:
                 rank = item['Rank']
                 region = item['Region']
                 
-                if len(item['Ratings'] <= 0):
+                if (len(item['Ratings']) <= 0):
                     break
     
                 rating = item['Ratings'][-1]
