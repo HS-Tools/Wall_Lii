@@ -24,6 +24,11 @@ async def bgrank(ctx, *args):
     args = args or ['lii']
     args = args[:2]
 
+    # Handle !bgrank EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = ['lii', region]
+
     response = removeTwitchEmotes(leaderboardBot.getRankText(*args))
 
     if len(args) >= 2:
@@ -37,6 +42,11 @@ async def bgrank(ctx, *args):
 async def bgdaily(ctx, *args):
     args = args or ['lii']
     args = args[:2]
+
+    # Handle !bgdaily EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = ['lii', region]
 
     response = leaderboardBot.getDailyStatsText(*args)
 
