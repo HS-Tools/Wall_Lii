@@ -63,6 +63,11 @@ async def getRank(ctx):
     else:
         args = [channels[ctx.channel.name]]
 
+    # Handle !bgrank EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = [channels[ctx.channel.name], region]
+
     response = leaderboardBot.getRankText(*args)
 
     # Add error message if region was invalid
@@ -81,6 +86,11 @@ async def getDailyStats(ctx):
         args = ctx.content.split(' ')[1:3]
     else:
         args = [channels[ctx.channel.name]]
+
+    # Handle !bgdaily EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = [channels[ctx.channel.name], region]
 
     response = leaderboardBot.getDailyStatsText(*args)
 
