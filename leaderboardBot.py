@@ -143,7 +143,7 @@ class LeaderBoardBot:
 
         return minuteDifference > 30
 
-    # We want to remove any patterns like: +x, -x, +x and replace it with x
+    # We want to remove any patterns like: +x, -x, +x and replace it with +x
     # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y
     def removeDuplicateGames(self, ratings):
         indicesToRemove = set()
