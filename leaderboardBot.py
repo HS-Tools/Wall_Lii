@@ -112,6 +112,7 @@ class LeaderBoardBot:
             if len(item['Ratings']) > longestRecord:
                 longestRecord = len(item['Ratings'])
                 ratings = item['Ratings']
+                self.removeDuplicateGames(ratings)
                 region = item['Region']
 
                 text = f"{tag} started today at {ratings[0]} in {region} and is now {ratings[-1]} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
@@ -141,3 +142,19 @@ class LeaderBoardBot:
         minuteDifference = delta.total_seconds() / 60
 
         return minuteDifference > 30
+
+    # We want to remove any patterns like: +x, -x, +x and replace it with x
+    # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y
+    def removeDuplicateGames(self, ratings):
+        indicesToRemove = set()
+        if len(ratings) >= 3:
+            for i in range(0, len(ratings) - 2):
+                if ratings[i] == ratings[i+2]:
+                    indicesToRemove.add(i+1)
+
+        indicesToRemove = list(indicesToRemove)
+        indicesToRemove.sort()
+        indicesToRemove.reverse()
+
+        for index in indicesToRemove:
+            del ratings[index]
