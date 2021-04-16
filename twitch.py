@@ -105,6 +105,10 @@ async def getDailyStats(ctx):
 async def goodBot(ctx):
     await ctx.send('MrDestructoid Just doing my job MrDestructoid')
 
+@twitchBot.command(name='wall_lii')
+async def wall_lii(ctx):
+    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name].')
+
 leaderboardBot = LeaderBoardBot()
 
 twitchThread = threading.Thread(target=twitchBot.run)
