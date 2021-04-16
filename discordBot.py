@@ -13,6 +13,11 @@ emotes = [
     'ninaisFEESH'
 ]
 
+def getEmbedObject(text, player, command):
+    embed = discord.Embed(title=f'{player}\'s {command}', description=text)
+
+    return embed
+
 def removeTwitchEmotes(s):
     for key in emotes:
         s = s.replace(key, '')
@@ -36,7 +41,7 @@ async def bgrank(ctx, *args):
         if parseRegion(region) is None:
             response = "Invalid region provided.\n" + response
         
-    await ctx.send(response)
+    await ctx.send(embed = getEmbedObject(removeTwitchEmotes(response), args[0], 'rank'))
 
 @bot.command()
 async def bgdaily(ctx, *args):
@@ -55,7 +60,7 @@ async def bgdaily(ctx, *args):
         if parseRegion(region) is None:
             response = "Invalid region provided.\n" + response
     
-    await ctx.send(removeTwitchEmotes(response))
+    await ctx.send(embed = getEmbedObject(removeTwitchEmotes(response), args[0], 'daily'))
 
 @bot.command()
 async def goodbot(ctx):
