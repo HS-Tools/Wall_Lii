@@ -42,5 +42,4 @@ jobs:
         account_id: ${{ secrets.AWS_ACCOUNT_ID }},
         repo: ${{ secrets.ECR_TWITCH_REPO }}
         region: us-east-1
-        tags: latest, ${{ github.sha }}
-        create_repo: true
+        tags: latest
