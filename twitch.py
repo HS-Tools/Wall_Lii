@@ -19,10 +19,13 @@ channels = {'iamtehshadow': 'tehshadow',
 'sunglitters': 'sunglitters',
 'sevel07': 'sevel',
 'endozoa': 'endozoa',
+'ixxdeee': 'ixxdeee',
 'l0rinda': 'l0rinda',
+'honinbo7': 'honinbo7',
 'sassyrutabaga1': 'rutabaga',
 'tylerootd': 'tyler',
 'hapabear': 'hapabear',
+'nicholena': 'nicholena',
 'ninaisnoob': 'ninaisnoob',
 'pockyplays': 'pocky',
 'blirby': 'blirby',
@@ -34,6 +37,8 @@ channels = {'iamtehshadow': 'tehshadow',
 'duhbbleyou': 'theletterw',
 'purple_hs': 'purple',
 'hmcnation': 'hurrymycurry',
+'wumbostyle': 'wumbostyle',
+'bradwong_live': 'bradwong',
 'bofur_hs': 'bofur'}
 
 twitchBot = commands.Bot(
@@ -58,6 +63,11 @@ async def getRank(ctx):
     else:
         args = [channels[ctx.channel.name]]
 
+    # Handle !bgrank EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = [channels[ctx.channel.name], region]
+
     response = leaderboardBot.getRankText(*args)
 
     # Add error message if region was invalid
@@ -66,7 +76,9 @@ async def getRank(ctx):
         if parseRegion(region) is None:
             response = f"Invalid region '{region}'.      " + response
 
-    await ctx.send(response)
+            
+    if ctx.channel.name != 'ixxdeee':
+        await ctx.send(response)
 
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
@@ -74,6 +86,11 @@ async def getDailyStats(ctx):
         args = ctx.content.split(' ')[1:3]
     else:
         args = [channels[ctx.channel.name]]
+
+    # Handle !bgdaily EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = [channels[ctx.channel.name], region]
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -87,6 +104,10 @@ async def getDailyStats(ctx):
 @twitchBot.command(name='goodbot')
 async def goodBot(ctx):
     await ctx.send('MrDestructoid Just doing my job MrDestructoid')
+
+@twitchBot.command(name='wall_lii')
+async def wall_lii(ctx):
+    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name].')
 
 leaderboardBot = LeaderBoardBot()
 
