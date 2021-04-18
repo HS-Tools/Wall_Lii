@@ -26,13 +26,10 @@ class RankingDatabaseClient:
                 region_name:region,
                 player_name:player
             })
-            print(f"{response} fetched from DDB")
             time.sleep(.01)
             return response['Item']
         except Exception as e:
             print(e)
-
-            print(f"{player} was not fetched and is being created now")
 
             return {
                 region_name:region,
@@ -45,11 +42,24 @@ class RankingDatabaseClient:
     '''
     TODO pydoc
     '''
-    def put_item(self,region,player,rating,rank,region_name="Region",player_name="PlayerName"):
+    def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
+        # To get only the time in 24 hour format.
+        currentTimeUTC = str(datetime.utcnow())
+
+        try: 
+            if (lastUpdate > item['LastUpdate']):
+                item['LastUpdate'] = lastUpdate
+            else:
+                item['LastUpdate'] = currentTimeUTC
+        except:
+            print("CurrentTime was not found ")
+            item['LastUpdate'] = currentTimeUTC
+
         rating = int(rating)
         item['Rank'] = rank
         item = self.__append_rating_to_list(rating,item)
+
         self.table.put_item(Item=item)
 
     '''
@@ -76,7 +86,6 @@ class RankingDatabaseClient:
 
         item['Ratings'].append(rating)
 
-        print(f"{item} was appended on")
         return item # Return isn't strictly neccessary, but it is nice for readability.
 
     def __getMidnightTTL(self):

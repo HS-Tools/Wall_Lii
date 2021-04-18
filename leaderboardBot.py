@@ -3,13 +3,23 @@ from parseRegion import REGIONS, parseRegion
 import threading
 import requests
 import os
+from datetime import datetime
 
 alias = {
     'waterloo': 'waterloooooo',
     'jeef': 'jeffispro',
     'jeff': 'jeffispro',
     'victor': 'diyingli',
-    'sleepy': 'foreversleep'
+    'sleepy': 'foreversleep',
+    'dogdog': 'dog',
+    'pockyplays': 'pocky',
+    'nina': 'ninaisnoob',
+    'liihs': 'lii',
+    'purple_hs': 'purple',
+    'deathitselfhs': 'deathitself',
+    'tylerootd': 'tyler',
+    'mrincrediblehs': 'mrincredible',
+    'sevel07': 'sevel'
 }
 
 class LeaderBoardBot:
@@ -57,7 +67,7 @@ class LeaderBoardBot:
         highestRank = 9999
 
         # Easter eggs
-        if tag == 'nina' or tag == 'ninaisnoob':
+        if tag == 'salami':
             text = '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
 
         if tag == 'gomez':
@@ -68,10 +78,18 @@ class LeaderBoardBot:
                 highestRank = item['Rank']
                 rank = item['Rank']
                 region = item['Region']
-                rating = item['Ratings'][-1]
                 
-                text = "{} is rank {} in {} with {} mmr liiHappyCat" \
-                    .format(tag, rank, region, rating)
+                if (len(item['Ratings']) <= 0):
+                    break
+    
+                rating = item['Ratings'][-1]
+                time = item['LastUpdate']
+
+                if self.checkIfTimeIs30MinutesInThePast(time):
+                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier today liiCat'
+                else:
+                    text = "{} is rank {} in {} with {} mmr liiHappyCat" \
+                        .format(tag, rank, region, rating)
 
         return text
 
@@ -99,6 +117,7 @@ class LeaderBoardBot:
             if len(item['Ratings']) > longestRecord:
                 longestRecord = len(item['Ratings'])
                 ratings = item['Ratings']
+                self.removeDuplicateGames(ratings)
                 region = item['Region']
 
                 text = f"{tag} started today at {ratings[0]} in {region} and is now {ratings[-1]} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
@@ -117,3 +136,30 @@ class LeaderBoardBot:
 
         return ', '.join(deltas)
 
+    def checkIfTimeIs30MinutesInThePast(self, time):
+        currentTime = datetime.utcnow()
+        try:
+            time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
+        except:
+            return False
+
+        delta = (currentTime - time)
+        minuteDifference = delta.total_seconds() / 60
+
+        return minuteDifference > 30
+
+    # We want to remove any patterns like: +x, -x, +x and replace it with +x
+    # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y
+    def removeDuplicateGames(self, ratings):
+        indicesToRemove = set()
+        if len(ratings) >= 3:
+            for i in range(0, len(ratings) - 2):
+                if ratings[i] == ratings[i+2]:
+                    indicesToRemove.add(i+1)
+
+        indicesToRemove = list(indicesToRemove)
+        indicesToRemove.sort()
+        indicesToRemove.reverse()
+
+        for index in indicesToRemove:
+            del ratings[index]
