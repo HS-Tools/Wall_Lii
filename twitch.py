@@ -109,6 +109,10 @@ async def goodBot(ctx):
 async def wall_lii(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name].')
 
+@twitchBot.command(name='help')
+async def help(ctx):
+    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name].')
+
 leaderboardBot = LeaderBoardBot()
 
 twitchThread = threading.Thread(target=twitchBot.run)
