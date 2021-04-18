@@ -35,11 +35,12 @@ jobs:
           --stack-name ${{ secrets.STACK_NAME }} \
           --region ${{ secrets.REGION }} \
           --capabilities CAPABILITY_IAM
-    - uses: kciter/aws-ecr-action@v2
-      with:
-        access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        secret_access_key: ${{ secrets.AWS_ACCESS_KEY }}
-        account_id: ${{ secrets.AWS_ACCOUNT_ID }},
-        repo: ${{ secrets.ECR_TWITCH_REPO }}
-        region: us-east-1
-        tags: latest
+    - name: Build and upload twitch and discord images
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 729861370591.dkr.ecr.us-east-1.amazonaws.com
+        docker build -t hs_leaderboards_twitch -f ./twitch.Dockerfile .
+        docker build -t hs_leaderboards_discord -f ./discord.Dockerfile .
+        docker tag hs_leaderboards_twitch:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_twitch:latest
+        docker tag hs_leaderboards_discord:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_discord:latest
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_twitch:latest
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_discord:latest
