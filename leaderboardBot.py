@@ -15,8 +15,6 @@ alias = {
     'pockyplays': 'pocky',
     'nina': 'ninaisnoob',
     'liihs': 'lii',
-    'liisus': 'lii',
-    'dawg': 'dog',
     'purple_hs': 'purple',
     'deathitselfhs': 'deathitself',
     'tylerootd': 'tyler',
