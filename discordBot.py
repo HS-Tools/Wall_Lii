@@ -64,6 +64,29 @@ async def bgdaily(ctx, *args):
     await ctx.send(embed = getEmbedObject(removeTwitchEmotes(response), args[0], 'daily'))
 
 @bot.command()
+async def yesterday(ctx, *args):
+    args = list(args) or ['lii', None]
+    args = list(args[:2])
+
+    if len(args) == 1:
+        args.append(None)
+    
+    args.append(True)
+
+    # Handle !yesterday EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = ['lii', region, True]
+
+    response = leaderboardBot.getDailyStatsText(*args)
+
+    region = args[1]
+    if region != None and parseRegion(region) is None:
+        response = "Invalid region provided.\n" + response
+    
+    await ctx.send(embed = getEmbedObject(removeTwitchEmotes(response), args[0], 'yesterday'))
+
+@bot.command()
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
