@@ -94,9 +94,10 @@ async def getDailyStats(ctx):
 
     response = leaderboardBot.getDailyStatsText(*args)
 
-    region = args[1]
-    if parseRegion(region) is None:
-        response = f"Invalid region '{region}'.      " + response
+    if len(args) > 1:
+        region = args[1]
+        if parseRegion(region) is None:
+            response = f"Invalid region '{region}'.      " + response
 
     await ctx.send(response)
 
