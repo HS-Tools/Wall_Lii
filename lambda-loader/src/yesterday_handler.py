@@ -27,7 +27,7 @@ def handler(event, context):
     today_scan = today_table.scan()
 
     # Move today's table to yesterday
-    with today_table.batch_writer() as batch:
+    with yesterday_table.batch_writer() as batch:
         for each in today_scan['Items']:
             del each['TTL']
             batch.put_item(each)
