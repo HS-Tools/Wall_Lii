@@ -110,7 +110,8 @@ async def sendDailyRecap():
     embed = discord.Embed(title='Daily Recap', description=text)
 
     dedicated_channel = bot.get_channel(811468284394209300)
-    await dedicated_channel.send(embed=embed)
+    recap = await dedicated_channel.send(embed=embed)
+    await recap.pin()
 
 leaderboardBot = LeaderBoardBot()
 bot.run(os.environ['DISCORD_TOKEN'])
