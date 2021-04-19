@@ -54,7 +54,7 @@ Resources:
               - dynamodb:BatchWriteItem
               - dynamodb:GetItem
             Resource: [
-              !GetAtt CompositeKeyTable.Arn
+              !GetAtt CompositeKeyTable.Arn,
               !GetAtt YesterdayTable.Arn
             ]
       Environment:
