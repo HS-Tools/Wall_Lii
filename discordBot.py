@@ -2,6 +2,8 @@ import threading
 import os
 import aiocron
 import discord
+from datetime import datetime
+from pytz import timezone, utc
 from discord.ext import commands, tasks
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion
@@ -107,11 +109,18 @@ async def sendDailyRecap():
 
     text = climbersText + '\n' + hardcore_gamersText
 
-    embed = discord.Embed(title='Daily Recap', description=text)
+    embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
 
     dedicated_channel = bot.get_channel(811468284394209300)
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
+
+def get_pst_time():
+    date_format='%m-%d'
+    date = datetime.now(tz=utc)
+    date = date.astimezone(timezone('US/Pacific'))
+    ptDateTime=date.strftime(date_format)
+    return ptDateTime
 
 leaderboardBot = LeaderBoardBot()
 bot.run(os.environ['DISCORD_TOKEN'])
