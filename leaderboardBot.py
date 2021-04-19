@@ -124,6 +124,60 @@ class LeaderBoardBot:
 
         return text
 
+    def getHighestClimbers(self, num):
+        # For each entry in the leaderboard, get the tag, region and mmr change
+        # At the end sort the entries by mmr change and return the top 5 people 
+
+        response = self.table.scan()
+        items = response['Items']
+
+        climbers = []
+        
+        for item in items:
+            obj = {
+                'Tag': item['PlayerName'],
+                'Region': item['Region'],
+                'Start': item['Ratings'][0],
+                'End': item['Ratings'][-1],
+                'Change': int(item['Ratings'][-1] - item['Ratings'][0])
+            }
+
+            climbers.append(obj)
+
+        climbers.sort(key=lambda x: x['Change'], reverse=True)
+
+        try:
+            return climbers[0:num]
+        except:
+            return []
+
+    def getHardcoreGamers(self, num):
+        response = self.table.scan()
+        items = response['Items']
+
+        gamers = []
+
+        for item in items:
+            games = item['Ratings']
+            self.removeDuplicateGames(games)
+            gameCount = len(games)
+
+            obj = {
+                'Tag': item['PlayerName'],
+                'Region': item['Region'],
+                'Gamecount': gameCount
+            }
+
+            gamers.append(obj)
+
+        gamers.sort(key=lambda x: x['Gamecount'], reverse=True)
+
+        try:
+            return gamers[0:num]
+        except:
+            return []
+
+
     # This should only get called if ratings has more than 1 entry
     def getDeltas(self, ratings):
         lastRating = ratings[0]

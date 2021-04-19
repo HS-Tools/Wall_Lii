@@ -67,6 +67,8 @@ async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
 leaderboardBot = LeaderBoardBot()
+print(leaderboardBot.getHighestClimbers(5))
+print(leaderboardBot.getHardcoreGamers(5))
 
 bot.run(os.environ['DISCORD_TOKEN'])
 
