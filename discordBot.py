@@ -98,8 +98,8 @@ async def sendDailyRecap():
     climbers = leaderboardBot.getHighestClimbers(5)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
 
-    climbersText = '**The top 5 gains were by:** \n'
-    hardcore_gamersText = '**The top 5 grinders were:** \n'
+    climbersText = '**The top 5 gainers were:** \n'
+    hardcore_gamersText = '**The top 5 games played were:** \n'
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
