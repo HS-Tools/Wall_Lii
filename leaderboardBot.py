@@ -32,12 +32,12 @@ class LeaderBoardBot:
         self.table = self.db.Table(os.environ['TABLE_NAME'])
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
 
-    def getPlayerData(self, tag, region=None):
+    def getPlayerData(self, tag, table, region=None):
 
         items = []
 
         if region != None:
-            response = self.table.get_item(Key={
+            response = table.get_item(Key={
                 'PlayerName':tag,
                 'Region':region
             })
@@ -46,7 +46,7 @@ class LeaderBoardBot:
                 items.append(response['Item'])
         else:
             for region in REGIONS:
-                response = self.table.get_item(Key={
+                response = table.get_item(Key={
                     'PlayerName':tag,
                     'Region': region
                 })
@@ -63,7 +63,7 @@ class LeaderBoardBot:
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
-        items = self.getPlayerData(tag, region)
+        items = self.getPlayerData(tag, self.table, region)
 
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
@@ -103,11 +103,15 @@ class LeaderBoardBot:
 
         return tag
 
-    def getDailyStatsText(self, tag, region=None):
+    def getDailyStatsText(self, tag, region=None, yesterday=False):
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
-        items = self.getPlayerData(tag, region)
+        
+        if not yesterday:
+            items = self.getPlayerData(tag, self.table, region)
+        else:
+            items = self.getPlayerData(tag, self.yesterday_table, region)
         longestRecord = 1
 
         if len(items) == 0:
@@ -122,7 +126,7 @@ class LeaderBoardBot:
                 self.removeDuplicateGames(ratings)
                 region = item['Region']
 
-                text = f"{tag} started today at {ratings[0]} in {region} and is now {ratings[-1]} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
+                text = f"{tag} started {'today' if not yesterday else 'yesterday'} at {ratings[0]} in {region} and is now {ratings[-1]} with {len(ratings)-1} games played. Their record is: {self.getDeltas(ratings)}"
 
         return text
 
