@@ -49,10 +49,7 @@ Resources:
         - Version: '2012-10-17'
           Statement:
           - Effect: Allow
-            Action:
-              - dynamodb:PutItem
-              - dynamodb:BatchWriteItem
-              - dynamodb:GetItem
+            Action: '*'
             Resource: [
               !GetAtt CompositeKeyTable.Arn,
               !GetAtt YesterdayTable.Arn
