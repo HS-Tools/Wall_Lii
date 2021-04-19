@@ -25,10 +25,12 @@ alias = {
 class LeaderBoardBot:
     db = None
     table = None
+    yesterday_table = None
 
     def __init__(self):
         self.db = boto3.resource('dynamodb', aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'], aws_secret_access_key=os.environ['AWS_ACCESS_KEY'], region_name=os.environ['REGION'])
         self.table = self.db.Table(os.environ['TABLE_NAME'])
+        self.yesterday_table = self.db.Table('yesterday-rating-record-table')
 
     def getPlayerData(self, tag, region=None):
 
