@@ -16,6 +16,7 @@ pytz = "*"
 datetime = "*"
 discord = "*"
 boto3 = "*"
+aiocron = "*"
 
 [dev-packages]
 
