@@ -35,7 +35,7 @@ Resources:
   YesterdayMigrationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: StatCalcFunction
+      FunctionName: YesterdayMigrationFunction
       CodeUri: dist/
       Handler: yesterday_handler.handler
       Timeout: 180
@@ -53,7 +53,10 @@ Resources:
               - dynamodb:PutItem
               - dynamodb:BatchWriteItem
               - dynamodb:GetItem
-            Resource: !GetAtt CompositeKeyTable.Arn
+            Resource: [
+              !GetAtt CompositeKeyTable.Arn
+              !GetAtt YesterdayTable.Arn
+            ]
       Environment:
         Variables:
           TABLE_NAME: !Ref CompositeKeyTable
