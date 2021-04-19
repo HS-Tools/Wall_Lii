@@ -113,7 +113,6 @@ async def sendDailyRecap():
     await dedicated_channel.send(embed=embed)
 
 leaderboardBot = LeaderBoardBot()
-
 bot.run(os.environ['DISCORD_TOKEN'])
 
 while True:

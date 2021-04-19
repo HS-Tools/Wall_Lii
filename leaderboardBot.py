@@ -224,3 +224,16 @@ class LeaderBoardBot:
 
         for index in indicesToRemove:
             del ratings[index]
+
+    def clearDailyTable(self):
+        today_scan = self.table.scan()
+
+        # Delete the entire today table
+        with self.table.batch_writer() as batch:
+            for each in today_scan['Items']:
+                batch.delete_item(
+                    Key = {
+                        'PlayerName': each['PlayerName'],
+                        'Region': each['Region']
+                    }
+                )
