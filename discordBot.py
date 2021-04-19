@@ -1,7 +1,8 @@
 import threading
 import os
+import aiocron
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion
 
@@ -66,9 +67,28 @@ async def bgdaily(ctx, *args):
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
+@aiocron.crontab('59 2 * * *')
+async def sendDailyRecap():
+    climbers = leaderboardBot.getHighestClimbers(5)
+    hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+
+    climbersText = '**The top 5 gains were by:** \n'
+    hardcore_gamersText = '**The top 5 grinders were:** \n'
+
+    for index, climber in enumerate(climbers):
+        climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+
+    for index, hardcore_gamer in enumerate(hardcore_gamers):
+        hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
+
+    text = climbersText + '\n' + hardcore_gamersText
+
+    embed = discord.Embed(title='Daily Recap', description=text)
+
+    dedicated_channel = bot.get_channel(811468284394209300)
+    await dedicated_channel.send(embed=embed)
+
 leaderboardBot = LeaderBoardBot()
-print(leaderboardBot.getHighestClimbers(5))
-print(leaderboardBot.getHardcoreGamers(5))
 
 bot.run(os.environ['DISCORD_TOKEN'])
 
