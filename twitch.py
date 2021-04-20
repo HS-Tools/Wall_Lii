@@ -94,6 +94,40 @@ async def getDailyStats(ctx):
 
     response = leaderboardBot.getDailyStatsText(*args)
 
+    if len(args) > 1:
+        region = args[1]
+        if parseRegion(region) is None:
+            response = f"Invalid region '{region}'.      " + response
+
+    await ctx.send(response)
+
+@twitchBot.command(name='yesterday')
+async def getYesterdayStats(ctx):
+    if len(ctx.content.split(' ')) == 2:
+        args = ctx.content.split(' ')[1:2]
+        print(args)
+        args.append(None)
+        # Append yesterday = True
+        args.append(True)
+    elif len(ctx.content.split(' ')) >= 3 :
+        args = ctx.content.split(' ')[1:3]
+        # Append yesterday = True
+        args.append(True)
+    else:
+        args = [channels[ctx.channel.name]]
+        args.append(None)
+        # Append yesterday = True
+        args.append(True)
+
+    # Handle !bgdaily EU for example
+    if parseRegion(args[0]):
+        region = parseRegion(args[0])
+        args = [channels[ctx.channel.name], region]
+        # Append yesterday = True
+        args.append(True)
+
+    response = leaderboardBot.getDailyStatsText(*args)
+
     if len(args) == 2:
         region = args[1]
         if parseRegion(region) is None:
