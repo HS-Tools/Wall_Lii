@@ -116,7 +116,7 @@ Resources:
         -
           AttributeName: "Rank"
           KeyType: "RANGE" # Sort Key
-      TableName: yesterday-rating-record-table
+      TableName: yesterday-rating-record-table2
       
       
       
