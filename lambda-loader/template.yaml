@@ -113,6 +113,9 @@ Resources:
         -
           AttributeName: "Region"
           KeyType: "RANGE" # Sort Key
+        -
+          AttributeName: "Rank"
+          KeyType: "RANGE" # Sort Key
       TableName: yesterday-rating-record-table
       
       

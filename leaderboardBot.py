@@ -1,4 +1,5 @@
 import boto3
+from boto3.dynamodb.conditions import Key
 from parseRegion import REGIONS, parseRegion
 import threading
 import requests
@@ -240,3 +241,14 @@ class LeaderBoardBot:
                         'Region': each['Region']
                     }
                 )
+    
+    def getTagFromRank(self, rank, region):
+        response = self.table.query(
+            IndexName='Rank-Region-index',
+            KeyConditionExpression=Key('Rank').eq(rank) & Key('Region').eq(region)
+        )
+
+        try:
+            return response['Items'][0]['PlayerName']
+        except:
+            return 'GSI_Query_Error'

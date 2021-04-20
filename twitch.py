@@ -68,6 +68,9 @@ async def getRank(ctx):
         region = parseRegion(args[0])
         args = [channels[ctx.channel.name], region]
 
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
+
     response = leaderboardBot.getRankText(*args)
 
     # Add error message if region was invalid
@@ -91,6 +94,9 @@ async def getDailyStats(ctx):
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = [channels[ctx.channel.name], region]
+
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -126,6 +132,9 @@ async def getYesterdayStats(ctx):
         # Append yesterday = True
         args.append(True)
 
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
+
     response = leaderboardBot.getDailyStatsText(*args)
 
     if len(args) == 2:
@@ -146,6 +155,15 @@ async def wall_lii(ctx):
 @twitchBot.command(name='help')
 async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name].')
+
+def get_tag_from_rank(tag, region):
+    if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
+        rank = int(tag)
+        region = parseRegion(region)
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+    return tag
 
 leaderboardBot = LeaderBoardBot()
 
