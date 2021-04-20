@@ -31,7 +31,7 @@ class LeaderBoardBot:
     def __init__(self):
         self.db = boto3.resource('dynamodb', aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'], aws_secret_access_key=os.environ['AWS_ACCESS_KEY'], region_name=os.environ['REGION'])
         self.table = self.db.Table(os.environ['TABLE_NAME'])
-        self.yesterday_table = self.db.Table('yesterday-rating-record-table')
+        self.yesterday_table = self.db.Table('yesterday-rating-record-table2')
 
     def getPlayerData(self, tag, table, region=None):
 
