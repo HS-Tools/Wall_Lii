@@ -59,11 +59,15 @@ class LeaderBoardBot:
         # [{'Rank': Decimal('12'), 'TTL': Decimal('1616569200'), 'PlayerName': 'lii', 'Region': 'US', 'Ratings': [Decimal('14825')]}]
 
 
-    def getRankText(self, tag, region=None):
+    def getRankText(self, tag, region=None, yesterday=False):
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
-        items = self.getPlayerData(tag, self.table, region)
+
+        if not yesterday:
+            items = self.getPlayerData(tag, self.table, region)
+        else:
+            items = self.getPlayerData(tag, self.yesterday_table, region)
 
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
@@ -87,11 +91,10 @@ class LeaderBoardBot:
                 rating = item['Ratings'][-1]
                 time = item['LastUpdate']
 
-                if self.checkIfTimeIs30MinutesInThePast(time):
+                if not yesterday and self.checkIfTimeIs30MinutesInThePast(time):
                     text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier today liiCat'
                 else:
-                    text = "{} is rank {} in {} with {} mmr liiHappyCat" \
-                        .format(tag, rank, region, rating)
+                    text = f'{tag} {"is" if not yesterday else "was"} rank {rank} in {region} with {rating} mmr liiHappyCat'
 
         return text
 
@@ -117,7 +120,7 @@ class LeaderBoardBot:
         if len(items) == 0:
             return f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
 
-        text = "{} and has not played any games today liiCat".format(self.getRankText(tag, region))
+        text = f'{self.getRankText(tag, region, yesterday=yesterday)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
 
         for item in items:
             if len(item['Ratings']) > longestRecord:
