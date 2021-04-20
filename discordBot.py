@@ -31,11 +31,21 @@ def removeTwitchEmotes(s):
 async def bgrank(ctx, *args):
     args = args or ['lii']
     args = args[:2]
+    args = list(args)
 
     # Handle !bgrank EU for example
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = ['lii', region]
+
+    # Handle ranks
+    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
+        rank = int(args[0])
+        region = parseRegion(args[1])
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+        args[0] = tag
 
     response = removeTwitchEmotes(leaderboardBot.getRankText(*args))
 
@@ -50,13 +60,24 @@ async def bgrank(ctx, *args):
 async def bgdaily(ctx, *args):
     args = args or ['lii']
     args = args[:2]
+    args = list(args)
 
     # Handle !bgdaily EU for example
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = ['lii', region]
 
+    # Handle ranks
+    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
+        rank = int(args[0])
+        region = parseRegion(args[1])
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+        args[0] = tag
+
     response = leaderboardBot.getDailyStatsText(*args)
+    
 
     if len(args) >= 2:
         region = args[1]
@@ -79,6 +100,15 @@ async def yesterday(ctx, *args):
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = ['lii', region, True]
+
+    # Handle ranks
+    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
+        rank = int(args[0])
+        region = parseRegion(args[1])
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+        args[0] = tag
 
     response = leaderboardBot.getDailyStatsText(*args)
 

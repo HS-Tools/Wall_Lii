@@ -68,6 +68,15 @@ async def getRank(ctx):
         region = parseRegion(args[0])
         args = [channels[ctx.channel.name], region]
 
+    # Handle ranks
+    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
+        rank = int(args[0])
+        region = parseRegion(args[1])
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+        args[0] = tag
+
     response = leaderboardBot.getRankText(*args)
 
     # Add error message if region was invalid
@@ -91,6 +100,15 @@ async def getDailyStats(ctx):
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = [channels[ctx.channel.name], region]
+
+    # Handle ranks
+    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
+        rank = int(args[0])
+        region = parseRegion(args[1])
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+        args[0] = tag
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -125,6 +143,15 @@ async def getYesterdayStats(ctx):
         args = [channels[ctx.channel.name], region]
         # Append yesterday = True
         args.append(True)
+
+    # Handle ranks
+    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
+        rank = int(args[0])
+        region = parseRegion(args[1])
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+        args[0] = tag
 
     response = leaderboardBot.getDailyStatsText(*args)
 
