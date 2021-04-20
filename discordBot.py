@@ -31,11 +31,15 @@ def removeTwitchEmotes(s):
 async def bgrank(ctx, *args):
     args = args or ['lii']
     args = args[:2]
+    args = list(args)
 
     # Handle !bgrank EU for example
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = ['lii', region]
+
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = removeTwitchEmotes(leaderboardBot.getRankText(*args))
 
@@ -50,13 +54,18 @@ async def bgrank(ctx, *args):
 async def bgdaily(ctx, *args):
     args = args or ['lii']
     args = args[:2]
+    args = list(args)
 
     # Handle !bgdaily EU for example
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = ['lii', region]
 
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
+
     response = leaderboardBot.getDailyStatsText(*args)
+    
 
     if len(args) >= 2:
         region = args[1]
@@ -79,6 +88,9 @@ async def yesterday(ctx, *args):
     if parseRegion(args[0]):
         region = parseRegion(args[0])
         args = ['lii', region, True]
+
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -121,6 +133,16 @@ def get_pst_time():
     date = date.astimezone(timezone('US/Pacific'))
     ptDateTime=date.strftime(date_format)
     return ptDateTime
+
+def get_tag_from_rank(tag, region):
+    if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
+        rank = int(tag)
+        region = parseRegion(region)
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+    return tag
+
 
 leaderboardBot = LeaderBoardBot()
 bot.run(os.environ['DISCORD_TOKEN'])
