@@ -68,14 +68,8 @@ async def getRank(ctx):
         region = parseRegion(args[0])
         args = [channels[ctx.channel.name], region]
 
-    # Handle ranks
-    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
-        rank = int(args[0])
-        region = parseRegion(args[1])
-
-        tag = leaderboardBot.getTagFromRank(rank, region)
-
-        args[0] = tag
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getRankText(*args)
 
@@ -101,14 +95,8 @@ async def getDailyStats(ctx):
         region = parseRegion(args[0])
         args = [channels[ctx.channel.name], region]
 
-    # Handle ranks
-    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
-        rank = int(args[0])
-        region = parseRegion(args[1])
-
-        tag = leaderboardBot.getTagFromRank(rank, region)
-
-        args[0] = tag
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -144,14 +132,8 @@ async def getYesterdayStats(ctx):
         # Append yesterday = True
         args.append(True)
 
-    # Handle ranks
-    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
-        rank = int(args[0])
-        region = parseRegion(args[1])
-
-        tag = leaderboardBot.getTagFromRank(rank, region)
-
-        args[0] = tag
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -173,6 +155,15 @@ async def wall_lii(ctx):
 @twitchBot.command(name='help')
 async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name].')
+
+def get_tag_from_rank(tag, region):
+    if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
+        rank = int(tag)
+        region = parseRegion(region)
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+    return tag
 
 leaderboardBot = LeaderBoardBot()
 

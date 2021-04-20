@@ -38,14 +38,8 @@ async def bgrank(ctx, *args):
         region = parseRegion(args[0])
         args = ['lii', region]
 
-    # Handle ranks
-    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
-        rank = int(args[0])
-        region = parseRegion(args[1])
-
-        tag = leaderboardBot.getTagFromRank(rank, region)
-
-        args[0] = tag
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = removeTwitchEmotes(leaderboardBot.getRankText(*args))
 
@@ -67,14 +61,8 @@ async def bgdaily(ctx, *args):
         region = parseRegion(args[0])
         args = ['lii', region]
 
-    # Handle ranks
-    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
-        rank = int(args[0])
-        region = parseRegion(args[1])
-
-        tag = leaderboardBot.getTagFromRank(rank, region)
-
-        args[0] = tag
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getDailyStatsText(*args)
     
@@ -101,14 +89,8 @@ async def yesterday(ctx, *args):
         region = parseRegion(args[0])
         args = ['lii', region, True]
 
-    # Handle ranks
-    if int(args[0]) <= 200 and int(args[0]) > 0 and parseRegion(args[1]) is not None:
-        rank = int(args[0])
-        region = parseRegion(args[1])
-
-        tag = leaderboardBot.getTagFromRank(rank, region)
-
-        args[0] = tag
+    # Handle if a rank is passed in with a region
+    args[0] = get_tag_from_rank(args[0], args[1])
 
     response = leaderboardBot.getDailyStatsText(*args)
 
@@ -151,6 +133,16 @@ def get_pst_time():
     date = date.astimezone(timezone('US/Pacific'))
     ptDateTime=date.strftime(date_format)
     return ptDateTime
+
+def get_tag_from_rank(tag, region):
+    if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
+        rank = int(tag)
+        region = parseRegion(region)
+
+        tag = leaderboardBot.getTagFromRank(rank, region)
+
+    return tag
+
 
 leaderboardBot = LeaderBoardBot()
 bot.run(os.environ['DISCORD_TOKEN'])
