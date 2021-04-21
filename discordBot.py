@@ -107,8 +107,8 @@ async def yesterday(ctx, *args):
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
-# The machines are in UTC time, this should be 3 am ET but daylights saving may mess things up
-@aiocron.crontab('59 6 * * *')
+# My pi is on EDT.
+@aiocron.crontab('59 2 * * *')
 async def sendDailyRecap():
     climbers = leaderboardBot.getHighestClimbers(5)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
