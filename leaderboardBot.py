@@ -242,13 +242,13 @@ class LeaderBoardBot:
                     }
                 )
     
-    def getTagFromRank(self, rank, region):
-        response = self.table.query(
-            IndexName='Rank-Region-index',
-            KeyConditionExpression=Key('Rank').eq(rank) & Key('Region').eq(region)
-        )
+    # def getTagFromRank(self, rank, region):
+    #     response = self.table.query(
+    #         IndexName='Rank-Region-index',
+    #         KeyConditionExpression=Key('Rank').eq(rank) & Key('Region').eq(region)
+    #     )
 
-        try:
-            return response['Items'][0]['PlayerName']
-        except:
-            return 'GSI_Query_Error'
+    #     try:
+    #         return response['Items'][0]['PlayerName']
+    #     except:
+    #         return 'GSI_Query_Error'
