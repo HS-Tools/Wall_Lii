@@ -135,7 +135,7 @@ class LeaderBoardBot:
 
         return text
 
-    def getHighestClimbers(self, num):
+    def getMostMMRChanged(self, num, highest):
         # For each entry in the leaderboard, get the tag, region and mmr change
         # At the end sort the entries by mmr change and return the top 5 people 
 
@@ -155,7 +155,7 @@ class LeaderBoardBot:
 
             climbers.append(obj)
 
-        climbers.sort(key=lambda x: x['Change'], reverse=True)
+        climbers.sort(key=lambda x: x['Change'], reverse=highest)
 
         try:
             return climbers[0:num]
@@ -187,7 +187,6 @@ class LeaderBoardBot:
             return gamers[0:num]
         except:
             return []
-
 
     # This should only get called if ratings has more than 1 entry
     def getDeltas(self, ratings):

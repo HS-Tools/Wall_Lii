@@ -110,23 +110,55 @@ async def goodbot(ctx):
 # PI is on UTC time it seems
 @aiocron.crontab('59 6 * * *')
 async def sendDailyRecap():
-    climbers = leaderboardBot.getHighestClimbers(5)
+    climbers = leaderboardBot.getMostMMRChanged(5, True)
+    losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
 
     climbersText = '**The top 5 gainers were:** \n'
+    losersText = '**The top 5 unluckiest were:** \n'
     hardcore_gamersText = '**The top 5 games played were:** \n'
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
 
+    for index, climber in enumerate(losers):
+        losersText += f"{index+1}. **{climber['Tag']}** lost a total of **{abs(climber['Change'])}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+
     for index, hardcore_gamer in enumerate(hardcore_gamers):
         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
 
-    text = climbersText + '\n' + hardcore_gamersText
+    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText 
 
     embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
 
     dedicated_channel = bot.get_channel(811468284394209300)
+    recap = await dedicated_channel.send(embed=embed)
+    await recap.pin()
+
+@bot.command()
+async def test(ctx):
+    climbers = leaderboardBot.getMostMMRChanged(5, True)
+    losers = leaderboardBot.getMostMMRChanged(5, False)
+    hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+
+    climbersText = '**The top 5 gainers were:** \n'
+    losersText = '**The top 5 unluckiest were:** \n'
+    hardcore_gamersText = '**The top 5 games played were:** \n'
+
+    for index, climber in enumerate(climbers):
+        climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+
+    for index, climber in enumerate(losers):
+        losersText += f"{index+1}. **{climber['Tag']}** lost a total of **{abs(climber['Change'])}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+
+    for index, hardcore_gamer in enumerate(hardcore_gamers):
+        hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
+
+    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText 
+
+    embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
+
+    dedicated_channel = bot.get_channel(730782280674443327)
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
