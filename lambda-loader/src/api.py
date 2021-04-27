@@ -2,7 +2,6 @@ import requests
 import json
 
 currentSeason = 2
-pages = range(1, 9)
 gameMode = 'BG'
 regions = ['US', 'EU', 'AP']
 
