@@ -113,21 +113,26 @@ async def sendDailyRecap():
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+    highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
 
-    climbersText = '**The top 5 gainers were:** \n'
+    climbersText = '**The top 5 climbers were:** \n'
     losersText = '**The top 5 unluckiest were:** \n'
-    hardcore_gamersText = '**The top 5 games played were:** \n'
+    hardcore_gamersText = '**The top 5 grinders were:** \n'
+    highestText = '**The top 5 highest rated active players today were:** \n'
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
 
-    for index, climber in enumerate(losers):
-        losersText += f"{index+1}. **{climber['Tag']}** lost a total of **{abs(climber['Change'])}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+    for index, loser in enumerate(losers):
+        losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
 
     for index, hardcore_gamer in enumerate(hardcore_gamers):
         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
 
-    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText 
+    for index, highest in enumerate(highest_active):
+        highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
+
+    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText
 
     embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
 
@@ -136,25 +141,30 @@ async def sendDailyRecap():
     await recap.pin()
 
 @bot.command()
-async def test(ctx):
+async def test1(ctx):
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+    highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
 
-    climbersText = '**The top 5 gainers were:** \n'
+    climbersText = '**The top 5 climbers were:** \n'
     losersText = '**The top 5 unluckiest were:** \n'
-    hardcore_gamersText = '**The top 5 games played were:** \n'
+    hardcore_gamersText = '**The top 5 grinders were:** \n'
+    highestText = '**The top 5 highest rated active players today were:** \n'
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
 
-    for index, climber in enumerate(losers):
-        losersText += f"{index+1}. **{climber['Tag']}** lost a total of **{abs(climber['Change'])}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+    for index, loser in enumerate(losers):
+        losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
 
     for index, hardcore_gamer in enumerate(hardcore_gamers):
         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
 
-    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText 
+    for index, highest in enumerate(highest_active):
+        highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
+
+    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText
 
     embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
 
