@@ -188,6 +188,35 @@ class LeaderBoardBot:
         except:
             return []
 
+    def getHighestRatingAndActivePlayers(self, num):
+        response = self.table.scan()
+        items = response['Items']
+
+        highest = []
+
+        for item in items:
+            ratings = item['Ratings']
+            self.removeDuplicateGames(ratings)
+
+            obj = {
+                'Tag': item['PlayerName'],
+                'Region': item['Region'],
+                'Start': item['Ratings'][0],
+                'End': item['Ratings'][-1],
+                'Gamecount': len(ratings),
+                'Change': int(item['Ratings'][-1] - item['Ratings'][0])
+            }
+
+            if len(ratings) > 1:
+                highest.append(obj)
+
+        highest.sort(key=lambda x: x['End'], reverse=True)
+
+        try:
+            return highest[0:num]
+        except:
+            return []
+
     # This should only get called if ratings has more than 1 entry
     def getDeltas(self, ratings):
         lastRating = ratings[0]
