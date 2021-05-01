@@ -150,7 +150,7 @@ async def test1(ctx):
     climbersText = '**The top 5 climbers were:** \n'
     losersText = '**The top 5 unluckiest were:** \n'
     hardcore_gamersText = '**The top 5 grinders were:** \n'
-    highestText = '**The top 5 highest rated active players today were:** \n'
+    highestText = '**The top 5 highest rated active players were:** \n'
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
