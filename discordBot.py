@@ -134,7 +134,7 @@ async def sendDailyRecap():
 
     text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText
 
-    embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
+    embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
 
     dedicated_channel = bot.get_channel(811468284394209300)
     recap = await dedicated_channel.send(embed=embed)
@@ -166,7 +166,7 @@ async def test1(ctx):
 
     text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText
 
-    embed = discord.Embed(title=f'Daily Recap for {get_pst_time()}', description=text)
+    embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
 
     dedicated_channel = bot.get_channel(730782280674443327)
     recap = await dedicated_channel.send(embed=embed)
