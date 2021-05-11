@@ -42,7 +42,8 @@ channels = {'iamtehshadow': 'tehshadow',
 'bofur_hs': 'bofur',
 'malisarhs': 'malisar',
 'mcmariners': 'mcmariners',
-'swissguy93': 'swissguy '}
+'swissguy93': 'swissguy',
+'grinninggoat', 'merps'}
 
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
