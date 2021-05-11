@@ -10,7 +10,7 @@ alias = {
     'waterloo': 'waterloooooo',
     'jeef': 'jeffispro',
     'jeff': 'jeffispro',
-    'victor': 'diyingli',
+    'victor': 'twlevewinshs',
     'sleepy': 'foreversleep',
     'dogdog': 'dog',
     'pockyplays': 'pocky',
