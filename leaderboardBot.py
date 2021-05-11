@@ -20,7 +20,8 @@ alias = {
     'deathitselfhs': 'deathitself',
     'tylerootd': 'tyler',
     'mrincrediblehs': 'mrincredible',
-    'sevel07': 'sevel'
+    'sevel07': 'sevel',
+    'jubjoe': 'felix'
 }
 
 class LeaderBoardBot:
