@@ -120,8 +120,8 @@ async def wall_lii(ctx):
 
 @twitchBot.command(name='tomorrow')
 async def tomorrow(ctx):
-    if len(ctx.content.split(' ') > 1):
-        player = ctx.content.split('')[1]
+    if len(ctx.content.split(' ')) > 1:
+        player = ctx.content.split(' ')[1]
     else:
         player = channels[ctx.channel.name]
     await ctx.send(f"{player} will get rank 1 on all servers tomorrow liiYep")
