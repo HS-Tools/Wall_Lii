@@ -8,7 +8,7 @@ WORKDIR ${PROJECT_DIR}
 
 COPY . ${PROJECT_DIR}/
 
-WORKDIR ${PROJECT_DIR}/code
+WORKDIR ${PROJECT_DIR}/src
 
 RUN pipenv install
 
