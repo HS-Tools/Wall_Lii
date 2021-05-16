@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 channels = {'iamtehshadow': 'tehshadow', 
 'dominickstarcraft': 'Dom2805',
 'rolferolferolfe': 'rolfe',
