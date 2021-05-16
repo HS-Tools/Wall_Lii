@@ -21,7 +21,14 @@ alias = {
     'tylerootd': 'tyler',
     'mrincrediblehs': 'mrincredible',
     'sevel07': 'sevel',
-    'jubjoe': 'felix'
+    'jubjoe': 'felix',
+    'quinnabr': 'middnie'
+}
+eggs = { # Easter eggs
+    'salami': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH',
+    'gomez': 'gomez is a cat, cats do not play BG',
+    420: "don't do drugs kids",
+    16969: 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
 }
 
 class LeaderBoardBot:
@@ -72,23 +79,28 @@ class LeaderBoardBot:
         # Looks like:
         # [{'Rank': Decimal('12'), 'TTL': Decimal('1616569200'), 'PlayerName': 'lii', 'Region': 'US', 'Ratings': [Decimal('14825')]}]
 
-    def getRankNumData(self, tag, table, region):
+    def getRankNumData(self, rank, table, region):
         response = table.get_item(Key={
-            'Rank':tag,
+            'Rank':rank,
             'Region':region
         })
         if 'Item' in response:
-            return respons['Item']
+            return response['Item']
         return None
 
     def getRankNumText(self, rank, region):
         if rank <= 0 or rank > 200:
-            return f"invalid number rank, I only track the top 200 players liiWait"
+            return f"invalid number rank {rank}, I only track the top 200 players liiWait"
+        if region is None:
+            return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
 
         item = self.getRankNumData(rank, self.table, region)
 
         if item is None:
-            return f"rank {rank} was not found liiWait"
+            if rank in eggs.keys():     ## check for easter egg
+                return eggs[rank]
+            else:                       ## wall_lii broke :(
+                return f"rank {rank} was not found liiWait"
 
         tag = item['PlayerName']
         rating = item['Ratings'][-1]
@@ -96,8 +108,7 @@ class LeaderBoardBot:
 
 
     def getRankText(self, tag, region=None, yesterday=False):
-
-        if tag.isdigit()
+        if tag.isdigit(): ## jump to search by number
             return self.getRankNumText(self, int(tag), self.table, region)
 
         region = parseRegion(region)
@@ -112,11 +123,8 @@ class LeaderBoardBot:
         highestRank = 9999
 
         # Easter eggs
-        if tag == 'salami':
-            text = '{} is rank 69 in Antartica with 16969 mmr ninaisFEESH'.format(tag)
-
-        if tag == 'gomez':
-            text = '{} is a cat, cats do not play BG'.format(tag)
+        if tag in eggs.keys():
+            text = eggs[tag]
 
         for item in items:
             if item['Rank'] < highestRank:

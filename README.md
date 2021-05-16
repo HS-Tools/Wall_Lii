@@ -8,7 +8,5 @@ Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to ena
 * !goodbot: Praise the bot
 
 # How to run:
-1. Download pipenv with `pip install pipenv`
-2. and populate `.env`
-3. `rpi.sh`
+`rpi.sh`
 
