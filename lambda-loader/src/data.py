@@ -47,7 +47,7 @@ class RankingDatabaseClient:
         # To get only the time in 24 hour format.
         currentTimeUTC = str(datetime.utcnow())
 
-        try: 
+        try:
             if (lastUpdate > item['LastUpdate']):
                 item['LastUpdate'] = lastUpdate
             else:
@@ -69,7 +69,8 @@ class RankingDatabaseClient:
     {
         region_name:'NA',
         player_name:'lii',
-        ranks:{'L':[{'N':15000} ... ]}
+        rank: 1,
+        Ratings:{'L':[{'N':15000} ... ]}
     }
 
     TODO pydoc
@@ -82,7 +83,7 @@ class RankingDatabaseClient:
             item['Ratings'] = []
 
         if item['Ratings'] and item['Ratings'][-1] == rating: # List is not empty and No updates to ratings list, return.
-            return item 
+            return item
 
         item['Ratings'].append(rating)
 
