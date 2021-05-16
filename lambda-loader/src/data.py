@@ -14,9 +14,33 @@ Ideally this class would be refactored to use DynamoDB's batch APIs due to the b
 '''
 class RankingDatabaseClient:
 
-    def __init__(self,table):
-        resource = boto3.resource('dynamodb')
-        self.table = resource.Table(table)
+    def __init__(self,table, key_id = None, key_secret = None, region=None):
+        self.table_name = table;
+        self.resource = None
+        if key_id is not None:
+            self.resource = boto3.resource('dynamodb', aws_access_key_id=key_id, aws_secret_access_key=key_secret, region_name=region)
+        else:
+            self.resource = boto3.resource('dynamodb')
+        self.table = self.resource.Table(table)
+
+    def create_table(self):
+        self.table = self.resource.create_table(
+            TableName=self.table_name,
+            KeySchema=[
+                {'AttributeName': 'region_name', 'KeyType': 'HASH'},
+                {'AttributeName': 'player_name', 'KeyType': 'HASH'},
+                {'AttributeName': 'rank',        'KeyType': 'HASH'},
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'region_name', 'AttributeType': 'S'},
+                {'AttributeName': 'player_name', 'AttributeType': 'S'},
+                {'AttributeName': 'rank',        'AttributeType': 'N'},
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10000,
+                'WriteCapacityUnits': 1000,
+            }
+        )
     '''
     TODO pydoc TTL
     '''

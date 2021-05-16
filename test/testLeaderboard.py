@@ -3,7 +3,7 @@ import os
 sys.path.append("../src")
 sys.path.append("../lambda-loader/src")
 import data
-from leaderboardSnapshot import getLeaderboardSnapshot
+from api import getLeaderboardSnapshot
 from leaderboardBot import LeaderBoardBot
 import unittest
 
@@ -11,11 +11,11 @@ class apiLeaaderboard(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
-        TABLE_NAME = os.environ.get('TABLE_NAME')
-        self.database = data.RankingDatabaseClient(TABLE_NAME)
-        snapshot, lastUpdated, season = getLeaderboardSnapshot(['US'],'BG',1)
-        snapshot = tup[0]
-        lastUpdated = tup[1]
+
+
+        self.database = data.RankingDatabaseClient(os.environ.get('TABLE_NAME'), os.environ['AWS_ACCESS_KEY_ID'], os.environ['AWS_SECRET_ACCESS_KEY'], os.environ['REGION'])
+        self.database.create_table()
+        snapshot, lastUpdated, season = getLeaderboardSnapshot(['US'],'BG',1, verbose=True)
 
         for region in snapshot.keys():
             for player in snapshot[region].keys():

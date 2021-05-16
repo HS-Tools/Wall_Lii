@@ -10,7 +10,9 @@ services:
       - "./docker/dynamodb:/home/dynamodblocal/data"
     working_dir: /home/dynamodblocal
   app-node:
-    build: ../test.Dockerfile
+    build:
+      context: .
+      dockerfile: test.Dockerfile
     container_name: app-node
     depends_on:
       - dynamodb-local
@@ -22,3 +24,4 @@ services:
       AWS_ACCESS_KEY_ID: 'DUMMYIDEXAMPLE'
       AWS_SECRET_ACCESS_KEY: 'DUMMYEXAMPLEKEY'
       REGION: 'us-west-2'
+      TABLE_NAME: 'testTable'
