@@ -45,4 +45,5 @@ channels = {'iamtehshadow': 'tehshadow',
 'runfree_aa': 'runfreeaa',
 'glory_to_god': 'glorytogod',
 'sunbaconrelaxer': 'victor',
-'slysssa': 'slysssa'}
+'slysssa': 'slysssa',
+'koxikkowy': 'koxik'}
