@@ -4,7 +4,7 @@ from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion
 
-channels = {'iamtehshadow': 'tehshadow', 
+channels = {'iamtehshadow': 'tehshadow',
 'dominickstarcraft': 'Dom2805',
 'rolferolferolfe': 'rolfe',
 'jeeeeeeef': 'jeef',
@@ -61,6 +61,19 @@ twitchBot = commands.Bot(
     initial_channels=channels.keys()
 )
 
+
+def parseArgs(ctx):
+    default = channels[ctx.channel.name]
+    return leaderboardBot.parseArgs(default, ctx.content.split(' ')[1:])
+
+def call(ctx, func, name, *args):
+    response = func(*args)
+    if len(args) >= 2:
+        if not isRegion(args[1])
+            response = "Invalid region provided.\n" + response
+
+    await ctx.send(response)
+
 @twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
@@ -70,93 +83,21 @@ async def event_message(ctx):
 
 @twitchBot.command(name='bgrank')
 async def getRank(ctx):
-    if len(ctx.content.split(' ')) > 1:
-        args = ctx.content.split(' ')[1:3]
-    else:
-        args = [channels[ctx.channel.name]]
-
-    # Handle !bgrank EU for example
-    if parseRegion(args[0]):
-        region = parseRegion(args[0])
-        args = [channels[ctx.channel.name], region]
-
-    # Handle if a rank is passed in with a region
-    # if len(args) > 1:
-    #     args[0] = get_tag_from_rank(args[0], args[1])
-
-    response = leaderboardBot.getRankText(*args)
-
-    # Add error message if region was invalid
-    if len(args) == 2:
-        region = args[1]
-        if parseRegion(region) is None:
-            response = f"Invalid region '{region}'.      " + response
-
-            
-    if ctx.channel.name != 'ixxdeee':
-        await ctx.send(response)
+    if ctx.channel.name == 'ixxdeee':
+        return
+    args = parseArgs(ctx)
+    call(ctx, leaderboardBot.getRankText, 'rank', *args)
 
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
-    if len(ctx.content.split(' ')) > 1:
-        args = ctx.content.split(' ')[1:3]
-    else:
-        args = [channels[ctx.channel.name]]
-
-    # Handle !bgdaily EU for example
-    if parseRegion(args[0]):
-        region = parseRegion(args[0])
-        args = [channels[ctx.channel.name], region]
-
-    # Handle if a rank is passed in with a region
-    # if len(args) > 1:
-    #     args[0] = get_tag_from_rank(args[0], args[1])
-
-    response = leaderboardBot.getDailyStatsText(*args)
-
-    if len(args) > 1:
-        region = args[1]
-        if parseRegion(region) is None:
-            response = f"Invalid region '{region}'.      " + response
-
-    await ctx.send(response)
+    args = parseArgs(ctx)
+    call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
 
 @twitchBot.command(name='yesterday')
 async def getYesterdayStats(ctx):
-    if len(ctx.content.split(' ')) == 2:
-        args = ctx.content.split(' ')[1:2]
-        args.append(None)
-        # Append yesterday = True
-        args.append(True)
-    elif len(ctx.content.split(' ')) >= 3 :
-        args = ctx.content.split(' ')[1:3]
-        # Append yesterday = True
-        args.append(True)
-    else:
-        args = [channels[ctx.channel.name]]
-        args.append(None)
-        # Append yesterday = True
-        args.append(True)
-
-    # Handle !bgdaily EU for example
-    if parseRegion(args[0]):
-        region = parseRegion(args[0])
-        args = [channels[ctx.channel.name], region]
-        # Append yesterday = True
-        args.append(True)
-
-    # Handle if a rank is passed in with a region
-    # if len(args) > 1:
-    #     args[0] = get_tag_from_rank(args[0], args[1])
-
-    response = leaderboardBot.getDailyStatsText(*args)
-
-    if len(args) == 2:
-        region = args[1]
-        if parseRegion(region) is None:
-            response = f"Invalid region '{region}'.      " + response
-
-    await ctx.send(response)
+    args = parseArgs(ctx)
+    args.append(True)   ## send the yesterday value to the function
+    call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
 @twitchBot.command(name='goodbot')
 async def goodBot(ctx):
@@ -169,17 +110,6 @@ async def wall_lii(ctx):
 @twitchBot.command(name='help')
 async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name].')
-
-# def get_tag_from_rank(tag, region):
-#     try:
-#         if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
-#             rank = int(tag)
-#             region = parseRegion(region)
-
-#             tag = leaderboardBot.getTagFromRank(rank, region)
-#     except:
-#         pass
-#     return tag
 
 leaderboardBot = LeaderBoardBot()
 

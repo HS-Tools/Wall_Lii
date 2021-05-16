@@ -1,6 +1,6 @@
 import boto3
 from boto3.dynamodb.conditions import Key
-from parseRegion import REGIONS, parseRegion
+from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
 import os
@@ -34,10 +34,22 @@ class LeaderBoardBot:
         self.table = self.db.Table(os.environ['TABLE_NAME'])
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
 
+    def parseArgs(default='lii', *args):
+        if (len(args) == 0):
+            return [default, None]
+        elif (len(args) == 1):
+            if isRegion(args[0]):
+                return [default, parseRegion(args[0])]
+            else:
+                return [args[0], None]
+        else:
+            if not isRegion(args[1]):
+                return [args[0], None]
+            else:
+                return [args[0], parseRegion(args[1])]
+
     def getPlayerData(self, tag, table, region=None):
-
         items = []
-
         if region != None:
             response = table.get_item(Key={
                 'PlayerName':tag,
@@ -52,16 +64,41 @@ class LeaderBoardBot:
                     'PlayerName':tag,
                     'Region': region
                 })
-                
+
                 if 'Item' in response:
                     items.append(response['Item'])
 
         return items
-        # Looks like: 
+        # Looks like:
         # [{'Rank': Decimal('12'), 'TTL': Decimal('1616569200'), 'PlayerName': 'lii', 'Region': 'US', 'Ratings': [Decimal('14825')]}]
+
+    def getRankNumData(self, tag, table, region):
+        response = table.get_item(Key={
+            'Rank':tag,
+            'Region':region
+        })
+        if 'Item' in response:
+            return respons['Item']
+        return None
+
+    def getRankNumText(self, rank, region):
+        if rank <= 0 or rank > 200:
+            return f"invalid number rank, I only track the top 200 players liiWait"
+
+        item = self.getRankNumData(rank, self.table, region)
+
+        if item is None:
+            return f"rank {rank} was not found liiWait"
+
+        tag = item['PlayerName']
+        rating = item['Ratings'][-1]
+        return f'{tag} is rank {rank} in {region} with {rating} mmr liiHappyCat'
 
 
     def getRankText(self, tag, region=None, yesterday=False):
+
+        if tag.isdigit()
+            return self.getRankNumText(self, int(tag), self.table, region)
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
@@ -86,10 +123,10 @@ class LeaderBoardBot:
                 highestRank = item['Rank']
                 rank = item['Rank']
                 region = item['Region']
-                
+
                 if (len(item['Ratings']) <= 0):
                     break
-    
+
                 rating = item['Ratings'][-1]
                 time = item['LastUpdate']
 
@@ -102,7 +139,7 @@ class LeaderBoardBot:
 
     def getFormattedTag(self, tag):
         tag = tag.lower()
-        
+
         if tag in alias:
             tag = alias[tag]
 
@@ -112,7 +149,7 @@ class LeaderBoardBot:
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
-        
+
         if not yesterday:
             items = self.getPlayerData(tag, self.table, region)
         else:
@@ -138,13 +175,13 @@ class LeaderBoardBot:
 
     def getMostMMRChanged(self, num, highest):
         # For each entry in the leaderboard, get the tag, region and mmr change
-        # At the end sort the entries by mmr change and return the top 5 people 
+        # At the end sort the entries by mmr change and return the top 5 people
 
         response = self.table.scan()
         items = response['Items']
 
         climbers = []
-        
+
         for item in items:
             obj = {
                 'Tag': item['PlayerName'],
@@ -222,7 +259,7 @@ class LeaderBoardBot:
     def getDeltas(self, ratings):
         lastRating = ratings[0]
         deltas = []
-        
+
         for rating in ratings[1:]:
             deltas.append('{0:+d}'.format(int(rating - lastRating)))
 
@@ -270,14 +307,4 @@ class LeaderBoardBot:
                         'Region': each['Region']
                     }
                 )
-    
-    # def getTagFromRank(self, rank, region):
-    #     response = self.table.query(
-    #         IndexName='Rank-Region-index',
-    #         KeyConditionExpression=Key('Rank').eq(rank) & Key('Region').eq(region)
-    #     )
 
-    #     try:
-    #         return response['Items'][0]['PlayerName']
-    #     except:
-    #         return 'GSI_Query_Error'

@@ -14,3 +14,6 @@ def parseRegion(region):
     region = REGION_ALIASES.get(region, region)
     if region in REGIONS:
         return region
+
+def isRegion(region):
+    return (region in REGIONS() or (region in REGION_ALIASES.keys())
