@@ -1,6 +1,6 @@
 import sys
-sys.path.append("../src")
-from leaderboardSnapshot import getLeaderboardSnapshot
+sys.path.append("../lambda-loader/src")
+from api import getLeaderboardSnapshot
 import unittest
 
 class apiTest(unittest.TestCase):
