@@ -1,5 +1,5 @@
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
@@ -36,8 +36,19 @@ class LeaderBoardBot:
     table = None
     yesterday_table = None
 
-    def __init__(self):
-        self.db = boto3.resource('dynamodb', aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'], aws_secret_access_key=os.environ['AWS_ACCESS_KEY'], region_name=os.environ['REGION'])
+    def __init__(self, url=None):
+        self.db = None
+        if url is None:
+            self.db = boto3.resource('dynamodb',
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                region_name=os.environ['REGION'])
+        else:
+            self.db = boto3.resource('dynamodb',
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                region_name=os.environ['REGION'],
+                endpoint_url=url)
         self.table = self.db.Table(os.environ['TABLE_NAME'])
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
 
@@ -80,12 +91,12 @@ class LeaderBoardBot:
         # [{'Rank': Decimal('12'), 'TTL': Decimal('1616569200'), 'PlayerName': 'lii', 'Region': 'US', 'Ratings': [Decimal('14825')]}]
 
     def getRankNumData(self, rank, table, region):
-        response = table.get_item(Key={
-            'Rank':rank,
-            'Region':region
-        })
-        if 'Item' in response:
-            return response['Item']
+        response = table.scan(
+            Select = 'ALL_ATTRIBUTES',
+            FilterExpression=Attr('Rank').eq(rank)
+        )
+        if 'Items' in response:
+            return response['Items']
         return None
 
     def getRankNumText(self, rank, region):
@@ -94,13 +105,15 @@ class LeaderBoardBot:
         if region is None:
             return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
 
-        item = self.getRankNumData(rank, self.table, region)
+        items = self.getRankNumData(rank, self.table, region)
+        item = [ it for it in items if it['Region'] == region ]
 
-        if item is None:
+        if len(item) != 1:
             if rank in eggs.keys():     ## check for easter egg
                 return eggs[rank]
             else:                       ## wall_lii broke :(
                 return f"rank {rank} was not found liiWait"
+        item = item[0]
 
         tag = item['PlayerName']
         rating = item['Ratings'][-1]

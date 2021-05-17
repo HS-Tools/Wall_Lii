@@ -13,33 +13,36 @@ This class provides two external APIs, get_item and put_item. Both requiring a P
 Ideally this class would be refactored to use DynamoDB's batch APIs due to the bursty nature of this workflow.
 '''
 class RankingDatabaseClient:
-
-    def __init__(self,table, key_id = None, key_secret = None, region=None):
-        self.table_name = table;
+    def __init__(self, url=None):
+        self.table_name = os.environ['TABLE_NAME'];
         self.resource = None
-        if key_id is not None:
-            self.resource = boto3.resource('dynamodb', aws_access_key_id=key_id, aws_secret_access_key=key_secret, region_name=region)
+        if url is not None:
+            self.resource = boto3.resource('dynamodb',
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+                region_name=os.environ['REGION'],
+                endpoint_url=url)
         else:
             self.resource = boto3.resource('dynamodb')
-        self.table = self.resource.Table(table)
+        self.table = self.resource.Table( self.table_name )
 
     def create_table(self):
+        print("creating table")
         self.table = self.resource.create_table(
             TableName=self.table_name,
             KeySchema=[
-                {'AttributeName': 'region_name', 'KeyType': 'HASH'},
-                {'AttributeName': 'player_name', 'KeyType': 'HASH'},
-                {'AttributeName': 'rank',        'KeyType': 'HASH'},
+                {'AttributeName': 'PlayerName', 'KeyType': 'HASH'},
+                {'AttributeName': 'Region', 'KeyType': 'RANGE'},
             ],
             AttributeDefinitions=[
-                {'AttributeName': 'region_name', 'AttributeType': 'S'},
-                {'AttributeName': 'player_name', 'AttributeType': 'S'},
-                {'AttributeName': 'rank',        'AttributeType': 'N'},
+                {'AttributeName': 'PlayerName', 'AttributeType': 'S'},
+                {'AttributeName': 'Region', 'AttributeType': 'S'},
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10000,
-                'WriteCapacityUnits': 1000,
-            }
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 25,
+            },
+            BillingMode='PROVISIONED',
         )
     '''
     TODO pydoc TTL
@@ -47,8 +50,8 @@ class RankingDatabaseClient:
     def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
         try:
             response = self.table.get_item(Key={
+                player_name:player,
                 region_name:region,
-                player_name:player
             })
             time.sleep(.01)
             return response['Item']
@@ -56,8 +59,8 @@ class RankingDatabaseClient:
             print(e)
 
             return {
-                region_name:region,
                 player_name:player,
+                region_name:region,
                 ttl_name: self.__getMidnightTTL(),
                 rating_name:[],
                 rank_name: -1
@@ -68,6 +71,7 @@ class RankingDatabaseClient:
     '''
     def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
+
         # To get only the time in 24 hour format.
         currentTimeUTC = str(datetime.utcnow())
 
@@ -83,7 +87,8 @@ class RankingDatabaseClient:
         rating = int(rating)
         item['Rank'] = rank
         item = self.__append_rating_to_list(rating,item)
-
+        print(item)
+        print(self.table.key_schema)
         self.table.put_item(Item=item)
 
     '''
