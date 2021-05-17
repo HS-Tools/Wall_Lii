@@ -93,26 +93,27 @@ class LeaderBoardBot:
     def getRankNumData(self, rank, table, region):
         response = table.scan(
             Select = 'ALL_ATTRIBUTES',
-            FilterExpression=Attr('Rank').eq(rank)
+            FilterExpression=Attr('Rank').eq(rank),
         )
         if 'Items' in response:
             return response['Items']
         return None
 
     def getRankNumText(self, rank, region):
+        if rank in eggs.keys():     ## check for easter egg
+            return eggs[rank]
         if rank <= 0 or rank > 200:
             return f"invalid number rank {rank}, I only track the top 200 players liiWait"
-        if region is None:
+        if region is None or not isRegion(region):
             return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
 
+        region = parseRegion(region)
         items = self.getRankNumData(rank, self.table, region)
         item = [ it for it in items if it['Region'] == region ]
 
         if len(item) != 1:
-            if rank in eggs.keys():     ## check for easter egg
-                return eggs[rank]
-            else:                       ## wall_lii broke :(
-                return f"rank {rank} was not found liiWait"
+            return f"rank {rank} was not found liiWait"
+
         item = item[0]
 
         tag = item['PlayerName']
@@ -122,7 +123,7 @@ class LeaderBoardBot:
 
     def getRankText(self, tag, region=None, yesterday=False):
         if tag.isdigit(): ## jump to search by number
-            return self.getRankNumText(self, int(tag), self.table, region)
+            return self.getRankNumText(int(tag), region)
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)

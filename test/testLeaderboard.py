@@ -56,7 +56,45 @@ class apiLeaaderboard(unittest.TestCase):
 
     def testGetRankNumText(self):
         string = self.bot.getRankNumText(1,'US')
-        # self.assertIn()
+        self.assertIn('vaguerabbit ', string)
+        self.assertIn(' 22483 ', string)
+        self.assertIn(' 1 ', string)
+
+    def testGetRankNumTextAlt(self):
+        string = self.bot.getRankNumText(2,'NA')
+        self.assertIn('testmmr ', string)
+        self.assertIn(' 22019 ', string)
+        self.assertIn(' 2 ', string)
+
+    def testGetRankNumEgg(self):
+        string = self.bot.getRankNumText(420,'NA')
+        self.assertEqual("don't do drugs kids", string)
+
+    def testGetRankText(self):
+        string = self.bot.getRankText('vaguerabbit', 'US')
+        self.assertIn('vaguerabbit ', string)
+        self.assertIn(' 22483 ', string)
+        self.assertIn(' 1 ', string)
+
+    def testGetRankTextAlt(self):
+        string = self.bot.getRankText('TestMMR', 'NA')
+        self.assertIn('testmmr ', string)
+        self.assertIn(' 22019 ', string)
+        self.assertIn(' 2 ', string)
+
+    def testGetRankTextNum(self):
+        string = self.bot.getRankText('1','US')
+        self.assertIn('vaguerabbit ', string)
+        self.assertIn(' 22483 ', string)
+        self.assertIn(' 1 ', string)
+
+    def testGetRankTextNoRegion(self):
+        string = self.bot.getRankText('vaguerabbit')
+        self.assertIn('vaguerabbit ', string)
+        self.assertIn(' 22483 ', string)
+        self.assertIn(' 1 ', string)
+
+
 
 
 
