@@ -10,3 +10,6 @@ Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to ena
 # How to run:
 `rpi.sh`
 
+# How to test:
+1. build with `docker-compose build`
+2. run with `docker-compose run app-node`

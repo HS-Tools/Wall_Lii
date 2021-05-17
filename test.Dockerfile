@@ -12,4 +12,4 @@ WORKDIR ${PROJECT_DIR}/test
 
 RUN pipenv install
 
-CMD ["pipenv", "run", "python", "testLeaderboard.py"]
+CMD ["bash", "test.sh"]
