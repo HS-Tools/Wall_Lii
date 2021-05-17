@@ -49,7 +49,7 @@ class LeaderBoardBot:
         self.table = self.db.Table(os.environ['TABLE_NAME'])
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
 
-    def parseArgs(default='lii', *args):
+    def parseArgs(self, default, *args):
         if (len(args) == 0):
             return [default, None]
         elif (len(args) == 1):
