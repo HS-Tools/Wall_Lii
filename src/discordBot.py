@@ -32,7 +32,7 @@ def call(ctx, func, name, *args):
     if len(args) >= 2:
         if not isRegion(args[1])
             response = "Invalid region provided.\n" + response
-    await ctx.send(embed = getEmbedObject(removeTwitchEmotes(response), args[0], name))
+    await ctx.send(embed = getEmbedObject(response, args[0], name))
 
 @bot.command()
 async def bgrank(ctx, *args):
