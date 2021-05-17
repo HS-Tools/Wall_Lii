@@ -77,7 +77,7 @@ class apiLeaaderboard(unittest.TestCase):
         self.assertIn(' 1 ', string)
 
     def testGetRankTextAlt(self):
-        string = self.bot.getRankText('TestMMR', 'NA')
+        string = self.bot.getRankText(*('TestMMR', 'NA'))
         self.assertIn('testmmr ', string)
         self.assertIn(' 22019 ', string)
         self.assertIn(' 2 ', string)
@@ -94,7 +94,25 @@ class apiLeaaderboard(unittest.TestCase):
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
+    def testParseArgDefault(self):
+        args = self.bot.parseArgs('lii')
+        self.assertEqual('lii', args[0])
+        self.assertIsNone(args[1])
 
+    def testParseArgName(self):
+        args = self.bot.parseArgs('lii', 'quinnabr',)
+        self.assertEqual('quinnabr', args[0])
+        self.assertIsNone(args[1])
+
+    def testParseArgRegion(self):
+        args = self.bot.parseArgs('lii', 'EU', )
+        self.assertEqual('lii', args[0])
+        self.assertEqual('EU', args[1])
+
+    def testParseArgUserRegion(self):
+        args = self.bot.parseArgs('lii', 'quinnabr', 'EU', )
+        self.assertEqual('quinnabr', args[0])
+        self.assertEqual('EU', args[1])
 
 
 
