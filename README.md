@@ -10,6 +10,10 @@ Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to ena
 # How to run:
 `rpi.sh`
 
-# How to test:
+# How to test in full container:
 1. build with `docker-compose build`
 2. run with `docker-compose run app-node`
+
+# How to test in partial container:
+1. run `docker-compose up`
+2. in a seperate terminal `pipenv run python testLeaderboard.py` or other test file
