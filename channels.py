@@ -47,4 +47,5 @@ channels = {'iamtehshadow': 'tehshadow',
 'sunbaconrelaxer': 'victor',
 'slysssa': 'slysssa',
 'koxikkowy': 'koxik',
+'sjow': 'sjow',
 'howardmoonbg': 'howardmoon'}
