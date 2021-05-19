@@ -13,10 +13,16 @@ class apiLeaaderboard(unittest.TestCase):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
 
         ## ,
-        os.environ['AWS_ACCESS_KEY_ID'] = 'DUMMYIDEXAMPLE'
-        os.environ['AWS_SECRET_ACCESS_KEY'] = 'DUMMYEXAMPLEKEY'
-        os.environ['REGION'] = 'us-west-2'
-        os.environ['TABLE_NAME'] = 'testTable'
+        print(f"setting up environment")
+
+        if 'AWS_ACCESS_KEY_ID' not in os.environ.keys():
+            os.environ['AWS_ACCESS_KEY_ID'] = 'DUMMYIDEXAMPLE'
+        if 'AWS_SECRET_ACCESS_KEY' not in os.environ.keys():
+            os.environ['AWS_SECRET_ACCESS_KEY'] = 'DUMMYEXAMPLEKEY'
+        if 'REGION' not in os.environ.keys():
+            os.environ['REGION'] = 'us-west-2'
+        if 'TABLE_NAME' not in os.environ.keys():
+            os.environ['TABLE_NAME'] = 'testTable'
         url = "http://localhost:8000"
         if 'ENDPOINT_URL' in os.environ.keys():
             url = os.environ['ENDPOINT_URL']
