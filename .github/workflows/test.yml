@@ -1,0 +1,11 @@
+name: Run tests with docker compose
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build stack
+        run: docker-compose build
+      - name: test
+        run: docker-compose run app-node
