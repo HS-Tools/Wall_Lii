@@ -8,9 +8,6 @@ jobs:
       - name: build
         run: docker-compose build app-node
         timeout-minutes: 3
-      - name: start dynamodb-local
-        run: docker-compose up --detach dynamodb-local
-        timeout-minutes: 1
       - name: test
         run: docker-compose run app-node
-        timeout-minutes: 3
+        timeout-minutes: 5
