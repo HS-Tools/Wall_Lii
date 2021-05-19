@@ -128,4 +128,5 @@ class apiLeaaderboard(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    print(f"testing leaderboardBot")
     unittest.main()
