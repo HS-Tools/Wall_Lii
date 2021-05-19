@@ -21,9 +21,13 @@ class apiLeaaderboard(unittest.TestCase):
         if 'ENDPOINT_URL' in os.environ.keys():
             url = os.environ['ENDPOINT_URL']
 
+        print(f"connecting to the db @ {url}")
         self.database = data.RankingDatabaseClient( url )
+        print(f"connected to db")
         try:
+            print(f"trying to create a table")
             self.database.create_table()
+            print(f"table made, filling table")
             snapshot, lastUpdated, season = getLeaderboardSnapshot(['US'],'BG',1, verbose=True)
             for region in snapshot.keys():
                 for player in snapshot[region].keys():
@@ -36,6 +40,7 @@ class apiLeaaderboard(unittest.TestCase):
             print('exception',e)
             print("table was not created, assume it exists")
 
+        print(f"creating bot")
         self.bot = LeaderBoardBot( url=url )
 
     def testGetPlayerData(self):
