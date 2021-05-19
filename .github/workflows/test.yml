@@ -5,7 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: build stack
-        run: docker-compose build
+      - name: build
+        run: docker-compose build app-node
+      - name: start dynamodb-local
+        run: docker-compose up --detatch dynamodb-local
       - name: test
         run: docker-compose run app-node
