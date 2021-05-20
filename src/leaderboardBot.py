@@ -53,8 +53,6 @@ class LeaderBoardBot:
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
 
     def parseArgs(self, default, *args):
-        # Args is a tuple where the first element is a list of the args
-        args = args[0]
         if (len(args) == 0):
             return [default, None]
         elif (len(args) == 1):
