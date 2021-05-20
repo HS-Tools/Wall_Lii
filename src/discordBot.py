@@ -7,6 +7,10 @@ from pytz import timezone, utc
 from discord.ext import commands, tasks
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
+from dotenv import load_dotenv
+load_dotenv()
+
+bot = commands.Bot(command_prefix='!')
 
 emotes = [
     'liiHappyCat',
@@ -125,10 +129,6 @@ def get_pst_time():
     return ptDateTime
 
 if __name__ == '__main__':
-    from dotenv import load_dotenv
-    load_dotenv()
-    bot = commands.Bot(command_prefix='!')
-
     leaderboardBot = LeaderBoardBot()
     bot.run(os.environ['DISCORD_TOKEN'])
 
