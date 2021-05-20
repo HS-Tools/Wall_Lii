@@ -16,6 +16,9 @@ def parseRegion(region):
         return region
 
 def isRegion(region):
+    if region == None:
+        return True
+
     if type(region) == str:
         region = region.upper()
     return (region in REGIONS) or (region in REGION_ALIASES.keys())

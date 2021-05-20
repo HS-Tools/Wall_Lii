@@ -3,6 +3,7 @@ import threading
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion
+from dotenv import load_dotenv
 
 channels = {'iamtehshadow': 'tehshadow',
 'dominickstarcraft': 'Dom2805',
@@ -53,6 +54,8 @@ channels = {'iamtehshadow': 'tehshadow',
 'sunbaconrelaxer': 'victor',
 'slysssa': 'slysssa'}
 
+load_dotenv()
+
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
@@ -66,10 +69,10 @@ def parseArgs(ctx):
     default = channels[ctx.channel.name]
     return leaderboardBot.parseArgs(default, ctx.content.split(' ')[1:])
 
-def call(ctx, func, name, *args):
+async def call(ctx, func, name, *args):
     response = func(*args)
     if len(args) >= 2:
-        if not isRegion(args[1])
+        if not isRegion(args[1]):
             response = "Invalid region provided.\n" + response
 
     await ctx.send(response)
@@ -86,18 +89,18 @@ async def getRank(ctx):
     if ctx.channel.name == 'ixxdeee':
         return
     args = parseArgs(ctx)
-    call(ctx, leaderboardBot.getRankText, 'rank', *args)
+    await call(ctx, leaderboardBot.getRankText, 'rank', *args)
 
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
     args = parseArgs(ctx)
-    call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
 
 @twitchBot.command(name='yesterday')
 async def getYesterdayStats(ctx):
     args = parseArgs(ctx)
     args.append(True)   ## send the yesterday value to the function
-    call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
 @twitchBot.command(name='goodbot')
 async def goodBot(ctx):

@@ -4,6 +4,7 @@ from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
 import os
+from dotenv import load_dotenv
 from datetime import datetime
 
 alias = {
@@ -38,6 +39,8 @@ class LeaderBoardBot:
 
     def __init__(self, url=None):
         self.db = None
+
+        load_dotenv()
 
         kargs = {   'aws_access_key_id':os.environ['AWS_ACCESS_KEY_ID'],
                     'aws_secret_access_key':os.environ['AWS_SECRET_ACCESS_KEY'],
@@ -119,6 +122,7 @@ class LeaderBoardBot:
 
 
     def getRankText(self, tag, region=None, yesterday=False):
+        print(tag)
         if tag.isdigit(): ## jump to search by number
             return self.getRankNumText(int(tag), region)
 
