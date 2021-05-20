@@ -7,6 +7,8 @@ from pytz import timezone, utc
 from discord.ext import commands, tasks
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
+from dotenv import load_dotenv
+load_dotenv()
 
 bot = commands.Bot(command_prefix='!')
 
@@ -27,28 +29,28 @@ def removeTwitchEmotes(s):
         s = s.replace(key, '')
     return s
 
-def call(ctx, func, name, *args):
+async def call(ctx, func, name, *args):
     response = removeTwitchEmotes(func(*args))
     if len(args) >= 2:
-        if not isRegion(args[1])
+        if not isRegion(args[1]):
             response = "Invalid region provided.\n" + response
     await ctx.send(embed = getEmbedObject(response, args[0], name))
 
 @bot.command()
 async def bgrank(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', args)
-    call(ctx, leaderboardBot.getRankText, 'rank', *args)
+    args = leaderboardBot.parseArgs('lii', *args)
+    await call(ctx, leaderboardBot.getRankText, 'rank', *args)
 
 @bot.command()
 async def bgdaily(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', args)
-    call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
+    args = leaderboardBot.parseArgs('lii', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
 
 @bot.command()
 async def yesterday(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', args)
+    args = leaderboardBot.parseArgs('lii', *args)
     args.append(True)   ## send the yesterday value to the function
-    call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
 @bot.command()
 async def goodbot(ctx):
@@ -126,20 +128,9 @@ def get_pst_time():
     ptDateTime=date.strftime(date_format)
     return ptDateTime
 
-# def get_tag_from_rank(tag, region):
-#     try:
-#         if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
-#             rank = int(tag)
-#             region = parseRegion(region)
+if __name__ == '__main__':
+    leaderboardBot = LeaderBoardBot()
+    bot.run(os.environ['DISCORD_TOKEN'])
 
-#             tag = leaderboardBot.getTagFromRank(rank, region)
-#     except:
-#         pass
-#     return tag
-
-
-leaderboardBot = LeaderBoardBot()
-bot.run(os.environ['DISCORD_TOKEN'])
-
-while True:
-    pass
+    while True:
+        pass

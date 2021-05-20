@@ -11,25 +11,11 @@ class apiLeaaderboard(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
-
-        ## ,
-        print(f"setting up environment")
-
-        if 'AWS_ACCESS_KEY_ID' not in os.environ.keys():
-            os.environ['AWS_ACCESS_KEY_ID'] = 'DUMMYIDEXAMPLE'
-        if 'AWS_SECRET_ACCESS_KEY' not in os.environ.keys():
-            os.environ['AWS_SECRET_ACCESS_KEY'] = 'DUMMYEXAMPLEKEY'
-        if 'REGION' not in os.environ.keys():
-            os.environ['REGION'] = 'us-west-2'
-        if 'TABLE_NAME' not in os.environ.keys():
-            os.environ['TABLE_NAME'] = 'testTable'
         url = "http://localhost:8000"
         if 'ENDPOINT_URL' in os.environ.keys():
             url = os.environ['ENDPOINT_URL']
 
-        print(f"connecting to the db @ {url}")
-        self.database = data.RankingDatabaseClient( url )
-        print(f"connected to db")
+        self.database = data.RankingDatabaseClient( endpoint_url=url )
         try:
             print(f"trying to create a table")
             self.database.create_table()
@@ -47,7 +33,7 @@ class apiLeaaderboard(unittest.TestCase):
             print("table was not created, assume it exists")
 
         print(f"creating bot")
-        self.bot = LeaderBoardBot( url=url )
+        self.bot = LeaderBoardBot( endpoint_url=url )
 
     def testGetPlayerData(self):
         items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
@@ -129,4 +115,6 @@ class apiLeaaderboard(unittest.TestCase):
 
 if __name__ == '__main__':
     print(f"testing leaderboardBot")
+    from dotenv import load_dotenv, dotenv_values
+    load_dotenv('.test-env')
     unittest.main()
