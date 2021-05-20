@@ -8,6 +8,9 @@ jobs:
       - name: build
         run: docker-compose build app-node
         timeout-minutes: 3
-      - name: test
-        run: docker-compose run app-node
+      - name: test api
+        run: docker-compose run app-node pipenv run python testApi.py
+        timeout-minutes: 5
+      - name: test leaderboard bot
+        run: docker-compose run app-node pipenv run python testLeaderboard.py
         timeout-minutes: 5
