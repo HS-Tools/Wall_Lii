@@ -4,6 +4,7 @@ from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
 import os
+from dotenv import load_dotenv
 from datetime import datetime
 
 alias = {
@@ -36,15 +37,7 @@ class LeaderBoardBot:
     table = None
     yesterday_table = None
 
-    def __init__(self, url=None):
-        self.db = None
-
-        kargs = {   'aws_access_key_id':os.environ['AWS_ACCESS_KEY_ID'],
-                    'aws_secret_access_key':os.environ['AWS_SECRET_ACCESS_KEY'],
-                    'region_name':os.environ['REGION'] }
-        if url is not None:
-            kargs['endpoint_url'] = url
-
+    def __init__(self, **kargs):
         self.db = boto3.resource('dynamodb', **kargs)
         self.table = self.db.Table(os.environ['TABLE_NAME'])
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
@@ -96,7 +89,7 @@ class LeaderBoardBot:
             return response['Items']
         return None
 
-    def getRankNumText(self, rank, region):
+    def getRankNumText(self, rank, region, yesterday=False):
         if rank in eggs.keys():     ## check for easter egg
             return eggs[rank]
         if rank <= 0 or rank > 200:
@@ -105,7 +98,7 @@ class LeaderBoardBot:
             return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
 
         region = parseRegion(region)
-        items = self.getRankNumData(rank, self.table, region)
+        items = self.getRankNumData(rank, self.yesterday_table if yesterday else self.table, region)
         item = [ it for it in items if it['Region'] == region ]
 
         if len(item) != 1:
@@ -119,16 +112,14 @@ class LeaderBoardBot:
 
 
     def getRankText(self, tag, region=None, yesterday=False):
+        print(tag)
         if tag.isdigit(): ## jump to search by number
             return self.getRankNumText(int(tag), region)
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
-        if not yesterday:
-            items = self.getPlayerData(tag, self.table, region)
-        else:
-            items = self.getPlayerData(tag, self.yesterday_table, region)
+        items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999

@@ -2,7 +2,8 @@ import os
 import threading
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
-from parseRegion import parseRegion
+from parseRegion import parseRegion, isRegion
+from dotenv import load_dotenv
 
 channels = {'iamtehshadow': 'tehshadow',
 'dominickstarcraft': 'Dom2805',
@@ -53,6 +54,8 @@ channels = {'iamtehshadow': 'tehshadow',
 'sunbaconrelaxer': 'victor',
 'slysssa': 'slysssa'}
 
+load_dotenv()
+
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
@@ -64,12 +67,13 @@ twitchBot = commands.Bot(
 
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
-    return leaderboardBot.parseArgs(default, ctx.content.split(' ')[1:])
+    args = ctx.content.split(' ')[1:]
+    return leaderboardBot.parseArgs(default, *args)
 
-def call(ctx, func, name, *args):
+async def call(ctx, func, name, *args):
     response = func(*args)
     if len(args) >= 2:
-        if not isRegion(args[1])
+        if not isRegion(args[1]):
             response = "Invalid region provided.\n" + response
 
     await ctx.send(response)
@@ -86,18 +90,18 @@ async def getRank(ctx):
     if ctx.channel.name == 'ixxdeee':
         return
     args = parseArgs(ctx)
-    call(ctx, leaderboardBot.getRankText, 'rank', *args)
+    await call(ctx, leaderboardBot.getRankText, 'rank', *args)
 
 @twitchBot.command(name='bgdaily')
 async def getDailyStats(ctx):
     args = parseArgs(ctx)
-    call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
 
 @twitchBot.command(name='yesterday')
 async def getYesterdayStats(ctx):
     args = parseArgs(ctx)
     args.append(True)   ## send the yesterday value to the function
-    call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
 @twitchBot.command(name='goodbot')
 async def goodBot(ctx):
@@ -111,11 +115,13 @@ async def wall_lii(ctx):
 async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name].')
 
-leaderboardBot = LeaderBoardBot()
 
-twitchThread = threading.Thread(target=twitchBot.run)
-twitchThread.setDaemon(True)
-twitchThread.start()
+if __name__ == '__main__':
+    leaderboardBot = LeaderBoardBot()
 
-while True:
-    pass
+    twitchThread = threading.Thread(target=twitchBot.run)
+    twitchThread.setDaemon(True)
+    twitchThread.start()
+
+    while True:
+        pass
