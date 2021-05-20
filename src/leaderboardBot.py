@@ -177,8 +177,10 @@ class LeaderBoardBot:
                 self.removeDuplicateGames(ratings)
                 region = item['Region']
 
+                emote = 'liiHappyCat' if ratings[-1] > ratings[0] else 'liiCat'
+
                 text = f"{tag} started {'today' if not yesterday else 'yesterday'} at {ratings[0]} in {region} and {'is now' if not yesterday else 'ended at' } \
-                {ratings[-1]} with {len(ratings)-1} games played. Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
+                {ratings[-1]} with {len(ratings)-1} games played. {emote} Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
 
         return text
 
