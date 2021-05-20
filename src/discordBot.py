@@ -137,9 +137,12 @@ def get_pst_time():
 #         pass
 #     return tag
 
+if __name__ == '__main__':
+    from dotenv import load_dotenv
+    load_dotenv()
 
-leaderboardBot = LeaderBoardBot()
-bot.run(os.environ['DISCORD_TOKEN'])
+    leaderboardBot = LeaderBoardBot()
+    bot.run(os.environ['DISCORD_TOKEN'])
 
-while True:
-    pass
+    while True:
+        pass
