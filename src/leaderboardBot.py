@@ -28,8 +28,8 @@ alias = {
 eggs = { # Easter eggs
     'salami': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH',
     'gomez': 'gomez is a cat, cats do not play BG',
-    420: "don't do drugs kids",
-    16969: 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
+    '420': "don't do drugs kids",
+    '16969': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
 }
 
 class LeaderBoardBot:
@@ -127,11 +127,18 @@ class LeaderBoardBot:
         return response
 
     def getRankText(self, tag, region=None, yesterday=False):
+        if tag in eggs.keys():
+            return eggs[tag]
+
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
         if tag.isdigit(): ## jump to search by number
-            items = self.getEntryFromRank(int(tag), region, yesterday)
+            tag = int(tag)
+            if tag > 200 or tag < 1:
+                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
+
+            items = self.getEntryFromRank(tag, region, yesterday)
             tag = items[0]['PlayerName']
         else:
             items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
@@ -176,7 +183,10 @@ class LeaderBoardBot:
         tag = self.getFormattedTag(tag)
 
         if tag.isdigit(): ## jump to search by number
-            items = self.getEntryFromRank(int(tag), region, yesterday)
+            tag = int(tag)
+            if tag > 200 or tag < 1:
+                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
+            items = self.getEntryFromRank(tag, region, yesterday)
             tag = items[0]['PlayerName']
         else:
             items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
