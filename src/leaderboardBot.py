@@ -28,8 +28,8 @@ alias = {
 eggs = { # Easter eggs
     'salami': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH',
     'gomez': 'gomez is a cat, cats do not play BG',
-    420: "don't do drugs kids",
-    16969: 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
+    '420': "don't do drugs kids",
+    '16969': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
 }
 
 class LeaderBoardBot:
@@ -80,45 +80,68 @@ class LeaderBoardBot:
         # Looks like:
         # [{'Rank': Decimal('12'), 'TTL': Decimal('1616569200'), 'PlayerName': 'lii', 'Region': 'US', 'Ratings': [Decimal('14825')]}]
 
-    def getRankNumData(self, rank, table, region):
+    # def getRankNumData(self, rank, table, region):
+    #     response = table.scan(
+    #         Select = 'ALL_ATTRIBUTES',
+    #         FilterExpression=Attr('Rank').eq(rank),
+    #     )
+    #     if 'Items' in response:
+    #         return response['Items']
+    #     return None
+
+    # def getRankNumText(self, rank, region, yesterday=False):
+    #     if rank in eggs.keys():     ## check for easter egg
+    #         return eggs[rank]
+    #     if rank <= 0 or rank > 200:
+    #         return f"invalid number rank {rank}, I only track the top 200 players liiWait"
+    #     if region is None or not isRegion(region):
+    #         return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
+
+    #     region = parseRegion(region)
+    #     items = self.getRankNumData(rank, self.yesterday_table if yesterday else self.table, region)
+    #     item = [ it for it in items if it['Region'] == region ]
+
+    #     if len(item) != 1:
+    #         return f"rank {rank} was not found liiWait"
+
+    #     item = item[0]
+
+    #     tag = item['PlayerName']
+    #     rating = item['Ratings'][-1]
+    #     return f'{tag} is rank {rank} in {region} with {rating} mmr liiHappyCat'
+
+    def getEntryFromRank(self, rank, region, yesterday=False):
+        table = self.yesterday_table if yesterday else self.table
         response = table.scan(
             Select = 'ALL_ATTRIBUTES',
             FilterExpression=Attr('Rank').eq(rank),
         )
+
         if 'Items' in response:
-            return response['Items']
-        return None
+            response = response['Items']
+        else:
+            response = None
 
-    def getRankNumText(self, rank, region, yesterday=False):
-        if rank in eggs.keys():     ## check for easter egg
-            return eggs[rank]
-        if rank <= 0 or rank > 200:
-            return f"invalid number rank {rank}, I only track the top 200 players liiWait"
-        if region is None or not isRegion(region):
-            return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
+        response = [it for it in response if it['Region'] == region]
 
-        region = parseRegion(region)
-        items = self.getRankNumData(rank, self.yesterday_table if yesterday else self.table, region)
-        item = [ it for it in items if it['Region'] == region ]
-
-        if len(item) != 1:
-            return f"rank {rank} was not found liiWait"
-
-        item = item[0]
-
-        tag = item['PlayerName']
-        rating = item['Ratings'][-1]
-        return f'{tag} is rank {rank} in {region} with {rating} mmr liiHappyCat'
-
+        return response
 
     def getRankText(self, tag, region=None, yesterday=False):
-        if tag.isdigit(): ## jump to search by number
-            return self.getRankNumText(int(tag), region)
+        if tag in eggs.keys():
+            return eggs[tag]
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
-        items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
+        if tag.isdigit(): ## jump to search by number
+            tag = int(tag)
+            if tag > 200 or tag < 1:
+                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
+
+            items = self.getEntryFromRank(tag, region, yesterday)
+            tag = items[0]['PlayerName']
+        else:
+            items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
@@ -159,10 +182,15 @@ class LeaderBoardBot:
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
-        if not yesterday:
-            items = self.getPlayerData(tag, self.table, region)
+        if tag.isdigit(): ## jump to search by number
+            tag = int(tag)
+            if tag > 200 or tag < 1:
+                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
+            items = self.getEntryFromRank(tag, region, yesterday)
+            tag = items[0]['PlayerName']
         else:
-            items = self.getPlayerData(tag, self.yesterday_table, region)
+            items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
+
         longestRecord = 1
 
         if len(items) == 0:
