@@ -67,7 +67,8 @@ twitchBot = commands.Bot(
 
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
-    return leaderboardBot.parseArgs(default, ctx.content.split(' ')[1:])
+    args = ctx.content.split(' ')[1:]
+    return leaderboardBot.parseArgs(default, *args)
 
 async def call(ctx, func, name, *args):
     response = func(*args)
