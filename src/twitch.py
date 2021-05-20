@@ -2,7 +2,7 @@ import os
 import threading
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
-from parseRegion import parseRegion
+from parseRegion import parseRegion, isRegion
 from dotenv import load_dotenv
 
 channels = {'iamtehshadow': 'tehshadow',
