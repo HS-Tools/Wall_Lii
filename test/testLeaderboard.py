@@ -111,6 +111,6 @@ class apiLeaaderboard(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv, dotenv_values
     load_dotenv('.test-env')
     unittest.main()

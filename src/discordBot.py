@@ -8,8 +8,6 @@ from discord.ext import commands, tasks
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
 
-bot = commands.Bot(command_prefix='!')
-
 emotes = [
     'liiHappyCat',
     'liiCat',
@@ -126,20 +124,10 @@ def get_pst_time():
     ptDateTime=date.strftime(date_format)
     return ptDateTime
 
-# def get_tag_from_rank(tag, region):
-#     try:
-#         if int(tag) <= 200 and int(tag) > 0 and parseRegion(region) is not None:
-#             rank = int(tag)
-#             region = parseRegion(region)
-
-#             tag = leaderboardBot.getTagFromRank(rank, region)
-#     except:
-#         pass
-#     return tag
-
 if __name__ == '__main__':
     from dotenv import load_dotenv
     load_dotenv()
+    bot = commands.Bot(command_prefix='!')
 
     leaderboardBot = LeaderBoardBot()
     bot.run(os.environ['DISCORD_TOKEN'])

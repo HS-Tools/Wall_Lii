@@ -89,7 +89,7 @@ class LeaderBoardBot:
             return response['Items']
         return None
 
-    def getRankNumText(self, rank, region):
+    def getRankNumText(self, rank, region, yesterday=False):
         if rank in eggs.keys():     ## check for easter egg
             return eggs[rank]
         if rank <= 0 or rank > 200:
@@ -98,7 +98,7 @@ class LeaderBoardBot:
             return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
 
         region = parseRegion(region)
-        items = self.getRankNumData(rank, self.table, region)
+        items = self.getRankNumData(rank, self.yesterday_table if yesterday else self.table, region)
         item = [ it for it in items if it['Region'] == region ]
 
         if len(item) != 1:
@@ -119,10 +119,7 @@ class LeaderBoardBot:
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
-        if not yesterday:
-            items = self.getPlayerData(tag, self.table, region)
-        else:
-            items = self.getPlayerData(tag, self.yesterday_table, region)
+        items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
