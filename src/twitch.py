@@ -3,6 +3,7 @@ import threading
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
+from dotenv import load_dotenv
 
 channels = {'iamtehshadow': 'tehshadow',
 'dominickstarcraft': 'Dom2805',
@@ -52,6 +53,16 @@ channels = {'iamtehshadow': 'tehshadow',
 'glory_to_god': 'glorytogod',
 'sunbaconrelaxer': 'victor',
 'slysssa': 'slysssa'}
+
+load_dotenv()
+
+twitchBot = commands.Bot(
+    irc_token=os.environ['TMI_TOKEN'],
+    client_id=os.environ['CLIENT_ID'],
+    nick=os.environ['BOT_NICK'],
+    prefix=os.environ['BOT_PREFIX'],
+    initial_channels=channels.keys()
+)
 
 
 def parseArgs(ctx):
@@ -106,17 +117,6 @@ async def help(ctx):
 
 
 if __name__ == '__main__':
-    from dotenv import load_dotenv
-    load_dotenv()
-
-    twitchBot = commands.Bot(
-        irc_token=os.environ['TMI_TOKEN'],
-        client_id=os.environ['CLIENT_ID'],
-        nick=os.environ['BOT_NICK'],
-        prefix=os.environ['BOT_PREFIX'],
-        initial_channels=channels.keys()
-    )
-
     leaderboardBot = LeaderBoardBot()
 
     twitchThread = threading.Thread(target=twitchBot.run)
