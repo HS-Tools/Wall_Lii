@@ -13,17 +13,9 @@ This class provides two external APIs, get_item and put_item. Both requiring a P
 Ideally this class would be refactored to use DynamoDB's batch APIs due to the bursty nature of this workflow.
 '''
 class RankingDatabaseClient:
-    def __init__(self, url=None):
+    def __init__(self, **kargs):
         self.table_name = os.environ['TABLE_NAME'];
-        self.resource = None
-        if url is not None:
-            self.resource = boto3.resource('dynamodb',
-                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
-                region_name=os.environ['REGION'],
-                endpoint_url=url)
-        else:
-            self.resource = boto3.resource('dynamodb')
+        self.resource = boto3.resource('dynamodb', **kargs)
         self.table = self.resource.Table( self.table_name )
 
     def create_table(self):

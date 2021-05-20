@@ -2,8 +2,7 @@ import api
 import data
 import os
 
-TABLE_NAME = os.environ.get('TABLE_NAME')
-database = data.RankingDatabaseClient(TABLE_NAME)
+database = data.RankingDatabaseClient()
 
 def handler(event, context):
     tup = api.getLeaderboardSnapshot(verbose=True) ## call and log the results to stdout

@@ -21,8 +21,4 @@ services:
     ports:
      - "8080:8080"
     environment:
-      AWS_ACCESS_KEY_ID: 'DUMMYIDEXAMPLE'
-      AWS_SECRET_ACCESS_KEY: 'DUMMYEXAMPLEKEY'
-      REGION: 'us-west-2'
-      TABLE_NAME: 'testTable'
       ENDPOINT_URL: "http://dynamodb-local:8000"
