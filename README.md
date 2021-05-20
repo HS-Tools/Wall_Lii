@@ -13,6 +13,7 @@ Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to ena
 # How to test in full container:
 1. build with `docker-compose build`
 2. run with `docker-compose run app-node`
+3. to clean up, `docker-compose down && rm -r docker/`
 
 # How to test in partial container:
 1. run `docker-compose up`
