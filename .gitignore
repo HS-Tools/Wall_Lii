@@ -133,3 +133,6 @@ dmypy.json
 
 # Error documents
 **/err*
+
+# docker generated data
+docker/
