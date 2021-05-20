@@ -11,17 +11,11 @@ class apiLeaaderboard(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
-
-        ## ,
-        os.environ['AWS_ACCESS_KEY_ID'] = 'DUMMYIDEXAMPLE'
-        os.environ['AWS_SECRET_ACCESS_KEY'] = 'DUMMYEXAMPLEKEY'
-        os.environ['REGION'] = 'us-west-2'
-        os.environ['TABLE_NAME'] = 'testTable'
         url = "http://localhost:8000"
         if 'ENDPOINT_URL' in os.environ.keys():
             url = os.environ['ENDPOINT_URL']
 
-        self.database = data.RankingDatabaseClient( url )
+        self.database = data.RankingDatabaseClient( endpoint_url=url )
         try:
             self.database.create_table()
             snapshot, lastUpdated, season = getLeaderboardSnapshot(['US'],'BG',1, verbose=True)
@@ -36,7 +30,7 @@ class apiLeaaderboard(unittest.TestCase):
             print('exception',e)
             print("table was not created, assume it exists")
 
-        self.bot = LeaderBoardBot( url=url )
+        self.bot = LeaderBoardBot( endpoint_url=url )
 
     def testGetPlayerData(self):
         items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
@@ -117,4 +111,6 @@ class apiLeaaderboard(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    from dotenv import load_dotenv, dotenv_values
+    load_dotenv('.test-env')
     unittest.main()
