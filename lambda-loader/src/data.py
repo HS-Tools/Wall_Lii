@@ -13,18 +13,37 @@ This class provides two external APIs, get_item and put_item. Both requiring a P
 Ideally this class would be refactored to use DynamoDB's batch APIs due to the bursty nature of this workflow.
 '''
 class RankingDatabaseClient:
+    def __init__(self, **kargs):
+        self.table_name = os.environ['TABLE_NAME'];
+        self.resource = boto3.resource('dynamodb', **kargs)
+        self.table = self.resource.Table( self.table_name )
 
-    def __init__(self,table):
-        resource = boto3.resource('dynamodb')
-        self.table = resource.Table(table)
+    def create_table(self):
+        print("creating table")
+        self.table = self.resource.create_table(
+            TableName=self.table_name,
+            KeySchema=[
+                {'AttributeName': 'PlayerName', 'KeyType': 'HASH'},
+                {'AttributeName': 'Region', 'KeyType': 'RANGE'},
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PlayerName', 'AttributeType': 'S'},
+                {'AttributeName': 'Region', 'AttributeType': 'S'},
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 25,
+            },
+            BillingMode='PROVISIONED',
+        )
     '''
     TODO pydoc TTL
     '''
     def get_item(self,region,player,region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
         try:
             response = self.table.get_item(Key={
+                player_name:player,
                 region_name:region,
-                player_name:player
             })
             time.sleep(.01)
             return response['Item']
@@ -32,8 +51,8 @@ class RankingDatabaseClient:
             print(e)
 
             return {
-                region_name:region,
                 player_name:player,
+                region_name:region,
                 ttl_name: self.__getMidnightTTL(),
                 rating_name:[],
                 rank_name: -1
@@ -44,10 +63,11 @@ class RankingDatabaseClient:
     '''
     def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
+
         # To get only the time in 24 hour format.
         currentTimeUTC = str(datetime.utcnow())
 
-        try: 
+        try:
             if (lastUpdate > item['LastUpdate']):
                 item['LastUpdate'] = lastUpdate
             else:
@@ -59,7 +79,8 @@ class RankingDatabaseClient:
         rating = int(rating)
         item['Rank'] = rank
         item = self.__append_rating_to_list(rating,item)
-
+        print(item)
+        print(self.table.key_schema)
         self.table.put_item(Item=item)
 
     '''
@@ -69,7 +90,8 @@ class RankingDatabaseClient:
     {
         region_name:'NA',
         player_name:'lii',
-        ranks:{'L':[{'N':15000} ... ]}
+        rank: 1,
+        Ratings:{'L':[{'N':15000} ... ]}
     }
 
     TODO pydoc
@@ -82,7 +104,7 @@ class RankingDatabaseClient:
             item['Ratings'] = []
 
         if item['Ratings'] and item['Ratings'][-1] == rating: # List is not empty and No updates to ratings list, return.
-            return item 
+            return item
 
         item['Ratings'].append(rating)
 

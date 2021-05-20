@@ -7,16 +7,14 @@ Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to ena
 * !wall_lii: Help command
 * !goodbot: Praise the bot
 
-# Webscraping with chromium:
-This project was initially done by scraping the hearthstone leaderboards with chromium. I have since changed to using the official api due to excessive resource requirements that my raspberry pi could not support. The following instructions are for using leaderboardSnapshot.py
-
 # How to run:
-1. Download Chrome
-2. Download Chromedriver https://chromedriver.chromium.org/downloads
-3. Put Chromedriver in PATH
-4. Download pipenv and populate .env
-5. Run with ```pipenv run python app.py```
+`rpi.sh`
 
-# RPI specific stuff:
-1. Follow instructions here to set up chromedriver: https://www.reddit.com/r/selenium/comments/7341wt/success_how_to_run_selenium_chrome_webdriver_on/
-2. Follow instructions here to add new option: https://www.raspberrypi.org/forums/viewtopic.php?f=66&t=258019&view=unread&sid=c63996b8d86958dfb501cf3e5b04e3e0#p1575053
+# How to test in full container:
+1. build with `docker-compose build`
+2. run with `docker-compose run app-node`
+3. to clean up, `docker-compose down && rm -r docker/`
+
+# How to test in partial container:
+1. run `docker-compose up`
+2. in a seperate terminal `pipenv run python testLeaderboard.py` or other test file
