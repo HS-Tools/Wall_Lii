@@ -27,28 +27,28 @@ def removeTwitchEmotes(s):
         s = s.replace(key, '')
     return s
 
-def call(ctx, func, name, *args):
+async def call(ctx, func, name, *args):
     response = removeTwitchEmotes(func(*args))
     if len(args) >= 2:
-        if not isRegion(args[1])
+        if not isRegion(args[1]):
             response = "Invalid region provided.\n" + response
     await ctx.send(embed = getEmbedObject(response, args[0], name))
 
 @bot.command()
 async def bgrank(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', args)
-    call(ctx, leaderboardBot.getRankText, 'rank', *args)
+    args = leaderboardBot.parseArgs('lii', *args)
+    await call(ctx, leaderboardBot.getRankText, 'rank', *args)
 
 @bot.command()
 async def bgdaily(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', args)
-    call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
+    args = leaderboardBot.parseArgs('lii', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
 
 @bot.command()
 async def yesterday(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', args)
+    args = leaderboardBot.parseArgs('lii', *args)
     args.append(True)   ## send the yesterday value to the function
-    call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
 @bot.command()
 async def goodbot(ctx):
