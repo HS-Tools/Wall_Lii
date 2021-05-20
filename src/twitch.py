@@ -54,15 +54,6 @@ channels = {'iamtehshadow': 'tehshadow',
 'slysssa': 'slysssa'}
 
 
-twitchBot = commands.Bot(
-    irc_token=os.environ['TMI_TOKEN'],
-    client_id=os.environ['CLIENT_ID'],
-    nick=os.environ['BOT_NICK'],
-    prefix=os.environ['BOT_PREFIX'],
-    initial_channels=channels.keys()
-)
-
-
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
     args = ctx.content.split(' ')[1:]
@@ -117,6 +108,15 @@ async def help(ctx):
 if __name__ == '__main__':
     from dotenv import load_dotenv
     load_dotenv()
+
+    twitchBot = commands.Bot(
+        irc_token=os.environ['TMI_TOKEN'],
+        client_id=os.environ['CLIENT_ID'],
+        nick=os.environ['BOT_NICK'],
+        prefix=os.environ['BOT_PREFIX'],
+        initial_channels=channels.keys()
+    )
+
     leaderboardBot = LeaderBoardBot()
 
     twitchThread = threading.Thread(target=twitchBot.run)
