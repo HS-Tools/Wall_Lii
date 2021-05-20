@@ -112,7 +112,6 @@ class LeaderBoardBot:
 
 
     def getRankText(self, tag, region=None, yesterday=False):
-        print(tag)
         if tag.isdigit(): ## jump to search by number
             return self.getRankNumText(int(tag), region)
 
