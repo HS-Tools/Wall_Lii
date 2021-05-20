@@ -37,17 +37,7 @@ class LeaderBoardBot:
     table = None
     yesterday_table = None
 
-    def __init__(self, url=None):
-        self.db = None
-
-        load_dotenv()
-
-        kargs = {   'aws_access_key_id':os.environ['AWS_ACCESS_KEY_ID'],
-                    'aws_secret_access_key':os.environ['AWS_SECRET_ACCESS_KEY'],
-                    'region_name':os.environ['REGION'] }
-        if url is not None:
-            kargs['endpoint_url'] = url
-
+    def __init__(self, **kargs):
         self.db = boto3.resource('dynamodb', **kargs)
         self.table = self.db.Table(os.environ['TABLE_NAME'])
         self.yesterday_table = self.db.Table('yesterday-rating-record-table')
