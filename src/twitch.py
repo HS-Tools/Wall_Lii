@@ -64,7 +64,6 @@ twitchBot = commands.Bot(
     initial_channels=channels.keys()
 )
 
-
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
     args = ctx.content.split(' ')[1:]
