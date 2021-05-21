@@ -3,6 +3,7 @@ import threading
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
+from channels import channels
 from dotenv import load_dotenv
 
 load_dotenv()
