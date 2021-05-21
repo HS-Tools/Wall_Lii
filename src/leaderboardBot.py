@@ -109,7 +109,11 @@ class LeaderBoardBot:
                 return f"invalid number rank {tag}, I only track the top 200 players liiWait"
 
             items = self.getEntryFromRank(tag, region, yesterday)
-            tag = items[0]['PlayerName']
+
+            if len(items) > 0:
+                tag = items[0]['PlayerName']
+            else:
+                return "Invalid or no region given for rank lookup"
         else:
             items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
@@ -157,7 +161,11 @@ class LeaderBoardBot:
             if tag > 200 or tag < 1:
                 return f"invalid number rank {tag}, I only track the top 200 players liiWait"
             items = self.getEntryFromRank(tag, region, yesterday)
-            tag = items[0]['PlayerName']
+            
+            if len(items) > 0:
+                tag = items[0]['PlayerName']
+            else:
+                return "Invalid or no region given for rank lookup"
         else:
             items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
