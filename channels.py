@@ -49,4 +49,5 @@ channels = {'iamtehshadow': 'tehshadow',
 'koxikkowy': 'koxik',
 'sjow': 'sjow',
 'yunicorn22': 'yunicorn22',
+'tuffhuntertactics': 'tuffhunter',
 'howardmoonbg': 'howardmoon'}
