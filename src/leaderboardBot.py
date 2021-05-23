@@ -33,14 +33,16 @@ eggs = { # Easter eggs
 }
 
 class LeaderBoardBot:
-    db = None
+    database = None
     table = None
     yesterday_table = None
 
-    def __init__(self, **kargs):
-        self.db = boto3.resource('dynamodb', **kargs)
-        self.table = self.db.Table(os.environ['TABLE_NAME'])
-        self.yesterday_table = self.db.Table('yesterday-rating-record-table')
+    def __init__(self, table_name=None, **kwargs):
+        if table_name is None:
+            table_name = os.environ['TABLE_NAME']
+        self.database = boto3.resource('dynamodb', **kwargs)
+        self.table = self.database.Table(table_name)
+        self.yesterday_table = self.database.Table('yesterday-rating-record-table')
 
     def parseArgs(self, default, *args):
         if (len(args) == 0):
@@ -84,17 +86,9 @@ class LeaderBoardBot:
         table = self.yesterday_table if yesterday else self.table
         response = table.scan(
             Select = 'ALL_ATTRIBUTES',
-            FilterExpression=Attr('Rank').eq(rank),
+            FilterExpression=Key('Rank').eq(rank),
         )
-
-        if 'Items' in response:
-            response = response['Items']
-        else:
-            response = None
-
-        response = [it for it in response if it['Region'] == region]
-
-        return response
+        return [ it for it in response['Items'] if it['Region'] == region ]
 
     def getRankText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
@@ -116,10 +110,6 @@ class LeaderBoardBot:
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
 
-        # Easter eggs
-        if tag in eggs.keys():
-            text = eggs[tag]
-
         for item in items:
             if item['Rank'] < highestRank:
                 highestRank = item['Rank']
@@ -130,10 +120,9 @@ class LeaderBoardBot:
                     break
 
                 rating = item['Ratings'][-1]
-                time = item['LastUpdate']
 
-                if not yesterday and self.checkIfTimeIs30MinutesInThePast(time):
-                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier today liiCat'
+                if item['Rank'] < 0:
+                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier {"today" if not yesterday else "Yesterday"} liiCat'
                 else:
                     text = f'{tag} {"is" if not yesterday else "was"} rank {rank} in {region} with {rating} mmr liiHappyCat'
 
@@ -275,18 +264,6 @@ class LeaderBoardBot:
             lastRating = rating
 
         return ', '.join(deltas)
-
-    def checkIfTimeIs30MinutesInThePast(self, time):
-        currentTime = datetime.utcnow()
-        try:
-            time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
-        except:
-            return False
-
-        delta = (currentTime - time)
-        minuteDifference = delta.total_seconds() / 60
-
-        return minuteDifference > 30
 
     # We want to remove any patterns like: +x, -x, +x and replace it with +x
     # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y

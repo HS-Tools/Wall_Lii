@@ -1,4 +1,5 @@
 import boto3
+from boto3.dynamodb.conditions import Key, Attr
 import os
 import time
 from datetime import datetime, date
@@ -16,12 +17,15 @@ class RankingDatabaseClient:
     def __init__(self, **kargs):
         self.table_name = os.environ['TABLE_NAME'];
         self.resource = boto3.resource('dynamodb', **kargs)
+        self.client = boto3.client('dynamodb', **kargs)
         self.table = self.resource.Table( self.table_name )
 
-    def create_table(self):
-        print("creating table")
+    def create_table(self, table_name=None):
+        if table_name is None:
+            table_name = self.table_name
+        # print("creating table")
         self.table = self.resource.create_table(
-            TableName=self.table_name,
+            TableName=table_name,
             KeySchema=[
                 {'AttributeName': 'PlayerName', 'KeyType': 'HASH'},
                 {'AttributeName': 'Region', 'KeyType': 'RANGE'},
@@ -29,13 +33,52 @@ class RankingDatabaseClient:
             AttributeDefinitions=[
                 {'AttributeName': 'PlayerName', 'AttributeType': 'S'},
                 {'AttributeName': 'Region', 'AttributeType': 'S'},
+                {'AttributeName': 'Rank', 'AttributeType': 'N'},
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'PlayerRank',
+                    'KeySchema': [
+                        {'AttributeName': 'Rank', 'KeyType': 'HASH'},
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL',
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 2,
+                        'WriteCapacityUnits': 2,
+                    },
+                },
             ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 25,
+                'WriteCapacityUnits': 10,
             },
             BillingMode='PROVISIONED',
         )
+
+    def default_entry(self, region, player, rank=-1, rating=1, region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
+        return {
+            player_name:player,
+            region_name:region,
+            ttl_name: self.__getMidnightTTL(),
+            rating_name:[rating],
+            rank_name: rank
+        }
+    '''
+    TODO pydoc TTL
+    '''
+    def clear_ranks(self, region, keep_players, region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
+        response = self.table.scan(
+            Select = 'ALL_ATTRIBUTES',
+            FilterExpression= (~Key(rank_name).eq(-1)) and Key(region_name).eq(region),
+        )
+        with self.table.batch_writer() as batch:
+            for item in response['Items']:
+                if (item[player_name] not in keep_players):
+                    item[rank_name] = -1
+                    batch.put_item(Item=item)
+
     '''
     TODO pydoc TTL
     '''
@@ -45,43 +88,60 @@ class RankingDatabaseClient:
                 player_name:player,
                 region_name:region,
             })
-            time.sleep(.01)
             return response['Item']
         except Exception as e:
-            print(e)
-
-            return {
-                player_name:player,
-                region_name:region,
-                ttl_name: self.__getMidnightTTL(),
-                rating_name:[],
-                rank_name: -1
-            }
-
+            return self.default_entry(region=region, player=player)
     '''
     TODO pydoc
     '''
     def put_item(self,region,player,rating,rank,lastUpdate,region_name="Region",player_name="PlayerName"):
         item = self.get_item(region,player,region_name,player_name)
-
-        # To get only the time in 24 hour format.
-        currentTimeUTC = str(datetime.utcnow())
-
-        try:
-            if (lastUpdate > item['LastUpdate']):
-                item['LastUpdate'] = lastUpdate
-            else:
-                item['LastUpdate'] = currentTimeUTC
-        except:
-            print("CurrentTime was not found ")
-            item['LastUpdate'] = currentTimeUTC
-
+        item['LastUpdate'] = lastUpdate
         rating = int(rating)
-        item['Rank'] = rank
-        item = self.__append_rating_to_list(rating,item)
-        print(item)
-        print(self.table.key_schema)
-        self.table.put_item(Item=item)
+        put = self.__append_rating_to_list(rating,item)
+        if (put) or item['Rank'] != rank:
+            item['Rank'] = rank
+            self.table.put_item(Item=item)
+
+    '''
+    TODO pydoc
+    '''
+    def put_items(self, region, data, region_name="Region", player_name="PlayerName", rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
+        response = self.table.scan(
+            Select = 'ALL_ATTRIBUTES',
+            FilterExpression= Key(region_name).eq(region),
+        )
+        items = []
+        players = list(data.keys())
+        if 'Items' in response.keys():
+            items = response['Items']
+        for item in items:
+            player = item[player_name]
+            if player in players:
+
+                update_rating = self.__append_rating_to_list( rating=data[player]['rating'], item=item)
+                if update_rating or item[rank_name] != data[player]['rank']:
+                    item[rank_name] = data[player]['rank']
+                else:
+                    items.remove(item) ## no changes so don't write again
+                players.remove(player)
+            else:
+                if item[rank_name] == -1:
+                    items.remove(item) ## no changes so don't write again
+                else:
+                    item[rank_name] = -1
+        for player in players:
+            items.append(self.default_entry(
+                region=region,
+                player=player,
+                rank=data[player]['rank'],
+                rating=data[player]['rating'] )
+            )
+
+        with self.table.batch_writer() as batch:
+            for item in response['Items']:
+                batch.put_item(Item=item)
+
 
     '''
     This almost certainly won't work.
@@ -104,11 +164,11 @@ class RankingDatabaseClient:
             item['Ratings'] = []
 
         if item['Ratings'] and item['Ratings'][-1] == rating: # List is not empty and No updates to ratings list, return.
-            return item
+            return False
 
         item['Ratings'].append(rating)
 
-        return item # Return isn't strictly neccessary, but it is nice for readability.
+        return True
 
     def __getMidnightTTL(self):
         tz = timezone('US/Pacific')
