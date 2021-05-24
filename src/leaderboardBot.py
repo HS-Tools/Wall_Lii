@@ -1,3 +1,4 @@
+from re import I
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from parseRegion import REGIONS, parseRegion, isRegion
@@ -93,6 +94,8 @@ class LeaderBoardBot:
             response = None
 
         response = [it for it in response if it['Region'] == region]
+        
+        response.sort(key=lambda x: x['LastUpdate'], reverse=True)
 
         return response
 
