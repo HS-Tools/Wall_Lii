@@ -7,7 +7,7 @@ from api import getLeaderboardSnapshot
 from boto3.dynamodb.conditions import Key, Attr
 import unittest
 
-class testLeaaderboardGet(unittest.TestCase):
+class testLeaderboardGet(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change

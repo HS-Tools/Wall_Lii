@@ -7,7 +7,7 @@ from handler import add_leaderboards_to_db
 from leaderboardBot import LeaderBoardBot
 import unittest
 
-class testLeaaderboardGet(unittest.TestCase):
+class testLeaderboardGet(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
