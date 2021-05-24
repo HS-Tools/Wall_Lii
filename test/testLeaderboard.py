@@ -3,11 +3,11 @@ import os
 sys.path.append("../src")
 sys.path.append("../lambda-loader/src")
 import data
-from api import getLeaderboardSnapshot
+from handler import add_leaderboards_to_db
 from leaderboardBot import LeaderBoardBot
 import unittest
 
-class apiLeaaderboard(unittest.TestCase):
+class testLeaderboardGet(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
@@ -16,21 +16,19 @@ class apiLeaaderboard(unittest.TestCase):
             url = os.environ['ENDPOINT_URL']
 
         self.database = data.RankingDatabaseClient( endpoint_url=url )
+
         try:
-            self.database.create_table()
-            snapshot, lastUpdated, season = getLeaderboardSnapshot(['US'],'BG',1, verbose=True)
-            for region in snapshot.keys():
-                for player in snapshot[region].keys():
-                    rating = snapshot[region][player]['rating']
-                    rank = snapshot[region][player]['rank']
-                    player = player.decode('utf-8')
-                    self.database.put_item(region=region, player=player,rating=rating,rank=rank, lastUpdate=lastUpdated[region])
-
+            self.database.create_table('testLeaderboardBot')
+            add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
         except Exception as e:
-            print('exception',e)
-            print("table was not created, assume it exists")
+            print('table exists monkaS')
 
-        self.bot = LeaderBoardBot( endpoint_url=url )
+        self.bot = LeaderBoardBot( table_name='testLeaderboardBot', endpoint_url=url )
+        self.img = self.database.table.scan()
+
+    @classmethod
+    def tearDownClass(self):
+        self.database.client.delete_table(TableName = 'testLeaderboardBot')
 
     def testGetPlayerData(self):
         items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
@@ -41,7 +39,7 @@ class apiLeaaderboard(unittest.TestCase):
         self.assertEqual(22483, item['Ratings'][0] )
 
     def testGetRankNumData(self):
-        items = self.bot.getRankNumData(1, self.bot.table, 'US' )
+        items = self.bot.getEntryFromRank(1, 'US' )
         self.assertEqual(1, len(items))
         item = items[0]
         self.assertEqual('vaguerabbit', item['PlayerName'] )
@@ -49,19 +47,19 @@ class apiLeaaderboard(unittest.TestCase):
         self.assertEqual(22483, item['Ratings'][0] )
 
     def testGetRankNumText(self):
-        string = self.bot.getRankNumText(1,'US')
+        string = self.bot.getRankText('1','US')
         self.assertIn('vaguerabbit ', string)
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
     def testGetRankNumTextAlt(self):
-        string = self.bot.getRankNumText(2,'NA')
+        string = self.bot.getRankText('2','NA')
         self.assertIn('testmmr ', string)
         self.assertIn(' 22019 ', string)
         self.assertIn(' 2 ', string)
 
     def testGetRankNumEgg(self):
-        string = self.bot.getRankNumText(420,'NA')
+        string = self.bot.getRankText('420','NA')
         self.assertEqual("don't do drugs kids", string)
 
     def testGetRankText(self):
@@ -107,7 +105,6 @@ class apiLeaaderboard(unittest.TestCase):
         args = self.bot.parseArgs('lii', 'quinnabr', 'EU', )
         self.assertEqual('quinnabr', args[0])
         self.assertEqual('EU', args[1])
-
 
 
 if __name__ == '__main__':
