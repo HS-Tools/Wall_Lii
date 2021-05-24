@@ -88,17 +88,7 @@ class LeaderBoardBot:
         response = table.scan(
             FilterExpression=Attr('Rank').eq(rank),
         )
-
-        if 'Items' in response:
-            response = response['Items']
-        else:
-            response = None
-
-        response = [it for it in response if it['Region'] == region]
-        
-        response.sort(key=lambda x: x['LastUpdate'], reverse=True)
-
-        return response
+        return [it for it in response['Items'] if it['Region'] == region]
 
     def getRankText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
@@ -162,7 +152,7 @@ class LeaderBoardBot:
             if tag > 200 or tag < 1:
                 return f"invalid number rank {tag}, I only track the top 200 players liiWait"
             items = self.getEntryFromRank(tag, region, yesterday)
-            
+
             if len(items) > 0:
                 tag = items[0]['PlayerName']
             else:

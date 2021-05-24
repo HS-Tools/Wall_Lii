@@ -52,6 +52,14 @@ class testLeaaderboardGet(unittest.TestCase):
         )
         self.assertEqual(1, len(foo['Items']))
 
+    def testRankScanNoResult(self):
+        self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
+        self.database.put_item(region='NA',player='lii',rating=1,rank=2,lastUpdate=1)
+        foo = self.database.table.scan(
+            FilterExpression= Attr('Rank').eq(200),
+        )
+        self.assertEqual(0, len(foo['Items']))
+
     def testRankScan9(self):
         self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
         for i in range(2,8):
@@ -61,13 +69,7 @@ class testLeaaderboardGet(unittest.TestCase):
         )
         self.assertEqual(1, len(foo['Items']))
 
-    def testRankScanRegion(self):
-        self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
-        self.database.put_item(region='EU',player='lii',rating=1,rank=1,lastUpdate=1)
-        foo = self.database.table.scan(
-            FilterExpression=Attr('Rank').eq(1),
-        )
-        self.assertEqual(2, len(foo['Items']))
+
 
 if __name__ == '__main__':
     from dotenv import load_dotenv, dotenv_values
