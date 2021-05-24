@@ -34,15 +34,13 @@ class testLeaaderboardGet(unittest.TestCase):
 
     def testPutItem(self):
         self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
-        foo = self.database.get_item(region='NA',player='nina')
-        print(foo)
+        foo = self.database.get_item(region='NA', player='nina')
         self.assertEqual('nina', foo['PlayerName'])
 
     def testRankScan1(self):
         self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
         foo = self.database.table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression= Key('Rank').eq(1),
+            FilterExpression= Attr('Rank').eq(1),
         )
         self.assertEqual(1, len(foo['Items']))
 
@@ -50,8 +48,7 @@ class testLeaaderboardGet(unittest.TestCase):
         self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
         self.database.put_item(region='NA',player='lii',rating=1,rank=2,lastUpdate=1)
         foo = self.database.table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression= Key('Rank').eq(1),
+            FilterExpression= Attr('Rank').eq(1),
         )
         self.assertEqual(1, len(foo['Items']))
 
@@ -60,8 +57,7 @@ class testLeaaderboardGet(unittest.TestCase):
         for i in range(2,8):
             self.database.put_item(region='NA',player=str(i),rating=1,rank=i,lastUpdate=1)
         foo = self.database.table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression= Key('Rank').eq(1),
+            FilterExpression= Attr('Rank').eq(1),
         )
         self.assertEqual(1, len(foo['Items']))
 
@@ -69,8 +65,7 @@ class testLeaaderboardGet(unittest.TestCase):
         self.database.put_item(region='NA',player='nina',rating=1,rank=1,lastUpdate=1)
         self.database.put_item(region='EU',player='lii',rating=1,rank=1,lastUpdate=1)
         foo = self.database.table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression=Key('Rank').eq(1),
+            FilterExpression=Attr('Rank').eq(1),
         )
         self.assertEqual(2, len(foo['Items']))
 
