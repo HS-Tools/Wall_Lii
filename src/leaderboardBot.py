@@ -1,3 +1,4 @@
+from re import I
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from parseRegion import REGIONS, parseRegion, isRegion
@@ -87,7 +88,17 @@ class LeaderBoardBot:
         response = table.scan(
             FilterExpression=Attr('Rank').eq(rank),
         )
-        return [ it for it in response['Items'] if it['Region'] == region ]
+
+        if 'Items' in response:
+            response = response['Items']
+        else:
+            response = None
+
+        response = [it for it in response if it['Region'] == region]
+        
+        response.sort(key=lambda x: x['LastUpdate'], reverse=True)
+
+        return response
 
     def getRankText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
@@ -102,7 +113,11 @@ class LeaderBoardBot:
                 return f"invalid number rank {tag}, I only track the top 200 players liiWait"
 
             items = self.getEntryFromRank(tag, region, yesterday)
-            tag = items[0]['PlayerName']
+
+            if len(items) > 0:
+                tag = items[0]['PlayerName']
+            else:
+                return "Invalid or no region given for rank lookup"
         else:
             items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
@@ -136,6 +151,8 @@ class LeaderBoardBot:
         return tag
 
     def getDailyStatsText(self, tag, region=None, yesterday=False):
+        if tag in eggs.keys():
+            return eggs[tag]
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
@@ -145,7 +162,11 @@ class LeaderBoardBot:
             if tag > 200 or tag < 1:
                 return f"invalid number rank {tag}, I only track the top 200 players liiWait"
             items = self.getEntryFromRank(tag, region, yesterday)
-            tag = items[0]['PlayerName']
+            
+            if len(items) > 0:
+                tag = items[0]['PlayerName']
+            else:
+                return "Invalid or no region given for rank lookup"
         else:
             items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
