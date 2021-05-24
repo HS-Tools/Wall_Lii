@@ -120,10 +120,6 @@ class LeaderBoardBot:
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
 
-        # Easter eggs
-        if tag in eggs.keys():
-            text = eggs[tag]
-
         for item in items:
             if item['Rank'] < highestRank:
                 highestRank = item['Rank']
@@ -152,6 +148,8 @@ class LeaderBoardBot:
         return tag
 
     def getDailyStatsText(self, tag, region=None, yesterday=False):
+        if tag in eggs.keys():
+            return eggs[tag]
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
