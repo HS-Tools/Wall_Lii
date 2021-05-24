@@ -2,7 +2,7 @@ import requests
 import json
 
 
-def parseSnapshot(text, verbose=True):
+def parseSnapshot(text, verbose=True, region='Unknown'):
     output = {}
 
     JSON = json.loads(text)
@@ -10,7 +10,7 @@ def parseSnapshot(text, verbose=True):
     accounts = JSON['leaderboard']['rows']
     updatedTime = " ".join(JSON['leaderboard']['metadata']['last_updated_time'].split(' ')[0:2])
 
-    if verbose: print(f'{region} fetched at {updatedDict[region]}')
+    if verbose: print(f'{region} fetched at {updatedTime}')
 
     for account in accounts:
         if verbose: print(f'\t{account}')
@@ -29,7 +29,7 @@ def getLeaderboardSnapshot(regions = ['US', 'EU', 'AP'], gameMode = 'BG', season
         if season != None: ## used for test code to pull a known season results
             apiUrl = f'{apiUrl}&seasonId={season}'
         r = requests.get(apiUrl)
-        ratingsDict[region], updatedDict[region], season = parseSnapshot(r.text, verbose)
+        ratingsDict[region], updatedDict[region], season = parseSnapshot(r.text, verbose, region)
 
     return (ratingsDict, updatedDict, season)
 

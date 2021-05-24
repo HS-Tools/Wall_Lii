@@ -85,8 +85,7 @@ class LeaderBoardBot:
     def getEntryFromRank(self, rank, region, yesterday=False):
         table = self.yesterday_table if yesterday else self.table
         response = table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression=Key('Rank').eq(rank),
+            FilterExpression=Attr('Rank').eq(rank),
         )
         return [ it for it in response['Items'] if it['Region'] == region ]
 

@@ -33,22 +33,6 @@ class RankingDatabaseClient:
             AttributeDefinitions=[
                 {'AttributeName': 'PlayerName', 'AttributeType': 'S'},
                 {'AttributeName': 'Region', 'AttributeType': 'S'},
-                {'AttributeName': 'Rank', 'AttributeType': 'N'},
-            ],
-            GlobalSecondaryIndexes=[
-                {
-                    'IndexName': 'PlayerRank',
-                    'KeySchema': [
-                        {'AttributeName': 'Rank', 'KeyType': 'HASH'},
-                    ],
-                    'Projection': {
-                        'ProjectionType': 'ALL',
-                    },
-                    'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 2,
-                        'WriteCapacityUnits': 2,
-                    },
-                },
             ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
@@ -65,19 +49,6 @@ class RankingDatabaseClient:
             rating_name:[rating],
             rank_name: rank
         }
-    '''
-    TODO pydoc TTL
-    '''
-    def clear_ranks(self, region, keep_players, region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
-        response = self.table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression= (~Key(rank_name).eq(-1)) and Key(region_name).eq(region),
-        )
-        with self.table.batch_writer() as batch:
-            for item in response['Items']:
-                if (item[player_name] not in keep_players):
-                    item[rank_name] = -1
-                    batch.put_item(Item=item)
 
     '''
     TODO pydoc TTL
@@ -108,28 +79,29 @@ class RankingDatabaseClient:
     '''
     def put_items(self, region, data, region_name="Region", player_name="PlayerName", rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
         response = self.table.scan(
-            Select = 'ALL_ATTRIBUTES',
-            FilterExpression= Key(region_name).eq(region),
+            FilterExpression=Key(region_name).eq(region),
         )
         items = []
         players = list(data.keys())
         if 'Items' in response.keys():
             items = response['Items']
-        for item in items:
+        to_remove = []
+        for i,item in enumerate(items):
             player = item[player_name]
             if player in players:
-
                 update_rating = self.__append_rating_to_list( rating=data[player]['rating'], item=item)
                 if update_rating or item[rank_name] != data[player]['rank']:
                     item[rank_name] = data[player]['rank']
                 else:
-                    items.remove(item) ## no changes so don't write again
+                    to_remove.append(item)
                 players.remove(player)
             else:
                 if item[rank_name] == -1:
-                    items.remove(item) ## no changes so don't write again
+                    to_remove.append(item)
                 else:
                     item[rank_name] = -1
+        for item in to_remove:
+            items.remove(item)
         for player in players:
             items.append(self.default_entry(
                 region=region,
@@ -138,8 +110,9 @@ class RankingDatabaseClient:
                 rating=data[player]['rating'] )
             )
 
+        print(f'writing {len(items)}')
         with self.table.batch_writer() as batch:
-            for item in response['Items']:
+            for item in items:
                 batch.put_item(Item=item)
 
 

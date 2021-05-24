@@ -5,10 +5,11 @@ sys.path.append("../lambda-loader/src")
 import data
 from leaderboardBot import LeaderBoardBot
 from handler import add_leaderboards_to_db
+from api import parseSnapshot, getLeaderboardSnapshot
 import unittest
 import time
 
-class testData(unittest.TestCase):
+class testDataPutItems(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
@@ -23,70 +24,123 @@ class testData(unittest.TestCase):
         except:
             pass
 
-        self.database.create_table('testDataTable')
-        add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
-        self.bot = LeaderBoardBot( table_name='testDataTable', endpoint_url=url )
-        self.img = self.database.table.scan()
+        self.tpl = getLeaderboardSnapshot( ['US'],'BG',1, False)
+        self.players = self.tpl[0]['US']
 
-    @classmethod
-    def tearDownClass(self):
-        self.database.client.delete_table(TableName='testDataTable')
+    def setUp(self):
+        self.database.create_table('testDataTable')
 
     def tearDown(self):
         self.database.client.delete_table(TableName='testDataTable')
-        self.database.create_table('testDataTable')
-        # reload the original items
-        with self.database.table.batch_writer() as batch:
-            for item in self.img['Items']:
-                batch.put_item(item)
 
-    def testClearRankRemove1(self):
-        self.database.put_items('US', { 'vaguerabbit':{'rank': 1, 'rating': 22483}})
+    def testPutItems(self):
+        self.database.put_items('US', self.players)
+        for key in self.tpl[0]['US'].keys():
+            item = self.database.get_item('US', key)
+            player = self.players[key]
+            self.assertIsNotNone(item)
+            self.assertEqual(key, item['PlayerName'] )
+            self.assertEqual(player['rank'], item['Rank'] )
+            self.assertEqual(player['rating'], item['Ratings'][0] )
 
-        items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
-        self.assertEqual(1, len(items))
-        item = items[0]
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
-        self.assertEqual(1, item['Rank'] )
-        self.assertEqual(22483, item['Ratings'][0] )
+    def testPutTestFile(self):
+        with open('files/s3-05-23-21-0150.json') as f:
+            json1 = f.read()
+        tlp = parseSnapshot(json1, False)
+        self.database.put_items('US', tlp[0])
+        for key in tlp[0].keys():
+            item = self.database.get_item('US', key)
+            player =  tlp[0][key]
+            self.assertIsNotNone(item)
+            self.assertEqual(key, item['PlayerName'] )
+            self.assertEqual(player['rank'], item['Rank'] )
+            self.assertEqual(player['rating'], item['Ratings'][0] )
 
-        items = self.bot.getPlayerData('ponpata07', self.bot.table )
-        self.assertEqual(1, len(items))
-        item = items[0]
-        self.assertEqual('ponpata07', item['PlayerName'] )
-        self.assertEqual(-1, item['Rank'] )
-        self.assertEqual(13626, item['Ratings'][-1] )
+    def testPutTestFiles(self):
+        with open('files/s3-05-23-21-0150.json') as f:
+            json1 = f.read()
+        with open('files/s3-05-23-21-0209.json') as f:
+            json2 = f.read()
 
-    def testClearRankSeason1(self):
-        items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
-        self.assertEqual(1, len(items))
-        item = items[0]
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
-        self.assertEqual(1, item['Rank'] )
-        self.assertEqual(22483, item['Ratings'][0] )
+        tlp = parseSnapshot(json1, False)
+        self.database.put_items('US', tlp[0])
 
-        items = self.bot.getPlayerData('ponpata07', self.bot.table )
-        self.assertEqual(1, len(items))
-        item = items[0]
-        self.assertEqual('ponpata07', item['PlayerName'] )
-        self.assertEqual(51, item['Rank'] )
-        self.assertEqual(13626, item['Ratings'][-1] )
+        tlp = parseSnapshot(json2, False)
+        self.database.put_items('US', tlp[0])
 
-        add_leaderboards_to_db(self.database, ['US'],'BG',0, False)
+        for key in tlp[0].keys():
+            item = self.database.get_item('US', key)
+            player =  tlp[0][key]
+            self.assertIsNotNone(item)
+            self.assertEqual(key, item['PlayerName'] )
+            self.assertEqual(player['rank'], item['Rank'] )
+            self.assertEqual(player['rating'], item['Ratings'][-1] )
 
-        items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
-        self.assertEqual(1, len(items))
-        item = items[0]
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
-        self.assertEqual(-1, item['Rank'] )
-        self.assertEqual(22483, item['Ratings'][0] )
+    # def testClearPutItems1(self):
+    #     self.database.put_items('US', self.players)
+    #     self.database.put_items('US', { 'vaguerabbit':{'rank': 1, 'rating': 22483}})
 
-        items = self.bot.getPlayerData('ponpata07', self.bot.table )
-        self.assertEqual(1, len(items))
-        item = items[0]
-        self.assertEqual('ponpata07', item['PlayerName'] )
-        self.assertEqual(7, item['Rank'] )
-        self.assertEqual(14043, item['Ratings'][-1] )
+    #     item = self.database.get_item('US', 'vaguerabbit')
+    #     self.assertEqual('vaguerabbit', item['PlayerName'] )
+    #     self.assertEqual(1, item['Rank'] )
+    #     self.assertEqual(22483, item['Ratings'][0] )
+
+    #     item = self.database.get_item('US', 'ponpata07')
+    #     self.assertEqual('ponpata07', item['PlayerName'] )
+    #     self.assertEqual(-1, item['Rank'] )
+    #     self.assertEqual(13626, item['Ratings'][-1] )
+
+    # def testClearPutItemSeason1(self):
+    #     self.database.put_items('US', self.players)
+    #     item = self.database.get_item('US', 'vaguerabbit')
+    #     self.assertEqual('vaguerabbit', item['PlayerName'] )
+    #     self.assertEqual(1, item['Rank'] )
+    #     self.assertEqual(22483, item['Ratings'][0] )
+
+    #     item = self.database.get_item('US', 'ponpata07')
+    #     self.assertEqual('ponpata07', item['PlayerName'] )
+    #     self.assertEqual(51, item['Rank'] )
+    #     self.assertEqual(13626, item['Ratings'][-1] )
+
+    #     add_leaderboards_to_db(self.database, ['US'],'BG',0, False)
+
+    #     item = self.database.get_item('US', 'vaguerabbit')
+    #     self.assertEqual('vaguerabbit', item['PlayerName'] )
+    #     self.assertEqual(-1, item['Rank'] )
+    #     self.assertEqual(22483, item['Ratings'][0] )
+
+    #     item = self.database.get_item('US', 'ponpata07')
+    #     self.assertEqual('ponpata07', item['PlayerName'] )
+    #     self.assertEqual(7, item['Rank'] )
+    #     self.assertEqual(14043, item['Ratings'][-1] )
+
+
+    def testMidSeasonTime(self):
+        with open('files/s3-05-23-21-0150.json') as f:
+            json1 = f.read()
+        with open('files/s3-05-23-21-0209.json') as f:
+            json2 = f.read()
+
+        tlp = parseSnapshot(json1, False)
+        self.database.put_items('US', tlp[0])
+
+        tlp = parseSnapshot(json2, False)
+        self.database.put_items('US', tlp[0])
+
+        item = self.database.get_item('US', 'middnie')
+        print(item)
+
+        item = self.database.get_item('US', 'andree')
+        print(item)
+
+        item = self.database.get_item('US', 'zuka')
+        print(item)
+
+
+
+
+
+
 
 if __name__ == '__main__':
     from dotenv import load_dotenv, dotenv_values
