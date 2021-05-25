@@ -1,31 +1,16 @@
 from re import I
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+import dotenv
 from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from default_alias import alias as default_alias
+from default_channels import channels as default_channels
 
-alias = {
-    'waterloo': 'waterloooooo',
-    'jeef': 'jeffispro',
-    'jeff': 'jeffispro',
-    'victor': 'twlevewinshs',
-    'sleepy': 'foreversleep',
-    'dogdog': 'dog',
-    'pockyplays': 'pocky',
-    'nina': 'ninaisnoob',
-    'liihs': 'lii',
-    'purple_hs': 'purple',
-    'deathitselfhs': 'deathitself',
-    'tylerootd': 'tyler',
-    'mrincrediblehs': 'mrincredible',
-    'sevel07': 'sevel',
-    'jubjoe': 'felix',
-    'quinnabr': 'middnie'
-}
 eggs = { # Easter eggs
     'salami': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH',
     'gomez': 'gomez is a cat, cats do not play BG',
@@ -34,16 +19,28 @@ eggs = { # Easter eggs
 }
 
 class LeaderBoardBot:
-    database = None
+    resource = None
     table = None
     yesterday_table = None
+    alias = {}
 
     def __init__(self, table_name=None, **kwargs):
         if table_name is None:
             table_name = os.environ['TABLE_NAME']
-        self.database = boto3.resource('dynamodb', **kwargs)
-        self.table = self.database.Table(table_name)
-        self.yesterday_table = self.database.Table('yesterday-rating-record-table')
+        self.resource = boto3.resource('dynamodb', **kwargs)
+        self.table = self.resource.Table(table_name)
+        self.yesterday_table = self.resource.Table('yesterday-rating-record-table')
+        self.alias_table = self.resource.Table('player-alias-table')
+        self.channel_table = self.resource.Table('channel-table')
+        self.updateAlias()
+
+    def updateAlias(self):
+        response = self.alias_table.scan()
+        self.alias = {it['Alias']:it['PlayerName'] for it in response['Items']}
+
+    def getChannels(self):
+        response = self.channel_table.scan()
+        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
 
     def parseArgs(self, default, *args):
         if (len(args) == 0):
@@ -135,8 +132,8 @@ class LeaderBoardBot:
     def getFormattedTag(self, tag):
         tag = tag.lower()
 
-        if tag in alias:
-            tag = alias[tag]
+        if tag in self.alias:
+            tag = self.alias[tag]
 
         return tag
 
@@ -304,3 +301,18 @@ class LeaderBoardBot:
                     }
                 )
 
+    def addDefaultAlias(self):
+        for key in default_alias:
+            item = {
+                'Alias': key,
+                'PlayerName': default_alias[key]
+            }
+            self.alias_table.put_item(Item=item)
+
+    def addChannels(self):
+        for key in default_channels:
+            item = {
+                'ChannelName': key,
+                'PlayerName': default_channels[key]
+            }
+            self.channel_table.put_item(Item=item)

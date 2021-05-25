@@ -111,7 +111,38 @@ Resources:
           AttributeName: "Region"
           KeyType: "RANGE" # Sort Key
       TableName: yesterday-rating-record-table
-      
+  ChannelTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "ChannelName"
+          AttributeType: "S"
+      BillingMode: PROVISIONED 
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      KeySchema: # Composite Key
+        -
+          AttributeName: "ChannelName"
+          KeyType: "HASH" # Partition Key
+      TableName: channel-table
+  AliasTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "Alias"
+          AttributeType: "S"
+      BillingMode: PROVISIONED 
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      KeySchema: # Composite Key
+        -
+          AttributeName: "Alias"
+          KeyType: "HASH" # Partition Key
+      TableName: player-alias-table
       
       
     
