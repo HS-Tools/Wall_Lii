@@ -1,17 +1,17 @@
 #!/bin/bash
 
-PlayerNane="$1"
-Alias="$2"
+Alias="$1"
+PlayerNane="$2"
 
 # arg checking
-if [ -z "$PlayerNane" ] ; then
-    echo "PlayerNane <$PlayerNane> is not defined"
+if [ -z "$Alias" ] ; then
+    echo "Alias <$Alias> is not defined (arg 1)"
     exit -1
 fi
 
 # arg checking
-if [ -z "$Alias" ] ; then
-    echo "Alias <$Alias> is not defined"
+if [ -z "$PlayerNane" ] ; then
+    echo "PlayerNane <$PlayerNane> is not defined (arg 2)"
     exit -1
 fi
 

@@ -32,6 +32,7 @@ class LeaderBoardBot:
         self.yesterday_table = self.resource.Table('yesterday-rating-record-table')
         self.alias_table = self.resource.Table('player-alias-table')
         self.channel_table = self.resource.Table('channel-table')
+        self.updateAlias()
 
     def updateAlias(self):
         response = self.alias_table.scan()

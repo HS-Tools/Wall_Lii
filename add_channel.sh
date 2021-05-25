@@ -5,13 +5,13 @@ PlayerNane="$2"
 
 # arg checking
 if [ -z "$ChannelName" ] ; then
-    echo "ChannelName <$ChannelName> is not defined"
+    echo "ChannelName <$ChannelName> is not defined (arg 1)"
     exit -1
 fi
 
 # arg checking
 if [ -z "$PlayerNane" ] ; then
-    echo "PlayerNane <$PlayerNane> is not defined"
+    echo "PlayerNane <$PlayerNane> is not defined (arg 2)"
     exit -1
 fi
 
