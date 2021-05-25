@@ -5,6 +5,7 @@ sys.path.append("../lambda-loader/src")
 import data
 from api import getLeaderboardSnapshot
 from boto3.dynamodb.conditions import Key, Attr
+from test import setup_production_environment
 import unittest
 
 class testLeaderboardGet(unittest.TestCase):
@@ -16,10 +17,11 @@ class testLeaderboardGet(unittest.TestCase):
             url = os.environ['ENDPOINT_URL']
 
         self.database = data.RankingDatabaseClient( endpoint_url=url )
-        try:
+        setup_production_environment(self.database, url)
+        tables = [table.name for table in self.database.resource.tables.all()]
+
+        if 'fake-table-1' in tables:
             self.database.client.delete_table(TableName = 'fake-table-1')
-        except:
-            pass
 
 
     def setUp(self):
