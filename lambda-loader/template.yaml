@@ -116,7 +116,7 @@ Resources:
     Properties:
       AttributeDefinitions:
         -
-          AttributeName: "PlayerName"
+          AttributeName: "ChannelName"
           AttributeType: "S"
       BillingMode: PROVISIONED 
       ProvisionedThroughput:
@@ -124,7 +124,7 @@ Resources:
         WriteCapacityUnits: 1
       KeySchema: # Composite Key
         -
-          AttributeName: "PlayerName"
+          AttributeName: "ChannelName"
           KeyType: "HASH" # Partition Key
       TableName: channel-table
   AliasTable:
