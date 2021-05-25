@@ -39,7 +39,7 @@ class LeaderBoardBot:
 
     def getChannels(self):
         response = self.channel_table.scan()
-        return {it['ChannelName']:it['ChannelName'] for it in response['Items']}
+        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
 
     def parseArgs(self, default, *args):
         if (len(args) == 0):
@@ -130,8 +130,6 @@ class LeaderBoardBot:
 
     def getFormattedTag(self, tag):
         tag = tag.lower()
-
-        print(self.alias)
 
         if tag in self.alias:
             tag = self.alias[tag]
@@ -313,7 +311,8 @@ class LeaderBoardBot:
     def addChannels(self):
         for key in default_channels:
             item = {
-                'ChannelName': key
+                'ChannelName': key,
+                'PlayerName': default_channels[key]
             }
             self.channel_table.put_item(Item=item)
 
