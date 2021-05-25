@@ -41,6 +41,22 @@ class RankingDatabaseClient:
             BillingMode='PROVISIONED',
         )
 
+    def create_support_table(self, table_name, key):
+        return self.resource.create_table(
+            TableName=table_name,
+            KeySchema=[
+                {'AttributeName': key, 'KeyType': 'HASH'},
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': key, 'AttributeType': 'S'},
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 1,
+                'WriteCapacityUnits': 1,
+            },
+            BillingMode='PROVISIONED',
+        )
+
     def default_entry(self, region, player, rank=-1, rating=1, region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
         return {
             player_name:player,
