@@ -1,6 +1,7 @@
 from re import I
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+import dotenv
 from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
@@ -34,11 +35,11 @@ class LeaderBoardBot:
 
     def updateAlias(self):
         response = self.alias_table.scan()
-        self.alias = {it['PlayerName']:it['Alias'] for it in response['Items']}
+        self.alias = {it['Alias']:it['PlayerName'] for it in response['Items']}
 
     def getChannels(self):
         response = self.channel_table.scan()
-        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
+        return {it['ChannelName']:it['ChannelName'] for it in response['Items']}
 
     def parseArgs(self, default, *args):
         if (len(args) == 0):
@@ -129,6 +130,8 @@ class LeaderBoardBot:
 
     def getFormattedTag(self, tag):
         tag = tag.lower()
+
+        print(self.alias)
 
         if tag in self.alias:
             tag = self.alias[tag]
@@ -299,10 +302,22 @@ class LeaderBoardBot:
                     }
                 )
 
-    def addAlias(self):
+    def addDefaultAlias(self):
         for key in default_alias:
             item = {
                 'Alias': key,
                 'PlayerName': default_alias[key]
             }
-            self.alias_table.put_item(item)
+            self.alias_table.put_item(Item=item)
+
+    def addChannels(self):
+        for key in default_channels:
+            item = {
+                'PlayerName': key
+            }
+            self.channel_table.put_item(Item=item)
+
+load_dotenv()
+bot = LeaderBoardBot()
+bot.addChannels()
+bot.addDefaultAlias()
