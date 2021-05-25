@@ -315,8 +315,3 @@ class LeaderBoardBot:
                 'PlayerName': default_channels[key]
             }
             self.channel_table.put_item(Item=item)
-
-load_dotenv()
-bot = LeaderBoardBot()
-bot.addChannels()
-bot.addDefaultAlias()
