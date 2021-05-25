@@ -5,6 +5,7 @@ sys.path.append("../lambda-loader/src")
 import data
 from handler import add_leaderboards_to_db
 from leaderboardBot import LeaderBoardBot
+from test import setup_production_environment
 import unittest
 
 class testLeaderboardGet(unittest.TestCase):
@@ -16,20 +17,19 @@ class testLeaderboardGet(unittest.TestCase):
             url = os.environ['ENDPOINT_URL']
 
         self.database = data.RankingDatabaseClient( endpoint_url=url )
+        setup_production_environment(self.database, url)
         tables = [table.name for table in self.database.resource.tables.all()]
 
-        if 'player-alias-table' in tables:
-            self.database.client.delete_table(TableName='player-alias-table')
-
-        try:
+        if 'testLeaderboardBot' in tables:
             self.database.client.delete_table(TableName='testLeaderboardBot')
-        except:
-            pass
 
         self.database.create_table('testLeaderboardBot')
         add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
 
         self.bot = LeaderBoardBot( table_name='testLeaderboardBot', endpoint_url=url )
+        self.bot.addDefaultAlias()
+        self.bot.updateAlias()
+
         self.img = self.database.table.scan()
 
     @classmethod
@@ -113,7 +113,6 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertEqual('EU', args[1])
 
     def testAliasJeef(self):
-        print(self.bot.alias)
         string = self.bot.getRankText('jeef')
         self.assertIn('jeffispro ', string)
         self.assertIn(' 16033 ', string)
