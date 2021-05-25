@@ -301,18 +301,24 @@ class LeaderBoardBot:
                     }
                 )
 
+    def addChannel(self, channel, playerName):
+        item = {
+            'ChannelName': channel,
+            'PlayerName': playerName
+        }
+        self.channel_table.put_item(Item=item)
+
+    def addAlias(self, alias, playerName):
+        item = {
+            'Alias': alias,
+            'PlayerName': playerName
+        }
+        self.alias_table.put_item(Item=item)
+
     def addDefaultAlias(self):
         for key in default_alias:
-            item = {
-                'Alias': key,
-                'PlayerName': default_alias[key]
-            }
-            self.alias_table.put_item(Item=item)
+            self.addAlias(key, default_alias[key])
 
     def addChannels(self):
         for key in default_channels:
-            item = {
-                'ChannelName': key,
-                'PlayerName': default_channels[key]
-            }
-            self.channel_table.put_item(Item=item)
+            self.addChannel(key, default_channels[key])
