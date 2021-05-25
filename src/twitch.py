@@ -1,12 +1,15 @@
 import os
 import threading
+import aiocron
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
-from channels import channels
 from dotenv import load_dotenv
 
+
 load_dotenv()
+
+channels = {'liihs': 'lii',}
 
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
@@ -70,9 +73,26 @@ async def help(ctx):
 if __name__ == '__main__':
     leaderboardBot = LeaderBoardBot()
 
+    @aiocron.crontab('0 * * * *') ## Every hour on the hour check and update channels
+    async def updateChannels():
+        all_channels = leaderboardBot.getChannels()
+        new_channels = []
+        for channel in all_channels.keys():
+            if channel not in channels:
+                channels[channel] = all_channels[channels]
+                new_channels.append(channel)
+        await twitchBot.join_channels(new_channels)
+
+    @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
+    def updateAlias():
+        leaderboardbot.updateAlias()
+
+
     twitchThread = threading.Thread(target=twitchBot.run)
     twitchThread.setDaemon(True)
     twitchThread.start()
+
+    updateChannels()
 
     while True:
         pass

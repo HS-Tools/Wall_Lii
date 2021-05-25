@@ -132,5 +132,9 @@ if __name__ == '__main__':
     leaderboardBot = LeaderBoardBot()
     bot.run(os.environ['DISCORD_TOKEN'])
 
+    @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
+    def updateAlias():
+        leaderboardbot.updateAlias()
+
     while True:
         pass

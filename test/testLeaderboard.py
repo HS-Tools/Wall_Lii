@@ -16,12 +16,18 @@ class testLeaderboardGet(unittest.TestCase):
             url = os.environ['ENDPOINT_URL']
 
         self.database = data.RankingDatabaseClient( endpoint_url=url )
+        tables = [table.name for table in self.database.resource.tables.all()]
+
+        if 'player-alias-table' in tables:
+            self.database.client.delete_table(TableName='player-alias-table')
 
         try:
-            self.database.create_table('testLeaderboardBot')
-            add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
-        except Exception as e:
-            print('table exists monkaS')
+            self.database.client.delete_table(TableName='testLeaderboardBot')
+        except:
+            pass
+
+        self.database.create_table('testLeaderboardBot')
+        add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
 
         self.bot = LeaderBoardBot( table_name='testLeaderboardBot', endpoint_url=url )
         self.img = self.database.table.scan()
@@ -105,6 +111,25 @@ class testLeaderboardGet(unittest.TestCase):
         args = self.bot.parseArgs('lii', 'quinnabr', 'EU', )
         self.assertEqual('quinnabr', args[0])
         self.assertEqual('EU', args[1])
+
+    def testAliasJeef(self):
+        print(self.bot.alias)
+        string = self.bot.getRankText('jeef')
+        self.assertIn('jeffispro ', string)
+        self.assertIn(' 16033 ', string)
+        self.assertIn(' 6 ', string)
+
+    def testAliasJeff(self):
+        string = self.bot.getRankText('jeff')
+        self.assertIn('jeffispro ', string)
+        self.assertIn(' 16033 ', string)
+        self.assertIn(' 6 ', string)
+
+    def testAlias_jeffispro(self):
+        string = self.bot.getRankText('jeffispro')
+        self.assertIn('jeffispro ', string)
+        self.assertIn(' 16033 ', string)
+        self.assertIn(' 6 ', string)
 
 
 if __name__ == '__main__':
