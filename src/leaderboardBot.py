@@ -313,7 +313,7 @@ class LeaderBoardBot:
     def addChannels(self):
         for key in default_channels:
             item = {
-                'PlayerName': key
+                'ChannelName': key
             }
             self.channel_table.put_item(Item=item)
 
