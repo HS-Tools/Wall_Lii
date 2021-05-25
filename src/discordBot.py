@@ -56,6 +56,32 @@ async def yesterday(ctx, *args):
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
+@bot.command()
+async def addalias(ctx, *args):
+    if (ctx.message.channel.id == 846867129834930207):
+        if len(args) < 2:
+            await ctx.send('The command must have two words. !addalias [alias] [name]')
+        else:
+            alias = args[0].lower()
+            name = args[1].lower()
+        
+            leaderboardBot.addAlias(alias, name)
+            leaderboardBot.updateAlias()
+            await ctx.send(f'{alias} is now an alias for {name}')
+
+@bot.command()
+async def addchannel(ctx, *args):
+    if (ctx.message.channel.id == 846867129834930207):
+        if len(args) < 2:
+            await ctx.send('The command must have two words. !addchannel [channelName] [playerName]')
+        else:
+            channelName = args[0].lower()
+            playerName = args[0].lower()
+
+            leaderboardBot.addChannel(channelName, playerName)
+            
+            await ctx.send(f'{channelName} will have wall_lii added to it in around an hour with the name {playerName}')
+
 # PI is on UTC time it seems
 @aiocron.crontab('59 6 * * *')
 async def sendDailyRecap():
