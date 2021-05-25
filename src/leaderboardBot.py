@@ -29,68 +29,8 @@ class LeaderBoardBot:
         self.resource = boto3.resource('dynamodb', **kwargs)
         self.table = self.resource.Table(table_name)
         self.yesterday_table = self.resource.Table('yesterday-rating-record-table')
-
-        tables = [table.name for table in self.resource.tables.all()]
-        for table in tables:
-            print(table)
-        if 'player-alias-table' not in tables:
-            self.createAliasTable(default_alias)
-        else:
-            self.alias_table = self.resource.Table('player-alias-table')
-
-        if 'channel-table' not in tables:
-            self.createChannelTable(default_channels)
-        else:
-            self.channel_table = self.resource.Table('channel-table')
-
-    def createAliasTable(self, entries={}):
-        print('creating alias table')
-        self.alias_table = self.resource.create_table(
-            TableName='player-alias-table',
-            KeySchema=[
-                {'AttributeName': 'PlayerName', 'KeyType': 'HASH'},
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PlayerName', 'AttributeType': 'S'},
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 1,
-                'WriteCapacityUnits': 1,
-            },
-            BillingMode='PROVISIONED',
-        )
-        with self.alias_table.batch_writer() as batch:
-            for key in entries.keys():
-                print(key, entries[key])
-                batch.put_item(Item={
-                    'PlayerName':key,
-                    'Alias':entries[key],
-                    }
-                )
-        self.updateAlias()
-
-    def createChannelTable(self, entries={}):
-        self.channel_table = self.resource.create_table(
-            TableName='channel-table',
-            KeySchema=[
-                {'AttributeName': 'ChannelName', 'KeyType': 'HASH'},
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'ChannelName', 'AttributeType': 'S'},
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 1,
-                'WriteCapacityUnits': 1,
-            },
-            BillingMode='PROVISIONED',
-        )
-        with self.channel_table.batch_writer() as batch:
-            for key in entries.keys():
-                batch.put_item(Item={
-                    'ChannelName':key,
-                    'PlayerName':entries[key],
-                    }
-                )
+        self.alias_table = self.resource.Table('player-alias-table')
+        self.channel_table = self.resource.Table('channel-table')
 
     def updateAlias(self):
         response = self.alias_table.scan()
