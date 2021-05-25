@@ -134,13 +134,16 @@ Resources:
         -
           AttributeName: "PlayerName"
           AttributeType: "S"
+        -
+          AttributeName: "Alias"
+          AttributeType: "S"
       BillingMode: PROVISIONED 
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       KeySchema: # Composite Key
         -
-          AttributeName: "PlayerName"
+          AttributeName: "Alias"
           KeyType: "HASH" # Partition Key
       TableName: player-alias-table
       
