@@ -132,9 +132,6 @@ Resources:
     Properties:
       AttributeDefinitions:
         -
-          AttributeName: "PlayerName"
-          AttributeType: "S"
-        -
           AttributeName: "Alias"
           AttributeType: "S"
       BillingMode: PROVISIONED 

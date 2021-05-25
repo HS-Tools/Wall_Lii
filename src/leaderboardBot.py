@@ -299,3 +299,10 @@ class LeaderBoardBot:
                     }
                 )
 
+    def addAlias(self):
+        for key in default_alias:
+            item = {
+                'Alias': key,
+                'PlayerName': default_alias[key]
+            }
+            self.alias_table.put_item(item)
