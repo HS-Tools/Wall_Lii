@@ -6,6 +6,7 @@ import data
 from leaderboardBot import LeaderBoardBot
 from handler import add_leaderboards_to_db
 from api import parseSnapshot, getLeaderboardSnapshot
+from test import setup_production_environment
 import unittest
 import time
 
@@ -18,11 +19,11 @@ class testDataPutItems(unittest.TestCase):
             url = os.environ['ENDPOINT_URL']
 
         self.database = data.RankingDatabaseClient( endpoint_url=url )
+        setup_production_environment(self.database, url)
+        tables = [table.name for table in self.database.resource.tables.all()]
 
-        try:
+        if 'testDataTable' in tables:
             self.database.client.delete_table(TableName='testDataTable')
-        except:
-            pass
 
         self.tpl = getLeaderboardSnapshot( ['US'],'BG',1, False)
         self.players = self.tpl[0]['US']
