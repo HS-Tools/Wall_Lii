@@ -76,7 +76,7 @@ async def addchannel(ctx, *args):
             await ctx.send('The command must have two words. !addchannel [channelName] [playerName]')
         else:
             channelName = args[0].lower()
-            playerName = args[0].lower()
+            playerName = args[1].lower()
 
             leaderboardBot.addChannel(channelName, playerName)
             
