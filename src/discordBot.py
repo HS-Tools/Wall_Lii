@@ -160,7 +160,6 @@ def get_pst_time():
 
 if __name__ == '__main__':
     leaderboardBot = LeaderBoardBot()
-    leaderboardBot.updateAlias()
 
     bot.run(os.environ['DISCORD_TOKEN'])
 

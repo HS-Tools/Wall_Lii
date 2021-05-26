@@ -13,7 +13,6 @@ leaderboardBot = LeaderBoardBot()
 
 # Initial setup
 channels = leaderboardBot.getChannels()
-leaderboardBot.updateAlias()
 
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
