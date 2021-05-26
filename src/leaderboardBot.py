@@ -318,6 +318,9 @@ class LeaderBoardBot:
             'Alias': alias,
             'PlayerName': playerName,
         }
+
+        self.alias[alias] = playerName
+
         if new:
             item['New'] = new
         self.alias_table.put_item(Item=item)
