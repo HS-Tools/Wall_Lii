@@ -308,6 +308,9 @@ class LeaderBoardBot:
         }
         if new:
             item['New'] = new
+
+        self.addAlias(channel, playerName)
+        
         self.channel_table.put_item(Item=item)
 
     def addAlias(self, alias, playerName, new=True):
