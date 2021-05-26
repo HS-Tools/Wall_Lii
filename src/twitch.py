@@ -88,4 +88,4 @@ if __name__ == '__main__':
     twitchThread.start()
 
     while True:
-        asyncio.sleep(0) # should save power
+        asyncio.sleep(0)
