@@ -34,14 +34,6 @@ class LeaderBoardBot:
         self.channel_table = self.resource.Table('channel-table')
         self.updateAlias()
 
-    def updateAlias(self):
-        response = self.alias_table.scan()
-        self.alias = {it['Alias']:it['PlayerName'] for it in response['Items']}
-
-    def getChannels(self):
-        response = self.channel_table.scan()
-        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
-
     def parseArgs(self, default, *args):
         if (len(args) == 0):
             return [default, None]
@@ -301,24 +293,56 @@ class LeaderBoardBot:
                     }
                 )
 
-    def addChannel(self, channel, playerName):
+    def updateAlias(self):
+        response = self.alias_table.scan()
+        self.alias = {it['Alias']:it['PlayerName'] for it in response['Items']}
+
+    def getChannels(self):
+        response = self.channel_table.scan()
+        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
+
+    def addChannel(self, channel, playerName, new=True):
         item = {
             'ChannelName': channel,
-            'PlayerName': playerName
+            'PlayerName': playerName,
         }
+        if new:
+            item['New'] = new
         self.channel_table.put_item(Item=item)
 
-    def addAlias(self, alias, playerName):
+    def addAlias(self, alias, playerName, new=True):
         item = {
             'Alias': alias,
-            'PlayerName': playerName
+            'PlayerName': playerName,
         }
+        if new:
+            item['New'] = new
         self.alias_table.put_item(Item=item)
+
+    def getNewChannels(self):
+        response = self.channel_table.scan(
+            FilterExpression=Attr('New').eq(True),
+        )
+        with self.channel_table.batch_writer() as batch:
+            for item in response['Items']:
+                item.pop('New', None)
+                batch.put_item(item)
+        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
+
+    def getNewAlias(self):
+        response = self.alias_table.scan(
+            FilterExpression=Attr('New').eq(True),
+        )
+        with self.alias_table.batch_writer() as batch:
+            for item in response['Items']:
+                item.pop('New', None)
+                self.alias[item['Alias']] = item['PlayerName']
+        return self.alias
 
     def addDefaultAlias(self):
         for key in default_alias:
-            self.addAlias(key, default_alias[key])
+            self.addAlias(key, default_alias[key], False)
 
     def addChannels(self):
         for key in default_channels:
-            self.addChannel(key, default_channels[key])
+            self.addChannel(key, default_channels[key], False)

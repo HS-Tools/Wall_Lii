@@ -13,7 +13,6 @@ leaderboardBot = LeaderBoardBot()
 
 # Initial setup
 channels = leaderboardBot.getChannels()
-leaderboardBot.updateAlias()
 
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
@@ -75,20 +74,14 @@ async def help(ctx):
 
 if __name__ == '__main__':
 
-    @aiocron.crontab('0 * * * *') ## Every hour on the hour check and update channels
+    @aiocron.crontab('* * * * *') ## Every minute check for new channels
     async def updateChannels():
-        all_channels = leaderboardBot.getChannels()
-        new_channels = []
-        for channel in all_channels.keys():
-            if channel not in channels:
-                channels[channel] = all_channels[channel]
-                new_channels.append(channel)
+        new_channels = leaderboardBot.getNewChannels()
+        await twitchBot.join_channels( list(new_channels.keys()) )
 
-        await twitchBot.join_channels(new_channels)
-
-    @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
+    @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
-        leaderboardbot.updateAlias()
+        leaderboardbot.getNewAlias()
 
     twitchThread = threading.Thread(target=twitchBot.run)
     twitchThread.setDaemon(True)
