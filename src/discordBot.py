@@ -35,6 +35,9 @@ async def call(ctx, func, name, *args):
     if len(args) >= 2:
         if not isRegion(args[1]):
             response = "Invalid region provided.\n" + response
+
+    message = ctx.message
+    await message.delete()
     await ctx.send(embed = getEmbedObject(response, args[0], name))
 
 @bot.command()
