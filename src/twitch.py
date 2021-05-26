@@ -81,8 +81,9 @@ if __name__ == '__main__':
         new_channels = []
         for channel in all_channels.keys():
             if channel not in channels:
-                channels[channel] = all_channels[channels]
+                channels[channel] = all_channels[channel]
                 new_channels.append(channel)
+
         await twitchBot.join_channels(new_channels)
 
     @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
@@ -94,4 +95,4 @@ if __name__ == '__main__':
     twitchThread.start()
 
     while True:
-        asyncio.sleep(0) # should save power
+        asyncio.sleep(0)
