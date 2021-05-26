@@ -158,6 +158,9 @@ class testLeaderboardGet(unittest.TestCase):
         new = self.bot.getNewAlias()
         self.assertEqual('jeffispro', new[jeef])
         self.assertEqual(1+len(default_alias), len(new))
+        new = self.bot.getNewAlias()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1+len(default_alias), len(new))
 
     def testChannel_add_jeeeeeeef(self):
         self.assertFalse( jeef in self.bot.getChannels() )
@@ -166,12 +169,15 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertEqual('jeffispro', new[jeef])
         self.assertEqual(1, len(new))
 
+
     def testChannel_add_jeeeeeeef2(self):
         self.assertFalse( jeef in self.bot.getChannels() )
         self.bot.addChannel(jeef, 'jeffispro')
         new = self.bot.getNewChannels()
         self.assertEqual('jeffispro', new[jeef])
         self.assertEqual(1, len(new))
+        new = self.bot.getNewChannels()
+        self.assertEqual(0, len(new))
 
 
 
