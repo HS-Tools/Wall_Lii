@@ -77,7 +77,7 @@ Resources:
       BillingMode: PROVISIONED 
       ProvisionedThroughput: # We should adjust based on usage.
         ReadCapacityUnits: 10 
-        WriteCapacityUnits: 25
+        WriteCapacityUnits: 20
       KeySchema: # Composite Key
         -
           AttributeName: "PlayerName"
@@ -102,7 +102,7 @@ Resources:
       BillingMode: PROVISIONED 
       ProvisionedThroughput: # We should adjust based on usage.
         ReadCapacityUnits: 10 
-        WriteCapacityUnits: 25
+        WriteCapacityUnits: 1
       KeySchema: # Composite Key
         -
           AttributeName: "PlayerName"
