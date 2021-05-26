@@ -1,5 +1,5 @@
 channels = {'iamtehshadow': 'tehshadow', 
-'dominickstarcraft': 'Dom2805',
+'dominickstarcraft': 'dom2805',
 'rolferolferolfe': 'rolfe',
 'jeeeeeeef': 'jeef',
 'xixo': 'xixo',

@@ -342,6 +342,8 @@ class LeaderBoardBot:
         with self.alias_table.batch_writer() as batch:
             for item in response['Items']:
                 item.pop('New', None)
+                batch.put_item(item)
+                
                 self.alias[item['Alias']] = item['PlayerName']
         return self.alias
 
