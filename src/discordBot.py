@@ -71,6 +71,9 @@ async def goodbot(ctx):
 @bot.command()
 async def addalias(ctx, *args):
     if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+
         if len(args) < 2:
             await ctx.send('The command must have two words. !addalias [alias] [name]')
         else:
@@ -87,6 +90,9 @@ async def addalias(ctx, *args):
 @bot.command()
 async def deletealias(ctx, *args):
     if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
                 await ctx.send('The command must have one word. !deletealias [alias]')
@@ -103,6 +109,9 @@ async def deletealias(ctx, *args):
 @bot.command()
 async def addchannel(ctx, *args):
     if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+        
         if len(args) < 2:
             await ctx.send('The command must have two words. !addchannel [channelName] [playerName]')
         else:
