@@ -204,9 +204,9 @@ class LeaderBoardBot:
         gamers = []
 
         for item in items:
-            games = item['Ratings']
-            self.removeDuplicateGames(games)
-            gameCount = len(games)
+            ratings = item['Ratings']
+            self.removeDuplicateGames(ratings)
+            gameCount = len(ratings) - 1
 
             obj = {
                 'Tag': item['PlayerName'],
@@ -343,7 +343,7 @@ class LeaderBoardBot:
             for item in response['Items']:
                 item.pop('New', None)
                 batch.put_item(item)
-                
+
                 self.alias[item['Alias']] = item['PlayerName']
         return self.alias
 
