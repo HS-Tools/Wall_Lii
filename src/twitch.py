@@ -1,6 +1,7 @@
 import os
 import threading
 import aiocron
+import asyncio
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
@@ -85,7 +86,7 @@ if __name__ == '__main__':
         await twitchBot.join_channels(new_channels)
 
     @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
-    def updateAlias():
+    async def updateAlias():
         leaderboardbot.updateAlias()
 
     twitchThread = threading.Thread(target=twitchBot.run)
@@ -93,4 +94,4 @@ if __name__ == '__main__':
     twitchThread.start()
 
     while True:
-        pass
+        asyncio.sleep(0) # should save power
