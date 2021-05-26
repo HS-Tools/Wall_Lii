@@ -68,7 +68,10 @@ async def addalias(ctx, *args):
 
             leaderboardBot.addAlias(alias, name)
             leaderboardBot.updateAlias()
-            await ctx.send(f'{alias} is now an alias for {name}')
+            if alias in leaderboardbot.alias.keys() and leaderboardbot.alias[alias] == name:
+                await ctx.send(f'{alias} is now an alias for {name}')
+            else:
+                await ctx.send(f'failed to set alias {alias} to name {name}')
 
 @bot.command()
 async def addchannel(ctx, *args):
@@ -160,10 +163,6 @@ if __name__ == '__main__':
     leaderboardBot.updateAlias()
 
     bot.run(os.environ['DISCORD_TOKEN'])
-
-    @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
-    def updateAlias():
-        leaderboardbot.updateAlias()
 
     while True:
         asyncio.sleep(0) # should save power

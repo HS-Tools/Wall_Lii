@@ -75,19 +75,14 @@ async def help(ctx):
 
 if __name__ == '__main__':
 
-    @aiocron.crontab('0 * * * *') ## Every hour on the hour check and update channels
+    @aiocron.crontab('* * * * *') ## Every hour on the hour check and update channels
     async def updateChannels():
-        all_channels = leaderboardBot.getChannels()
-        new_channels = []
-        for channel in all_channels.keys():
-            if channel not in channels:
-                channels[channel] = all_channels[channels]
-                new_channels.append(channel)
-        await twitchBot.join_channels(new_channels)
+        new_channels = leaderboardBot.getNewChannels()
+        await twitchBot.join_channels( list(new_channels.keys()) )
 
-    @aiocron.crontab('5 * * * *') ## Every hour on the 5 check and update the alias table
+    @aiocron.crontab('* * * * *') ## Every hour on the 5 check and update the alias table
     async def updateAlias():
-        leaderboardbot.updateAlias()
+        leaderboardbot.getNewAlias()
 
     twitchThread = threading.Thread(target=twitchBot.run)
     twitchThread.setDaemon(True)

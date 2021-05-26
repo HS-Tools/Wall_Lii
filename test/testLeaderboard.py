@@ -6,7 +6,12 @@ import data
 from handler import add_leaderboards_to_db
 from leaderboardBot import LeaderBoardBot
 from test import setup_production_environment
+from boto3.dynamodb.conditions import Key, Attr
 import unittest
+from default_alias import alias as default_alias
+from default_channels import channels as default_channels
+
+jeef = 'not-another-freaking-jeeeeeeef-alias'
 
 class testLeaderboardGet(unittest.TestCase):
     @classmethod
@@ -35,6 +40,16 @@ class testLeaderboardGet(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         self.database.client.delete_table(TableName = 'testLeaderboardBot')
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        if jeef in self.bot.alias:
+            self.bot.alias_table.delete_item( Key={'Alias':jeef} )
+            self.bot.updateAlias()
+        if jeef in self.bot.getChannels():
+            self.bot.channel_table.delete_item( Key={'ChannelName':jeef} )
 
     def testGetPlayerData(self):
         items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
@@ -129,6 +144,35 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertIn('jeffispro ', string)
         self.assertIn(' 16033 ', string)
         self.assertIn(' 6 ', string)
+
+    def testAlias_add_jeeeeeeef(self):
+        self.assertFalse( jeef in self.bot.alias.keys() )
+        self.bot.addAlias(jeef, 'jeffispro')
+        new = self.bot.getNewAlias()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1+len(default_alias), len(new))
+
+    def testAlias_add_jeeeeeeef2(self):
+        self.assertFalse( jeef in self.bot.alias.keys() )
+        self.bot.addAlias(jeef, 'jeffispro')
+        new = self.bot.getNewAlias()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1+len(default_alias), len(new))
+
+    def testChannel_add_jeeeeeeef(self):
+        self.assertFalse( jeef in self.bot.getChannels() )
+        self.bot.addChannel(jeef, 'jeffispro')
+        new = self.bot.getNewChannels()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1, len(new))
+
+    def testChannel_add_jeeeeeeef2(self):
+        self.assertFalse( jeef in self.bot.getChannels() )
+        self.bot.addChannel(jeef, 'jeffispro')
+        new = self.bot.getNewChannels()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1, len(new))
+
 
 
 if __name__ == '__main__':
