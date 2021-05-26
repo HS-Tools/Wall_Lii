@@ -19,6 +19,8 @@ channelIds = {
     'test': 730782280674443327,
 }
 
+liiDiscordId = 204806965585510400
+
 emotes = [
     'liiHappyCat',
     'liiCat',
@@ -81,6 +83,22 @@ async def addalias(ctx, *args):
                 await ctx.send(f'{alias} is now an alias for {name}')
             else:
                 await ctx.send(f'failed to set alias {alias} to name {name}')
+
+@bot.command()
+async def deletealias(ctx, *args):
+    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        if ctx.message.author.id == liiDiscordId:
+            if len(args) < 1:
+                await ctx.send('The command must have one word. !deletealias [alias]')
+            else:
+                alias = args[0].lower()
+
+                leaderboardBot.deleteAlias(alias)
+                leaderboardBot.updateAlias()
+                
+                await ctx.send(f'{alias} alias was deleted')
+        else:
+            await ctx.send('Only Lii can delete aliases')
 
 @bot.command()
 async def addchannel(ctx, *args):
