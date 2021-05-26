@@ -120,7 +120,7 @@ async def addchannel(ctx, *args):
 
             leaderboardBot.addChannel(channelName, playerName)
 
-            await ctx.send(f'{channelName} will have wall_lii added to it in around an hour with the name {playerName}')
+            await ctx.send(f'{channelName} will have wall_lii added to it with the default name of {playerName}')
 
 # PI is on UTC time it seems
 @aiocron.crontab('59 6 * * *')
