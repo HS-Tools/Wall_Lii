@@ -1,6 +1,7 @@
 import threading
 import os
 import aiocron
+import asyncio
 import discord
 from datetime import datetime
 from pytz import timezone, utc
@@ -64,7 +65,7 @@ async def addalias(ctx, *args):
         else:
             alias = args[0].lower()
             name = args[1].lower()
-        
+
             leaderboardBot.addAlias(alias, name)
             leaderboardBot.updateAlias()
             await ctx.send(f'{alias} is now an alias for {name}')
@@ -79,7 +80,7 @@ async def addchannel(ctx, *args):
             playerName = args[1].lower()
 
             leaderboardBot.addChannel(channelName, playerName)
-            
+
             await ctx.send(f'{channelName} will have wall_lii added to it in around an hour with the name {playerName}')
 
 # PI is on UTC time it seems
@@ -165,4 +166,5 @@ if __name__ == '__main__':
         leaderboardbot.updateAlias()
 
     while True:
-        pass
+        asyncio.sleep(0) # should save power
+
