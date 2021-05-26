@@ -76,8 +76,11 @@ if __name__ == '__main__':
 
     @aiocron.crontab('* * * * *') ## Every minute check for new channels
     async def updateChannels():
+        global channels
+
         new_channels = leaderboardBot.getNewChannels()
-        await twitchBot.join_channels( list(new_channels.keys()) )
+        channels = leaderboardBot.getChannels()
+        await twitchBot.join_channels(list(new_channels.keys()))
 
     @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
