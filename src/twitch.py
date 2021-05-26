@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
     @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
-        leaderboardbot.getNewAlias()
+        leaderboardBot.getNewAlias()
 
     twitchThread = threading.Thread(target=twitchBot.run)
     twitchThread.setDaemon(True)

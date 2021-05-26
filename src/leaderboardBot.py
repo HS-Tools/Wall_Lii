@@ -319,6 +319,12 @@ class LeaderBoardBot:
             item['New'] = new
         self.alias_table.put_item(Item=item)
 
+    def deleteAlias(self, alias):
+        key = {
+            'Alias': alias,
+        }
+        self.alias_table.delete_item(Key=key)
+
     def getNewChannels(self):
         response = self.channel_table.scan(
             FilterExpression=Attr('New').eq(True),
