@@ -28,7 +28,7 @@ Resources:
         ThreeMinuteInvoke:
           Type: Schedule
           Properties:
-            Schedule: rate(3 minutes)
+            Schedule: rate(1 minutes)
   YesterdayMigrationFunction:
     Type: AWS::Serverless::Function
     Properties:
