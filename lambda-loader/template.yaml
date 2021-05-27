@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Deploys a cron service to fetch Hearthstone leaderboard data every 3 minutes.
+Description: Deploys a cron service to fetch Hearthstone leaderboard data every minute.
 Resources:
   LeaderboardFetchFunction:
     Type: AWS::Serverless::Function
@@ -25,10 +25,10 @@ Resources:
         Variables:
           TABLE_NAME: !Ref CompositeKeyTable
       Events:
-        ThreeMinuteInvoke:
+        OneMinuteInvoke:
           Type: Schedule
           Properties:
-            Schedule: rate(1 minutes)
+            Schedule: rate(1 minute)
   YesterdayMigrationFunction:
     Type: AWS::Serverless::Function
     Properties:
