@@ -59,7 +59,7 @@ Resources:
         EndOfDayInvoke:
           Type: Schedule
           Properties:
-            Schedule: cron(57 6 * * ? *)
+            Schedule: cron(59 6 * * ? *)
   CompositeKeyTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -77,7 +77,7 @@ Resources:
       BillingMode: PROVISIONED 
       ProvisionedThroughput: # We should adjust based on usage.
         ReadCapacityUnits: 10 
-        WriteCapacityUnits: 20
+        WriteCapacityUnits: 10
       KeySchema: # Composite Key
         -
           AttributeName: "PlayerName"
@@ -102,7 +102,7 @@ Resources:
       BillingMode: PROVISIONED 
       ProvisionedThroughput: # We should adjust based on usage.
         ReadCapacityUnits: 10 
-        WriteCapacityUnits: 1
+        WriteCapacityUnits: 13
       KeySchema: # Composite Key
         -
           AttributeName: "PlayerName"
