@@ -96,15 +96,7 @@ class Predictions:
 
     # Start a new prediction
     self.create_prediction()
-    
-# delete_body = {
-#   'broadcaster_id': '73626243',
-#   'id': id,
-#   'status': 'RESOLVED',
-#   'winning_outcome_id': id
-# }
 
-#requests.post(f"https://id.twitch.tv/oauth2/revoke?client_id={CLIENT_ID}&token={ACCESS_TOKEN}")
 load_dotenv()
 
 client_id = os.environ['CLIENT_ID']
@@ -113,10 +105,3 @@ access_token = os.environ['ACCESS_TOKEN']
 predictions = Predictions(client_id, access_token)
 
 predictions.run(True)
-
-# prediction_obj = create_prediction(create_body, headers)
-# prediction_id = prediction_obj['id']
-# outcome_ids = prediction_obj['outcome_ids']
-# time.sleep(150)
-
-# end_prediction(prediction_id, 'RESOLVED', outcome_ids[0], headers)
