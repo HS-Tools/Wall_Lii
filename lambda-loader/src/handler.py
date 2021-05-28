@@ -8,7 +8,7 @@ def add_leaderboards_to_db(database, *args):
     tup = api.getLeaderboardSnapshot(*args)
     snapshot = tup[0]
 
-    handlePredictions(database, snapshot, 'dog', 'US')
+    #handlePredictions(database, snapshot, 'lii', 'US')
 
     for region in snapshot.keys():
         database.put_items(region, snapshot[region])
