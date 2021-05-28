@@ -97,11 +97,11 @@ class Predictions:
     # Start a new prediction
     self.create_prediction()
 
-load_dotenv()
+# load_dotenv()
 
-client_id = os.environ['CLIENT_ID']
-access_token = os.environ['ACCESS_TOKEN']
+# client_id = os.environ['CLIENT_ID']
+# access_token = os.environ['ACCESS_TOKEN']
 
-predictions = Predictions(client_id, access_token)
+# predictions = Predictions(client_id, access_token)
 
 # predictions.run(True)
