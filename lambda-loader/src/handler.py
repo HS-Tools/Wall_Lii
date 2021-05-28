@@ -17,17 +17,17 @@ def handlePredictions(database, snapshot, name, region):
     client_id = os.environ['CLIENT_ID']
     access_token = os.environ['ACCESS_TOKEN']
 
-    predictions = Predictions(client_id, access_token)
+    predicter = Predictions(client_id, access_token)
 
     # Automatic prediction module
     lii_rating = database.get_item(region, name)['Ratings'][-1]
     
     # Rating gain
     if int(lii_rating) > int(snapshot[region][name]['rating']):
-        predictions.run(True)
+        predicter.run(True)
     # Rating loss
     if int(lii_rating) < int(snapshot[region][name]['rating']):
-        predictions.run(False)
+        predicter.run(False)
 
 def handler(event, context):
     load_dotenv()
