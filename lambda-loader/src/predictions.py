@@ -104,4 +104,4 @@ access_token = os.environ['ACCESS_TOKEN']
 
 predictions = Predictions(client_id, access_token)
 
-predictions.run(True)
+# predictions.run(True)
