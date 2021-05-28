@@ -20,7 +20,7 @@ def handlePredictions(database, snapshot, name, region):
     if int(lii_rating) > int(snapshot[region][name]['rating']):
         predictions.run(True)
     # Rating loss
-    if int(lii_rating) > int(snapshot[region][name]['rating']):
+    if int(lii_rating) < int(snapshot[region][name]['rating']):
         predictions.run(False)
 
 def handler(event, context):
