@@ -39,7 +39,7 @@ def handlePredictions(database, snapshot, name, region):
         if int(snapshot[region][name]['rating'] < lii_rating):
             predicter.run(False)
     except:
-        print(f"Failed to get {name}'s data from snapshot or database, probably because they are not on leaderboard")
+        print(f"Failed to get {name}'s data from snapshot or database from {region}, probably because they are not on leaderboard")
 
 def handler(event, context):
     load_dotenv()
