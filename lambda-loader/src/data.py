@@ -59,7 +59,7 @@ class RankingDatabaseClient:
             BillingMode='PROVISIONED',
         )
 
-    def pasre_time(self, time_str):
+    def parse_time(self, time_str):
         # the -3 converts from nanoseconds to microseconds which the datetime class can handle
         time = datetime.strptime(time_str[:-3], '%Y-%m-%d %H:%M:%S.%f')
         return int(time.timestamp())
@@ -70,7 +70,7 @@ class RankingDatabaseClient:
             region_name:region,
             'Time': time,
             rank_name: -1,
-            rating_name: [],
+            rating_name: [-1],
         }
         self.table.put_item(Item=item)
 
@@ -191,4 +191,3 @@ class RankingDatabaseClient:
         midnight_as_epoch = int(midnight_with_tzinfo.timestamp())
 
         return midnight_as_epoch + 86400
-

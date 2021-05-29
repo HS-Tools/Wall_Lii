@@ -82,7 +82,7 @@ class testDataPutItems(unittest.TestCase):
             self.assertEqual(player['rating'], item['Ratings'][-1] )
 
     def testPutTime(self):
-        time = self.database.pasre_time(self.tpl[1]['US'])
+        time = self.database.parse_time(self.tpl[1]['US'])
         self.database.put_time('US', time)
         self.assertEqual(1608095023, self.database.get_time('US'))
 
