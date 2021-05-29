@@ -13,8 +13,8 @@ def add_leaderboards_to_db(database):
         timeLast = database.get_time(region)
         timeCurrent = database.parse_time(lastUpdated[region])
         if timeCurrent >= timeLast: ## allow equal time for easy testing
-            if (region == 'EU'):
-                handlePredictions(database, snapshot, 'superjj', 'EU')
+            if (region == 'US'):
+                handlePredictions(database, snapshot, 'lii', 'US')
 
             database.put_time(region, timeCurrent)
             database.put_items(region, snapshot[region])
