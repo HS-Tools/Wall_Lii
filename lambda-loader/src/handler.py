@@ -7,8 +7,9 @@ import os
 def add_leaderboards_to_db(database, *args):
     tup = api.getLeaderboardSnapshot(*args)
     snapshot = tup[0]
+    lastUpdated = tup[1]
 
-    handlePredictions(database, snapshot, 'lii', 'US')
+    # handlePredictions(database, snapshot, 'lii', 'US')
 
     for region in snapshot.keys():
         timeLast = database.get_time(region)
@@ -37,5 +38,5 @@ def handler(event, context):
     load_dotenv()
     
     database = data.RankingDatabaseClient()
-    add_leaderboards_to_db(database)
+    add_leaderboards_to_db(database, verbose=False)
 
