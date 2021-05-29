@@ -180,15 +180,16 @@ class LeaderBoardBot:
         climbers = []
 
         for item in items:
-            obj = {
-                'Tag': item['PlayerName'],
-                'Region': item['Region'],
-                'Start': item['Ratings'][0],
-                'End': item['Ratings'][-1],
-                'Change': int(item['Ratings'][-1] - item['Ratings'][0])
-            }
+            if len(item['Ratings']) > 0:
+                obj = {
+                    'Tag': item['PlayerName'],
+                    'Region': item['Region'],
+                    'Start': item['Ratings'][0],
+                    'End': item['Ratings'][-1],
+                    'Change': int(item['Ratings'][-1] - item['Ratings'][0])
+                }
 
-            climbers.append(obj)
+                climbers.append(obj)
 
         climbers.sort(key=lambda x: x['Change'], reverse=highest)
 
@@ -230,20 +231,21 @@ class LeaderBoardBot:
         highest = []
 
         for item in items:
-            ratings = item['Ratings']
-            self.removeDuplicateGames(ratings)
+            if len(item['Ratings']) > 0:
+                ratings = item['Ratings']
+                self.removeDuplicateGames(ratings)
 
-            obj = {
-                'Tag': item['PlayerName'],
-                'Region': item['Region'],
-                'Start': item['Ratings'][0],
-                'End': item['Ratings'][-1],
-                'Gamecount': len(ratings),
-                'Change': int(item['Ratings'][-1] - item['Ratings'][0])
-            }
+                obj = {
+                    'Tag': item['PlayerName'],
+                    'Region': item['Region'],
+                    'Start': item['Ratings'][0],
+                    'End': item['Ratings'][-1],
+                    'Gamecount': len(ratings),
+                    'Change': int(item['Ratings'][-1] - item['Ratings'][0])
+                }
 
-            if len(ratings) > 1:
-                highest.append(obj)
+                if len(ratings) > 1:
+                    highest.append(obj)
 
         highest.sort(key=lambda x: x['End'], reverse=True)
 
