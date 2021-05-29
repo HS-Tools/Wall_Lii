@@ -9,12 +9,15 @@ def add_leaderboards_to_db(database):
     snapshot = tup[0]
     lastUpdated = tup[1]
 
+    predictionPlayerName = 'lii'
+    predictionRegions = ['US', 'EU']
+
     for region in snapshot.keys():
         timeLast = database.get_time(region)
         timeCurrent = database.parse_time(lastUpdated[region])
         if timeCurrent >= timeLast: ## allow equal time for easy testing
-            if (region == 'US'):
-                handlePredictions(database, snapshot, 'lii', 'US')
+            if (region in predictionRegions):
+                handlePredictions(database, snapshot, predictionPlayerName, region)
 
             database.put_time(region, timeCurrent)
             database.put_items(region, snapshot[region])
@@ -25,15 +28,18 @@ def handlePredictions(database, snapshot, name, region):
 
     predicter = Predictions(client_id, access_token)
 
-    # Automatic prediction module
-    lii_rating = database.get_item(region, name)['Ratings'][-1]
-    
-    # Rating gain
-    if int(snapshot[region][name]['rating'] > lii_rating):
-        predicter.run(True)
-    # Rating loss
-    if int(snapshot[region][name]['rating'] < lii_rating):
-        predicter.run(False)
+    try:
+        # Automatic prediction module
+        lii_rating = database.get_item(region, name)['Ratings'][-1]
+        
+        # Rating gain
+        if int(snapshot[region][name]['rating'] > lii_rating):
+            predicter.run(True)
+        # Rating loss
+        if int(snapshot[region][name]['rating'] < lii_rating):
+            predicter.run(False)
+    except:
+        print(f"Failed to get {name}'s data from snapshot or database, probably because they are not on leaderboard")
 
 def handler(event, context):
     load_dotenv()
