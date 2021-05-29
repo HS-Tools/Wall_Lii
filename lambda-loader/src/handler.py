@@ -29,10 +29,10 @@ def handlePredictions(database, snapshot, name, region):
     lii_rating = database.get_item(region, name)['Ratings'][-1]
     
     # Rating gain
-    if int(lii_rating) > int(snapshot[region][name]['rating']):
+    if int(snapshot[region][name]['rating'] > lii_rating):
         predicter.run(True)
     # Rating loss
-    if int(lii_rating) < int(snapshot[region][name]['rating']):
+    if int(snapshot[region][name]['rating'] < lii_rating):
         predicter.run(False)
 
 def handler(event, context):
