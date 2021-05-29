@@ -4,8 +4,8 @@ from predictions import Predictions
 from dotenv import load_dotenv
 import os
 
-def add_leaderboards_to_db(database, *args):
-    tup = api.getLeaderboardSnapshot(*args)
+def add_leaderboards_to_db(database):
+    tup = api.getLeaderboardSnapshot(verbose=False)
     snapshot = tup[0]
     lastUpdated = tup[1]
 
@@ -38,5 +38,5 @@ def handler(event, context):
     load_dotenv()
     
     database = data.RankingDatabaseClient()
-    add_leaderboards_to_db(database, verbose=False)
+    add_leaderboards_to_db(database)
 
