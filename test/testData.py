@@ -48,7 +48,9 @@ class testDataPutItems(unittest.TestCase):
         with open('files/s3-05-23-21-0150.json') as f:
             json1 = f.read()
         tlp = parseSnapshot(json1, False)
-        self.database.put_items('US', tlp[0])
+        numItems = self.database.put_items('US', tlp[0])
+        self.assertEqual(200, numItems)
+
         for key in tlp[0].keys():
             item = self.database.get_item('US', key)
             player =  tlp[0][key]
@@ -64,10 +66,12 @@ class testDataPutItems(unittest.TestCase):
             json2 = f.read()
 
         tlp = parseSnapshot(json1, False)
-        self.database.put_items('US', tlp[0])
+        numItems = self.database.put_items('US', tlp[0])
+        self.assertEqual(200, numItems)
 
         tlp = parseSnapshot(json2, False)
-        self.database.put_items('US', tlp[0])
+        numItems = self.database.put_items('US', tlp[0])
+        self.assertEqual(120, numItems)
 
         for key in tlp[0].keys():
             item = self.database.get_item('US', key)
@@ -77,70 +81,48 @@ class testDataPutItems(unittest.TestCase):
             self.assertEqual(player['rank'], item['Rank'] )
             self.assertEqual(player['rating'], item['Ratings'][-1] )
 
-    # def testClearPutItems1(self):
-    #     self.database.put_items('US', self.players)
-    #     self.database.put_items('US', { 'vaguerabbit':{'rank': 1, 'rating': 22483}})
+    def testPutTime(self):
+        time = self.database.parse_time(self.tpl[1]['US'])
+        self.database.put_time('US', time)
+        self.assertEqual(1608095023, self.database.get_time('US'))
 
-    #     item = self.database.get_item('US', 'vaguerabbit')
-    #     self.assertEqual('vaguerabbit', item['PlayerName'] )
-    #     self.assertEqual(1, item['Rank'] )
-    #     self.assertEqual(22483, item['Ratings'][0] )
+    def testClearPutItems(self):
+        self.database.put_items('US', self.players)
+        self.database.put_items('US', { 'vaguerabbit':{'rank': 1, 'rating': 22483}})
 
-    #     item = self.database.get_item('US', 'ponpata07')
-    #     self.assertEqual('ponpata07', item['PlayerName'] )
-    #     self.assertEqual(-1, item['Rank'] )
-    #     self.assertEqual(13626, item['Ratings'][-1] )
+        item = self.database.get_item('US', 'vaguerabbit')
+        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        self.assertEqual(1, item['Rank'] )
+        self.assertEqual(22483, item['Ratings'][0] )
 
-    # def testClearPutItemSeason1(self):
-    #     self.database.put_items('US', self.players)
-    #     item = self.database.get_item('US', 'vaguerabbit')
-    #     self.assertEqual('vaguerabbit', item['PlayerName'] )
-    #     self.assertEqual(1, item['Rank'] )
-    #     self.assertEqual(22483, item['Ratings'][0] )
+        item = self.database.get_item('US', 'ponpata07')
+        self.assertEqual('ponpata07', item['PlayerName'] )
+        self.assertEqual(-1, item['Rank'] )
+        self.assertEqual(13626, item['Ratings'][-1] )
 
-    #     item = self.database.get_item('US', 'ponpata07')
-    #     self.assertEqual('ponpata07', item['PlayerName'] )
-    #     self.assertEqual(51, item['Rank'] )
-    #     self.assertEqual(13626, item['Ratings'][-1] )
+    def testClearPutItemSeason1(self):
+        self.database.put_items('US', self.players)
+        item = self.database.get_item('US', 'vaguerabbit')
+        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        self.assertEqual(1, item['Rank'] )
+        self.assertEqual(22483, item['Ratings'][0] )
 
-    #     add_leaderboards_to_db(self.database, ['US'],'BG',0, False)
+        item = self.database.get_item('US', 'ponpata07')
+        self.assertEqual('ponpata07', item['PlayerName'] )
+        self.assertEqual(51, item['Rank'] )
+        self.assertEqual(13626, item['Ratings'][-1] )
 
-    #     item = self.database.get_item('US', 'vaguerabbit')
-    #     self.assertEqual('vaguerabbit', item['PlayerName'] )
-    #     self.assertEqual(-1, item['Rank'] )
-    #     self.assertEqual(22483, item['Ratings'][0] )
+        add_leaderboards_to_db(self.database, ['US'],'BG',0, False)
 
-    #     item = self.database.get_item('US', 'ponpata07')
-    #     self.assertEqual('ponpata07', item['PlayerName'] )
-    #     self.assertEqual(7, item['Rank'] )
-    #     self.assertEqual(14043, item['Ratings'][-1] )
+        item = self.database.get_item('US', 'vaguerabbit')
+        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        self.assertEqual(-1, item['Rank'] )
+        self.assertEqual(22483, item['Ratings'][0] )
 
-
-    def testMidSeasonTime(self):
-        with open('files/s3-05-23-21-0150.json') as f:
-            json1 = f.read()
-        with open('files/s3-05-23-21-0209.json') as f:
-            json2 = f.read()
-
-        tlp = parseSnapshot(json1, False)
-        self.database.put_items('US', tlp[0])
-
-        tlp = parseSnapshot(json2, False)
-        self.database.put_items('US', tlp[0])
-
-        item = self.database.get_item('US', 'middnie')
-        print(item)
-
-        item = self.database.get_item('US', 'andree')
-        print(item)
-
-        item = self.database.get_item('US', 'zuka')
-        print(item)
-
-
-
-
-
+        item = self.database.get_item('US', 'ponpata07')
+        self.assertEqual('ponpata07', item['PlayerName'] )
+        self.assertEqual(7, item['Rank'] )
+        self.assertEqual(14043, item['Ratings'][-1] )
 
 
 if __name__ == '__main__':
