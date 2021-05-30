@@ -17,7 +17,7 @@ Ideally this class would be refactored to use DynamoDB's batch APIs due to the b
 '''
 class RankingDatabaseClient:
     def __init__(self, **kargs):
-        self.table_name = os.environ['TABLE_NAME'];
+        self.table_name = os.environ['TABLE_NAME']
         self.resource = boto3.resource('dynamodb', **kargs)
         self.client = boto3.client('dynamodb', **kargs)
         self.table = self.resource.Table( self.table_name )
