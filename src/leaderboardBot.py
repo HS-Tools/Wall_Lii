@@ -124,10 +124,14 @@ class LeaderBoardBot:
     def getFormattedTag(self, tag):
         tag = tag.lower()
 
-        if tag in self.alias:
-            tag = self.alias[tag]
+        checked_aliases = []
+
+        while tag in self.alias and tag not in checked_aliases:
+            checked_aliases.append(tag)
+            tag = self.alias[tag].lower()
 
         return tag
+
 
     def getDailyStatsText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
