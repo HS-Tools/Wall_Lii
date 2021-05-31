@@ -4,12 +4,13 @@ from dotenv import load_dotenv
 
 PREDICTIONS_URL = 'https://api.twitch.tv/helix/predictions'
 STREAMS_URL = 'https://api.twitch.tv/helix/streams'
-LII_TWITCH_ID = '73626243'
 
 class Predictions:
-  def __init__(self, client_id, access_token):
+  def __init__(self, channel_name, broadcaster_id, client_id, access_token):
     self.client_id = client_id
     self.access_token = access_token
+    self.channel_name = channel_name
+    self.broadcaster_id = broadcaster_id
 
     self.headers = {
       'Authorization': 'Bearer {}'.format(self.access_token),
@@ -17,8 +18,8 @@ class Predictions:
     }
 
     self.create_body = {
-      'broadcaster_id': LII_TWITCH_ID,
-      'title': 'Will lii Gain MMR?',
+      'broadcaster_id': self.broadcaster_id,
+      'title': f'Will {self.channel_name} Gain MMR?',
       'outcomes': [
         { 'title': 'YEP.' },
         { 'title': 'NOP.' }
@@ -46,7 +47,7 @@ class Predictions:
 
   def end_prediction(self, prediction_id, status, result_id):
     body = {
-      'broadcaster_id': LII_TWITCH_ID,
+      'broadcaster_id': self.broadcaster_id,
       'id': prediction_id,
       'status': status,
       'winning_outcome_id': result_id
@@ -55,8 +56,8 @@ class Predictions:
 
     print(r.text)
 
-  def check_if_live(self, channel_name='liihs'):
-    url = f"{STREAMS_URL}?user_login={channel_name}" 
+  def check_if_live(self):
+    url = f"{STREAMS_URL}?user_login={self.channel_name}" 
     r = requests.get(url=url, headers=self.headers)
 
     if len(r.json()['data']) > 0:
@@ -65,7 +66,7 @@ class Predictions:
       return False
   
   def get_current_prediction(self):
-    r = requests.get(f"{PREDICTIONS_URL}?broadcaster_id={LII_TWITCH_ID}", headers=self.headers)
+    r = requests.get(f"{PREDICTIONS_URL}?broadcaster_id={self.broadcaster_id}", headers=self.headers)
     last_prediction = r.json()['data'][0]
     status = last_prediction['status']
 
