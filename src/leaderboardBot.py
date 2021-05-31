@@ -160,7 +160,6 @@ class LeaderBoardBot:
             if len(item['Ratings']) > longestRecord:
                 longestRecord = len(item['Ratings'])
                 ratings = item['Ratings']
-                self.removeDuplicateGames(ratings)
                 region = item['Region']
 
                 emote = 'liiHappyCat' if ratings[-1] > ratings[0] else 'liiCat'
@@ -206,7 +205,6 @@ class LeaderBoardBot:
 
         for item in items:
             ratings = item['Ratings']
-            self.removeDuplicateGames(ratings)
             gameCount = len(ratings) - 1
 
             obj = {
@@ -233,7 +231,6 @@ class LeaderBoardBot:
         for item in items:
             if len(item['Ratings']) > 0:
                 ratings = item['Ratings']
-                self.removeDuplicateGames(ratings)
 
                 obj = {
                     'Tag': item['PlayerName'],
@@ -265,22 +262,6 @@ class LeaderBoardBot:
             lastRating = rating
 
         return ', '.join(deltas)
-
-    # We want to remove any patterns like: +x, -x, +x and replace it with +x
-    # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y
-    def removeDuplicateGames(self, ratings):
-        indicesToRemove = set()
-        if len(ratings) >= 3:
-            for i in range(0, len(ratings) - 2):
-                if ratings[i] == ratings[i+2]:
-                    indicesToRemove.add(i+1)
-
-        indicesToRemove = list(indicesToRemove)
-        indicesToRemove.sort()
-        indicesToRemove.reverse()
-
-        for index in indicesToRemove:
-            del ratings[index]
 
     def clearDailyTable(self):
         today_scan = self.table.scan()
