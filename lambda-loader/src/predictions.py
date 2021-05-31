@@ -96,7 +96,10 @@ class Predictions:
       print('No current prediction')
 
     # Start a new prediction
-    self.create_prediction()
+    if self.check_if_live():
+      self.create_prediction()
+    else:
+      print(f"Didn't start prediction cause {self.channel_name} isn't live")
 
 # load_dotenv()
 
