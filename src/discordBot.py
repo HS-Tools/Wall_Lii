@@ -164,11 +164,13 @@ async def test(ctx):
     losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
     highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
+    leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
 
     climbersText = '**The top 5 climbers were:** \n'
     losersText = '**The top 5 unluckiest were:** \n'
     hardcore_gamersText = '**The top 5 grinders were:** \n'
     highestText = '**The top 5 highest rated active players were:** \n'
+    threshholdText = '**The minimum rating to be on the leaderboards was: ** \n'
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
@@ -182,7 +184,10 @@ async def test(ctx):
     for index, highest in enumerate(highest_active):
         highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
 
-    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText
+    for region, rating in leaderboard_threshold.items():
+        threshholdText += f"{rating} in the {region} region \n"
+
+    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText + '\n' + threshholdText
 
     embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
 
