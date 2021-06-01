@@ -72,7 +72,7 @@ class Predictions:
 
     print(last_prediction)
 
-    if status == 'ACTIVE' or 'LOCKED':
+    if status == 'ACTIVE' or status == 'LOCKED':
       return last_prediction
     else:
       return -1
