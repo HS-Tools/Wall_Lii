@@ -36,7 +36,8 @@ def handlePredictions(database, snapshot, channel_name, name, region):
         if int(snapshot[region][name]['rating'] < rating):
             predicter.run(False)
     except:
-        print(f"Failed to get {name}'s data from snapshot or database from {region}, probably because they are not on leaderboard")
+        pass
+        #print(f"Failed to get {name}'s data from snapshot or database from {region}, probably because they are not on leaderboard")
 
 def handler(event, context):
     load_dotenv()
