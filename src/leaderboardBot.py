@@ -77,7 +77,23 @@ class LeaderBoardBot:
         response = table.scan(
             FilterExpression=Attr('Rank').eq(rank),
         )
+        print(response)
         return [it for it in response['Items'] if it['Region'] == region]
+
+    def getLeaderboardThreshold(self, rank=200):
+        table = self.table
+        response = table.scan(
+            FilterExpression=Attr('Rank').eq(rank),
+        )
+
+        dict = {}
+
+        for item in response['Items']:
+            region = item['Region']
+            rating = item['Ratings'][-1]
+            dict[region] = rating
+        
+        return dict
 
     def getRankText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
