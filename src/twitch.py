@@ -1,60 +1,18 @@
 import os
 import threading
+import aiocron
+import asyncio
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import parseRegion, isRegion
 from dotenv import load_dotenv
 
-channels = {'iamtehshadow': 'tehshadow',
-'dominickstarcraft': 'Dom2805',
-'rolferolferolfe': 'rolfe',
-'jeeeeeeef': 'jeef',
-'xixo': 'xixo',
-'terry_tsang_gaming': 'terrytsang',
-'cursed_hs': 'cursed',
-'awedragon': 'awedragon',
-'socktastic': 'socktastic',
-'logicandanger': 'logicdanger',
-'liihs': 'lii',
-'saphirexx': 'vaguerabbit',
-'sunglitters': 'sunglitters',
-'sevel07': 'sevel',
-'endozoa': 'endozoa',
-'ixxdeee': 'ixxdeee',
-'l0rinda': 'l0rinda',
-'honinbo7': 'honinbo7',
-'sassyrutabaga1': 'rutabaga',
-'tylerootd': 'tyler',
-'hapabear': 'hapabear',
-'nicholena': 'hiddensquid',
-'ninaisnoob': 'ninaisnoob',
-'pockyplays': 'pocky',
-'blirby': 'blirby',
-'mrincrediblehs': 'mrincredible',
-'vendettahsb': 'vendetta',
-'jkirek_': 'jkirek',
-'deathitselfhs': 'deathitself',
-'livvylive': 'livvy',
-'duhbbleyou': 'theletterw',
-'purple_hs': 'purple',
-'hmcnation': 'hurrymycurry',
-'wumbostyle': 'wumbostyle',
-'bradwong_live': 'bradwong',
-'bofur_hs': 'bofur',
-'malisarhs': 'malisar',
-'mcmariners': 'mcmariners',
-'swissguy93': 'swissguy',
-'grinninggoat': 'merps',
-'zorgo_hs': 'zorg',
-'kita_731': 'kita',
-'fasteddietwitch': 'fasteddie',
-'benice92': 'benice',
-'runfree_aa': 'runfreeaa',
-'glory_to_god': 'glorytogod',
-'sunbaconrelaxer': 'victor',
-'slysssa': 'slysssa'}
-
 load_dotenv()
+
+leaderboardBot = LeaderBoardBot()
+
+# Initial setup
+channels = leaderboardBot.getChannels()
 
 twitchBot = commands.Bot(
     irc_token=os.environ['TMI_TOKEN'],
@@ -63,7 +21,6 @@ twitchBot = commands.Bot(
     prefix=os.environ['BOT_PREFIX'],
     initial_channels=channels.keys()
 )
-
 
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
@@ -115,13 +72,23 @@ async def wall_lii(ctx):
 async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name].')
 
-
 if __name__ == '__main__':
-    leaderboardBot = LeaderBoardBot()
+
+    @aiocron.crontab('* * * * *') ## Every minute check for new channels
+    async def updateChannels():
+        global channels
+
+        new_channels = leaderboardBot.getNewChannels()
+        channels = leaderboardBot.getChannels()
+        await twitchBot.join_channels(list(new_channels.keys()))
+
+    @aiocron.crontab('* * * * *') ## Every minute check for new alias
+    async def updateAlias():
+        leaderboardBot.getNewAlias()
 
     twitchThread = threading.Thread(target=twitchBot.run)
     twitchThread.setDaemon(True)
     twitchThread.start()
 
     while True:
-        pass
+        asyncio.sleep(0)
