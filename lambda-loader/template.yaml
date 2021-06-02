@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Deploys a cron service to fetch Hearthstone leaderboard data every 3 minutes.
+Description: Deploys a cron service to fetch Hearthstone leaderboard data every minute.
 Resources:
   LeaderboardFetchFunction:
     Type: AWS::Serverless::Function
@@ -19,19 +19,16 @@ Resources:
         - Version: '2012-10-17'
           Statement:
           - Effect: Allow
-            Action:
-              - dynamodb:PutItem
-              - dynamodb:BatchWriteItem
-              - dynamodb:GetItem
+            Action: '*'
             Resource: !GetAtt CompositeKeyTable.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref CompositeKeyTable
       Events:
-        ThreeMinuteInvoke:
+        OneMinuteInvoke:
           Type: Schedule
           Properties:
-            Schedule: rate(3 minutes)
+            Schedule: rate(1 minute)
   YesterdayMigrationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -80,7 +77,7 @@ Resources:
       BillingMode: PROVISIONED 
       ProvisionedThroughput: # We should adjust based on usage.
         ReadCapacityUnits: 10 
-        WriteCapacityUnits: 25
+        WriteCapacityUnits: 10
       KeySchema: # Composite Key
         -
           AttributeName: "PlayerName"
@@ -105,7 +102,7 @@ Resources:
       BillingMode: PROVISIONED 
       ProvisionedThroughput: # We should adjust based on usage.
         ReadCapacityUnits: 10 
-        WriteCapacityUnits: 25
+        WriteCapacityUnits: 13
       KeySchema: # Composite Key
         -
           AttributeName: "PlayerName"
@@ -114,7 +111,38 @@ Resources:
           AttributeName: "Region"
           KeyType: "RANGE" # Sort Key
       TableName: yesterday-rating-record-table
-      
+  ChannelTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "ChannelName"
+          AttributeType: "S"
+      BillingMode: PROVISIONED 
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      KeySchema: # Composite Key
+        -
+          AttributeName: "ChannelName"
+          KeyType: "HASH" # Partition Key
+      TableName: channel-table
+  AliasTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "Alias"
+          AttributeType: "S"
+      BillingMode: PROVISIONED 
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      KeySchema: # Composite Key
+        -
+          AttributeName: "Alias"
+          KeyType: "HASH" # Partition Key
+      TableName: player-alias-table
       
       
     

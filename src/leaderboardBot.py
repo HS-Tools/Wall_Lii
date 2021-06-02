@@ -1,46 +1,38 @@
+from re import I
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+import dotenv
 from parseRegion import REGIONS, parseRegion, isRegion
 import threading
 import requests
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from default_alias import alias as default_alias
+from default_channels import channels as default_channels
 
-alias = {
-    'waterloo': 'waterloooooo',
-    'jeef': 'jeffispro',
-    'jeff': 'jeffispro',
-    'victor': 'twlevewinshs',
-    'sleepy': 'foreversleep',
-    'dogdog': 'dog',
-    'pockyplays': 'pocky',
-    'nina': 'ninaisnoob',
-    'liihs': 'lii',
-    'purple_hs': 'purple',
-    'deathitselfhs': 'deathitself',
-    'tylerootd': 'tyler',
-    'mrincrediblehs': 'mrincredible',
-    'sevel07': 'sevel',
-    'jubjoe': 'felix',
-    'quinnabr': 'middnie'
-}
 eggs = { # Easter eggs
     'salami': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH',
     'gomez': 'gomez is a cat, cats do not play BG',
-    420: "don't do drugs kids",
-    16969: 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
+    '420': "don't do drugs kids",
+    '16969': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
 }
 
 class LeaderBoardBot:
-    db = None
+    resource = None
     table = None
     yesterday_table = None
+    alias = {}
 
-    def __init__(self, **kargs):
-        self.db = boto3.resource('dynamodb', **kargs)
-        self.table = self.db.Table(os.environ['TABLE_NAME'])
-        self.yesterday_table = self.db.Table('yesterday-rating-record-table')
+    def __init__(self, table_name=None, **kwargs):
+        if table_name is None:
+            table_name = os.environ['TABLE_NAME']
+        self.resource = boto3.resource('dynamodb', **kwargs)
+        self.table = self.resource.Table(table_name)
+        self.yesterday_table = self.resource.Table('yesterday-rating-record-table')
+        self.alias_table = self.resource.Table('player-alias-table')
+        self.channel_table = self.resource.Table('channel-table')
+        self.updateAlias()
 
     def parseArgs(self, default, *args):
         if (len(args) == 0):
@@ -80,53 +72,36 @@ class LeaderBoardBot:
         # Looks like:
         # [{'Rank': Decimal('12'), 'TTL': Decimal('1616569200'), 'PlayerName': 'lii', 'Region': 'US', 'Ratings': [Decimal('14825')]}]
 
-    def getRankNumData(self, rank, table, region):
+    def getEntryFromRank(self, rank, region, yesterday=False):
+        table = self.yesterday_table if yesterday else self.table
         response = table.scan(
-            Select = 'ALL_ATTRIBUTES',
             FilterExpression=Attr('Rank').eq(rank),
         )
-        if 'Items' in response:
-            return response['Items']
-        return None
-
-    def getRankNumText(self, rank, region, yesterday=False):
-        if rank in eggs.keys():     ## check for easter egg
-            return eggs[rank]
-        if rank <= 0 or rank > 200:
-            return f"invalid number rank {rank}, I only track the top 200 players liiWait"
-        if region is None or not isRegion(region):
-            return f"please specify the region when searching by number. Regions are NA, EU, AP. ex: !bgrank 200 NA "
-
-        region = parseRegion(region)
-        items = self.getRankNumData(rank, self.yesterday_table if yesterday else self.table, region)
-        item = [ it for it in items if it['Region'] == region ]
-
-        if len(item) != 1:
-            return f"rank {rank} was not found liiWait"
-
-        item = item[0]
-
-        tag = item['PlayerName']
-        rating = item['Ratings'][-1]
-        return f'{tag} is rank {rank} in {region} with {rating} mmr liiHappyCat'
-
+        return [it for it in response['Items'] if it['Region'] == region]
 
     def getRankText(self, tag, region=None, yesterday=False):
-        print(tag)
-        if tag.isdigit(): ## jump to search by number
-            return self.getRankNumText(int(tag), region)
+        if tag in eggs.keys():
+            return eggs[tag]
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
-        items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
+        if tag.isdigit(): ## jump to search by number
+            tag = int(tag)
+            if tag > 200 or tag < 1:
+                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
+
+            items = self.getEntryFromRank(tag, region, yesterday)
+
+            if len(items) > 0:
+                tag = items[0]['PlayerName']
+            else:
+                return "Invalid or no region given for rank lookup"
+        else:
+            items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
 
         text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
         highestRank = 9999
-
-        # Easter eggs
-        if tag in eggs.keys():
-            text = eggs[tag]
 
         for item in items:
             if item['Rank'] < highestRank:
@@ -138,10 +113,9 @@ class LeaderBoardBot:
                     break
 
                 rating = item['Ratings'][-1]
-                time = item['LastUpdate']
 
-                if not yesterday and self.checkIfTimeIs30MinutesInThePast(time):
-                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier today liiCat'
+                if item['Rank'] < 0:
+                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier {"today" if not yesterday else "Yesterday"} liiCat'
                 else:
                     text = f'{tag} {"is" if not yesterday else "was"} rank {rank} in {region} with {rating} mmr liiHappyCat'
 
@@ -150,20 +124,31 @@ class LeaderBoardBot:
     def getFormattedTag(self, tag):
         tag = tag.lower()
 
-        if tag in alias:
-            tag = alias[tag]
+        if tag in self.alias:
+            tag = self.alias[tag]
 
         return tag
 
     def getDailyStatsText(self, tag, region=None, yesterday=False):
+        if tag in eggs.keys():
+            return eggs[tag]
 
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
 
-        if not yesterday:
-            items = self.getPlayerData(tag, self.table, region)
+        if tag.isdigit(): ## jump to search by number
+            tag = int(tag)
+            if tag > 200 or tag < 1:
+                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
+            items = self.getEntryFromRank(tag, region, yesterday)
+
+            if len(items) > 0:
+                tag = items[0]['PlayerName']
+            else:
+                return "Invalid or no region given for rank lookup"
         else:
-            items = self.getPlayerData(tag, self.yesterday_table, region)
+            items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
+
         longestRecord = 1
 
         if len(items) == 0:
@@ -178,8 +163,10 @@ class LeaderBoardBot:
                 self.removeDuplicateGames(ratings)
                 region = item['Region']
 
+                emote = 'liiHappyCat' if ratings[-1] > ratings[0] else 'liiCat'
+
                 text = f"{tag} started {'today' if not yesterday else 'yesterday'} at {ratings[0]} in {region} and {'is now' if not yesterday else 'ended at' } \
-                {ratings[-1]} with {len(ratings)-1} games played. Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
+                {ratings[-1]} with {len(ratings)-1} games played. {emote} Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
 
         return text
 
@@ -217,9 +204,9 @@ class LeaderBoardBot:
         gamers = []
 
         for item in items:
-            games = item['Ratings']
-            self.removeDuplicateGames(games)
-            gameCount = len(games)
+            ratings = item['Ratings']
+            self.removeDuplicateGames(ratings)
+            gameCount = len(ratings) - 1
 
             obj = {
                 'Tag': item['PlayerName'],
@@ -277,18 +264,6 @@ class LeaderBoardBot:
 
         return ', '.join(deltas)
 
-    def checkIfTimeIs30MinutesInThePast(self, time):
-        currentTime = datetime.utcnow()
-        try:
-            time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f')
-        except:
-            return False
-
-        delta = (currentTime - time)
-        minuteDifference = delta.total_seconds() / 60
-
-        return minuteDifference > 30
-
     # We want to remove any patterns like: +x, -x, +x and replace it with +x
     # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y
     def removeDuplicateGames(self, ratings):
@@ -318,3 +293,70 @@ class LeaderBoardBot:
                     }
                 )
 
+    def updateAlias(self):
+        response = self.alias_table.scan()
+        self.alias = {it['Alias']:it['PlayerName'] for it in response['Items']}
+
+    def getChannels(self):
+        response = self.channel_table.scan()
+        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
+
+    def addChannel(self, channel, playerName, new=True):
+        item = {
+            'ChannelName': channel,
+            'PlayerName': playerName,
+        }
+        if new:
+            item['New'] = new
+
+        self.addAlias(channel, playerName)
+        
+        self.channel_table.put_item(Item=item)
+
+    def addAlias(self, alias, playerName, new=True):
+        item = {
+            'Alias': alias,
+            'PlayerName': playerName,
+        }
+
+        self.alias[alias] = playerName
+
+        if new:
+            item['New'] = new
+        self.alias_table.put_item(Item=item)
+
+    def deleteAlias(self, alias):
+        key = {
+            'Alias': alias,
+        }
+        self.alias_table.delete_item(Key=key)
+
+    def getNewChannels(self):
+        response = self.channel_table.scan(
+            FilterExpression=Attr('New').eq(True),
+        )
+        with self.channel_table.batch_writer() as batch:
+            for item in response['Items']:
+                item.pop('New', None)
+                batch.put_item(item)
+        return {it['ChannelName']:it['PlayerName'] for it in response['Items']}
+
+    def getNewAlias(self):
+        response = self.alias_table.scan(
+            FilterExpression=Attr('New').eq(True),
+        )
+        with self.alias_table.batch_writer() as batch:
+            for item in response['Items']:
+                item.pop('New', None)
+                batch.put_item(item)
+
+                self.alias[item['Alias']] = item['PlayerName']
+        return self.alias
+
+    def addDefaultAlias(self):
+        for key in default_alias:
+            self.addAlias(key, default_alias[key], False)
+
+    def addChannels(self):
+        for key in default_channels:
+            self.addChannel(key, default_channels[key], False)

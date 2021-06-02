@@ -3,11 +3,17 @@ import os
 sys.path.append("../src")
 sys.path.append("../lambda-loader/src")
 import data
-from api import getLeaderboardSnapshot
+from handler import add_leaderboards_to_db
 from leaderboardBot import LeaderBoardBot
+from test import setup_production_environment
+from boto3.dynamodb.conditions import Key, Attr
 import unittest
+from default_alias import alias as default_alias
+from default_channels import channels as default_channels
 
-class apiLeaaderboard(unittest.TestCase):
+jeef = 'not-another-freaking-jeeeeeeef-alias'
+
+class testLeaderboardGet(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls, fill server with data from season 2 which shouldn't change
@@ -16,24 +22,34 @@ class apiLeaaderboard(unittest.TestCase):
             url = os.environ['ENDPOINT_URL']
 
         self.database = data.RankingDatabaseClient( endpoint_url=url )
-        try:
-            print(f"trying to create a table")
-            self.database.create_table()
-            print(f"table made, filling table")
-            snapshot, lastUpdated, season = getLeaderboardSnapshot(['US'],'BG',1, verbose=True)
-            for region in snapshot.keys():
-                for player in snapshot[region].keys():
-                    rating = snapshot[region][player]['rating']
-                    rank = snapshot[region][player]['rank']
-                    player = player.decode('utf-8')
-                    self.database.put_item(region=region, player=player,rating=rating,rank=rank, lastUpdate=lastUpdated[region])
+        setup_production_environment(self.database, url)
+        tables = [table.name for table in self.database.resource.tables.all()]
 
-        except Exception as e:
-            print('exception',e)
-            print("table was not created, assume it exists")
+        if 'testLeaderboardBot' in tables:
+            self.database.client.delete_table(TableName='testLeaderboardBot')
 
-        print(f"creating bot")
-        self.bot = LeaderBoardBot( endpoint_url=url )
+        self.database.create_table('testLeaderboardBot')
+        add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
+
+        self.bot = LeaderBoardBot( table_name='testLeaderboardBot', endpoint_url=url )
+        self.bot.addDefaultAlias()
+        self.bot.updateAlias()
+
+        self.img = self.database.table.scan()
+
+    @classmethod
+    def tearDownClass(self):
+        self.database.client.delete_table(TableName = 'testLeaderboardBot')
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        if jeef in self.bot.alias:
+            self.bot.alias_table.delete_item( Key={'Alias':jeef} )
+            self.bot.updateAlias()
+        if jeef in self.bot.getChannels():
+            self.bot.channel_table.delete_item( Key={'ChannelName':jeef} )
 
     def testGetPlayerData(self):
         items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
@@ -44,7 +60,7 @@ class apiLeaaderboard(unittest.TestCase):
         self.assertEqual(22483, item['Ratings'][0] )
 
     def testGetRankNumData(self):
-        items = self.bot.getRankNumData(1, self.bot.table, 'US' )
+        items = self.bot.getEntryFromRank(1, 'US' )
         self.assertEqual(1, len(items))
         item = items[0]
         self.assertEqual('vaguerabbit', item['PlayerName'] )
@@ -52,19 +68,19 @@ class apiLeaaderboard(unittest.TestCase):
         self.assertEqual(22483, item['Ratings'][0] )
 
     def testGetRankNumText(self):
-        string = self.bot.getRankNumText(1,'US')
+        string = self.bot.getRankText('1','US')
         self.assertIn('vaguerabbit ', string)
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
     def testGetRankNumTextAlt(self):
-        string = self.bot.getRankNumText(2,'NA')
+        string = self.bot.getRankText('2','NA')
         self.assertIn('testmmr ', string)
         self.assertIn(' 22019 ', string)
         self.assertIn(' 2 ', string)
 
     def testGetRankNumEgg(self):
-        string = self.bot.getRankNumText(420,'NA')
+        string = self.bot.getRankText('420','NA')
         self.assertEqual("don't do drugs kids", string)
 
     def testGetRankText(self):
@@ -110,6 +126,58 @@ class apiLeaaderboard(unittest.TestCase):
         args = self.bot.parseArgs('lii', 'quinnabr', 'EU', )
         self.assertEqual('quinnabr', args[0])
         self.assertEqual('EU', args[1])
+
+    def testAliasJeef(self):
+        string = self.bot.getRankText('jeef')
+        self.assertIn('jeffispro ', string)
+        self.assertIn(' 16033 ', string)
+        self.assertIn(' 6 ', string)
+
+    def testAliasJeff(self):
+        string = self.bot.getRankText('jeff')
+        self.assertIn('jeffispro ', string)
+        self.assertIn(' 16033 ', string)
+        self.assertIn(' 6 ', string)
+
+    def testAlias_jeffispro(self):
+        string = self.bot.getRankText('jeffispro')
+        self.assertIn('jeffispro ', string)
+        self.assertIn(' 16033 ', string)
+        self.assertIn(' 6 ', string)
+
+    def testAlias_add_jeeeeeeef(self):
+        self.assertFalse( jeef in self.bot.alias.keys() )
+        self.bot.addAlias(jeef, 'jeffispro')
+        new = self.bot.getNewAlias()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1+len(default_alias), len(new))
+
+    def testAlias_add_jeeeeeeef2(self):
+        self.assertFalse( jeef in self.bot.alias.keys() )
+        self.bot.addAlias(jeef, 'jeffispro')
+        new = self.bot.getNewAlias()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1+len(default_alias), len(new))
+        new = self.bot.getNewAlias()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1+len(default_alias), len(new))
+
+    def testChannel_add_jeeeeeeef(self):
+        self.assertFalse( jeef in self.bot.getChannels() )
+        self.bot.addChannel(jeef, 'jeffispro')
+        new = self.bot.getNewChannels()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1, len(new))
+
+
+    def testChannel_add_jeeeeeeef2(self):
+        self.assertFalse( jeef in self.bot.getChannels() )
+        self.bot.addChannel(jeef, 'jeffispro')
+        new = self.bot.getNewChannels()
+        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual(1, len(new))
+        new = self.bot.getNewChannels()
+        self.assertEqual(0, len(new))
 
 
 

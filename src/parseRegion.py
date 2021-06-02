@@ -16,7 +16,6 @@ def parseRegion(region):
         return region
 
 def isRegion(region):
-    print(region)
     if region == None:
         return True
 

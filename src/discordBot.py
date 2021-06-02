@@ -1,6 +1,7 @@
 import threading
 import os
 import aiocron
+import asyncio
 import discord
 from datetime import datetime
 from pytz import timezone, utc
@@ -11,6 +12,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 bot = commands.Bot(command_prefix='!')
+
+channelIds = {
+    'wall_lii': 811468284394209300,
+    'wall-lii-requests': 846867129834930207,
+    'test': 730782280674443327,
+}
+
+liiDiscordId = 204806965585510400
 
 emotes = [
     'liiHappyCat',
@@ -34,6 +43,12 @@ async def call(ctx, func, name, *args):
     if len(args) >= 2:
         if not isRegion(args[1]):
             response = "Invalid region provided.\n" + response
+
+    message = ctx.message
+    try:
+        await message.delete()
+    except:
+        pass
     await ctx.send(embed = getEmbedObject(response, args[0], name))
 
 @bot.command()
@@ -55,6 +70,60 @@ async def yesterday(ctx, *args):
 @bot.command()
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
+
+@bot.command()
+async def addalias(ctx, *args):
+    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+
+        if len(args) < 2:
+            await ctx.send('The command must have two words. !addalias [alias] [name]')
+        else:
+            alias = args[0].lower()
+            name = args[1].lower()
+
+            leaderboardBot.addAlias(alias, name)
+            leaderboardBot.updateAlias()
+            if alias in leaderboardBot.alias.keys() and leaderboardBot.alias[alias] == name:
+                await ctx.send(f'{alias} is now an alias for {name}')
+            else:
+                await ctx.send(f'failed to set alias {alias} to name {name}')
+
+@bot.command()
+async def deletealias(ctx, *args):
+    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+
+        if ctx.message.author.id == liiDiscordId:
+            if len(args) < 1:
+                await ctx.send('The command must have one word. !deletealias [alias]')
+            else:
+                alias = args[0].lower()
+
+                leaderboardBot.deleteAlias(alias)
+                leaderboardBot.updateAlias()
+                
+                await ctx.send(f'{alias} alias was deleted')
+        else:
+            await ctx.send('Only Lii can delete aliases')
+
+@bot.command()
+async def addchannel(ctx, *args):
+    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+        
+        if len(args) < 2:
+            await ctx.send('The command must have two words. !addchannel [channelName] [playerName]')
+        else:
+            channelName = args[0].lower()
+            playerName = args[1].lower()
+
+            leaderboardBot.addChannel(channelName, playerName)
+
+            await ctx.send(f'{channelName} will have wall_lii added to it with the default name of {playerName}')
 
 # PI is on UTC time it seems
 @aiocron.crontab('59 6 * * *')
@@ -85,12 +154,12 @@ async def sendDailyRecap():
 
     embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
 
-    dedicated_channel = bot.get_channel(811468284394209300)
+    dedicated_channel = bot.get_channel(channelIds['wall_lii'])
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
 @bot.command()
-async def test1(ctx):
+async def test(ctx):
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
@@ -117,7 +186,7 @@ async def test1(ctx):
 
     embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
 
-    dedicated_channel = bot.get_channel(730782280674443327)
+    dedicated_channel = bot.get_channel(channelIds['test'])
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
@@ -130,7 +199,8 @@ def get_pst_time():
 
 if __name__ == '__main__':
     leaderboardBot = LeaderBoardBot()
+
     bot.run(os.environ['DISCORD_TOKEN'])
 
     while True:
-        pass
+        asyncio.sleep(0) # should save power
