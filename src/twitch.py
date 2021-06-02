@@ -60,6 +60,10 @@ async def getYesterdayStats(ctx):
     args.append(True)   ## send the yesterday value to the function
     await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
+@twitchBot.command(name='bgdailii')
+async def bgdailii(ctx):
+    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', 'lii')
+
 @twitchBot.command(name='goodbot')
 async def goodBot(ctx):
     await ctx.send('MrDestructoid Just doing my job MrDestructoid')

@@ -68,6 +68,10 @@ async def yesterday(ctx, *args):
     await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
 
 @bot.command()
+async def bgdailii(ctx):
+    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', 'lii')
+
+@bot.command()
 async def goodbot(ctx):
     await ctx.send(':robot: Just doing my job :robot:')
 
