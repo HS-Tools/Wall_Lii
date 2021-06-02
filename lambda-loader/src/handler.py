@@ -13,17 +13,23 @@ def add_leaderboards_to_db(database):
         timeLast = database.get_time(region)
         timeCurrent = database.parse_time(lastUpdated[region])
         if timeCurrent >= timeLast: ## allow equal time for easy testing
-            handlePredictions(database, snapshot, 'liihs', 'lii', region)
+            client_id = os.environ['CLIENT_ID']
+            access_token = os.environ['ACCESS_TOKEN']
+            twitch_id = os.environ['LII_TWITCH_ID']
+
+            victor_client_id = os.environ['VICTOR_CLIENT_ID']
+            victor_access_token = os.environ['VICTOR_ACCESS_TOKEN']
+            victor_channel_id = os.environ['VICTOR_TWITCH_ID']
+
+            handlePredictions(database, snapshot, 'liihs', 'lii', region, client_id, access_token, twitch_id)
+            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'diyingli', region, victor_client_id, victor_access_token, victor_channel_id)
+            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'twlevewinshs', region, victor_client_id, victor_access_token, victor_channel_id)
 
             database.put_time(region, timeCurrent)
             database.put_items(region, snapshot[region])
 
-def handlePredictions(database, snapshot, channel_name, name, region):
-    client_id = os.environ['CLIENT_ID']
-    access_token = os.environ['ACCESS_TOKEN']
-    lii_twitch_id = os.environ['LII_TWITCH_ID']
-
-    predicter = Predictions(channel_name, lii_twitch_id, client_id, access_token)
+def handlePredictions(database, snapshot, channel_name, name, region, client_id, access_token, twitch_id):
+    predicter = Predictions(channel_name, twitch_id, client_id, access_token)
 
     try:
         # Automatic prediction module
