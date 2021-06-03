@@ -77,6 +77,17 @@ class Predictions:
     else:
       return -1
 
+  def start_ad(self, length=30):
+    AD_URL = 'https://api.twitch.tv/helix/channels/commercial'
+    data = {
+      'broadcaster_id': self.broadcaster_id,
+      'length': length
+    }
+
+    r = requests.post(url=AD_URL, headers=self.headers ,json=data)
+
+    print(r.text)
+
   def run(self, isGain):
     current_prediction = self.get_current_prediction()
 
@@ -95,8 +106,9 @@ class Predictions:
     else:
       print('No current prediction')
 
-    # Start a new prediction
+    # Start a new prediction and run ad
     if self.check_if_live():
+      self.start_ad()
       self.create_prediction()
     else:
       print(f"Didn't start prediction cause {self.channel_name} isn't live")
