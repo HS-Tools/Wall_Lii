@@ -77,7 +77,7 @@ class Predictions:
     else:
       return -1
 
-  def start_ad(self, length=30):
+  def start_ad(self, length=60):
     AD_URL = 'https://api.twitch.tv/helix/channels/commercial'
     data = {
       'broadcaster_id': self.broadcaster_id,
