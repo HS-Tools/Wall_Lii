@@ -54,6 +54,13 @@ async def getDailyStats(ctx):
     args = parseArgs(ctx)
     await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
 
+@twitchBot.command(name='tomorrow')
+async def tomorrow(ctx):
+    args = parseArgs(ctx)
+    name = args[0]
+    print(name)
+    await ctx.send(f"{name} will be rank 1 for sure liiYep")
+
 @twitchBot.command(name='yesterday')
 async def getYesterdayStats(ctx):
     args = parseArgs(ctx)
