@@ -6,6 +6,8 @@ from datetime import datetime, date
 from datetime import time as dtime
 from pytz import timezone
 
+timeToken = 'api-last-updated-time-token-981q8u' ## is is just a unique token for storing last updated time
+
 '''
 RankingDatabaseClient provides a wrapper for interacting with DyanmoDB and Player objects therein.
 
@@ -15,7 +17,7 @@ Ideally this class would be refactored to use DynamoDB's batch APIs due to the b
 '''
 class RankingDatabaseClient:
     def __init__(self, **kargs):
-        self.table_name = os.environ['TABLE_NAME'];
+        self.table_name = os.environ['TABLE_NAME']
         self.resource = boto3.resource('dynamodb', **kargs)
         self.client = boto3.client('dynamodb', **kargs)
         self.table = self.resource.Table( self.table_name )
@@ -56,6 +58,28 @@ class RankingDatabaseClient:
             },
             BillingMode='PROVISIONED',
         )
+
+    def parse_time(self, time_str):
+        # the -3 converts from nanoseconds to microseconds which the datetime class can handle
+        time = datetime.strptime(time_str[:-3], '%Y-%m-%d %H:%M:%S.%f')
+        return int(time.timestamp())
+
+    def put_time(self, region, time, region_name="Region",player_name="PlayerName", rank_name="Rank", rating_name="Ratings"):
+        item = {
+            player_name:timeToken,
+            region_name:region,
+            'Time': time,
+            rank_name: -1,
+            rating_name: [-1],
+        }
+        self.table.put_item(Item=item)
+
+    def get_time(self, region, region_name="Region",player_name="PlayerName"):
+        response = self.table.get_item(Key={player_name:timeToken, region_name:region})
+        if 'Item' in response.keys():
+            return response['Item']['Time']
+        else:
+            return 0
 
     def default_entry(self, region, player, rank=-1, rating=1, region_name="Region",player_name="PlayerName",rating_name="Ratings", ttl_name="TTL", rank_name="Rank"):
         return {
@@ -130,7 +154,7 @@ class RankingDatabaseClient:
         with self.table.batch_writer() as batch:
             for item in items:
                 batch.put_item(Item=item)
-
+        return len(items) # return the number of items for testing
 
     '''
     This almost certainly won't work.
@@ -167,4 +191,3 @@ class RankingDatabaseClient:
         midnight_as_epoch = int(midnight_with_tzinfo.timestamp())
 
         return midnight_as_epoch + 86400
-

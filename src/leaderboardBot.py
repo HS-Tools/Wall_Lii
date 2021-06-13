@@ -77,7 +77,23 @@ class LeaderBoardBot:
         response = table.scan(
             FilterExpression=Attr('Rank').eq(rank),
         )
+        print(response)
         return [it for it in response['Items'] if it['Region'] == region]
+
+    def getLeaderboardThreshold(self, rank=200):
+        table = self.table
+        response = table.scan(
+            FilterExpression=Attr('Rank').eq(rank),
+        )
+
+        dict = {}
+
+        for item in response['Items']:
+            region = item['Region']
+            rating = item['Ratings'][-1]
+            dict[region] = rating
+        
+        return dict
 
     def getRankText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
@@ -124,10 +140,14 @@ class LeaderBoardBot:
     def getFormattedTag(self, tag):
         tag = tag.lower()
 
-        if tag in self.alias:
-            tag = self.alias[tag]
+        checked_aliases = []
+
+        while tag in self.alias and tag not in checked_aliases:
+            checked_aliases.append(tag)
+            tag = self.alias[tag].lower()
 
         return tag
+
 
     def getDailyStatsText(self, tag, region=None, yesterday=False):
         if tag in eggs.keys():
@@ -160,7 +180,6 @@ class LeaderBoardBot:
             if len(item['Ratings']) > longestRecord:
                 longestRecord = len(item['Ratings'])
                 ratings = item['Ratings']
-                self.removeDuplicateGames(ratings)
                 region = item['Region']
 
                 emote = 'liiHappyCat' if ratings[-1] > ratings[0] else 'liiCat'
@@ -180,15 +199,16 @@ class LeaderBoardBot:
         climbers = []
 
         for item in items:
-            obj = {
-                'Tag': item['PlayerName'],
-                'Region': item['Region'],
-                'Start': item['Ratings'][0],
-                'End': item['Ratings'][-1],
-                'Change': int(item['Ratings'][-1] - item['Ratings'][0])
-            }
+            if len(item['Ratings']) > 0:
+                obj = {
+                    'Tag': item['PlayerName'],
+                    'Region': item['Region'],
+                    'Start': item['Ratings'][0],
+                    'End': item['Ratings'][-1],
+                    'Change': int(item['Ratings'][-1] - item['Ratings'][0])
+                }
 
-            climbers.append(obj)
+                climbers.append(obj)
 
         climbers.sort(key=lambda x: x['Change'], reverse=highest)
 
@@ -205,7 +225,6 @@ class LeaderBoardBot:
 
         for item in items:
             ratings = item['Ratings']
-            self.removeDuplicateGames(ratings)
             gameCount = len(ratings) - 1
 
             obj = {
@@ -230,20 +249,20 @@ class LeaderBoardBot:
         highest = []
 
         for item in items:
-            ratings = item['Ratings']
-            self.removeDuplicateGames(ratings)
+            if len(item['Ratings']) > 0:
+                ratings = item['Ratings']
 
-            obj = {
-                'Tag': item['PlayerName'],
-                'Region': item['Region'],
-                'Start': item['Ratings'][0],
-                'End': item['Ratings'][-1],
-                'Gamecount': len(ratings),
-                'Change': int(item['Ratings'][-1] - item['Ratings'][0])
-            }
+                obj = {
+                    'Tag': item['PlayerName'],
+                    'Region': item['Region'],
+                    'Start': item['Ratings'][0],
+                    'End': item['Ratings'][-1],
+                    'Gamecount': len(ratings),
+                    'Change': int(item['Ratings'][-1] - item['Ratings'][0])
+                }
 
-            if len(ratings) > 1:
-                highest.append(obj)
+                if len(ratings) > 1:
+                    highest.append(obj)
 
         highest.sort(key=lambda x: x['End'], reverse=True)
 
@@ -263,22 +282,6 @@ class LeaderBoardBot:
             lastRating = rating
 
         return ', '.join(deltas)
-
-    # We want to remove any patterns like: +x, -x, +x and replace it with +x
-    # This corresponds to a rating pattern like: x, y, x, y and I need to make it look like: x, y
-    def removeDuplicateGames(self, ratings):
-        indicesToRemove = set()
-        if len(ratings) >= 3:
-            for i in range(0, len(ratings) - 2):
-                if ratings[i] == ratings[i+2]:
-                    indicesToRemove.add(i+1)
-
-        indicesToRemove = list(indicesToRemove)
-        indicesToRemove.sort()
-        indicesToRemove.reverse()
-
-        for index in indicesToRemove:
-            del ratings[index]
 
     def clearDailyTable(self):
         today_scan = self.table.scan()
