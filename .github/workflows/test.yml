@@ -12,22 +12,26 @@ jobs:
         timeout-minutes: 3
       - name: start db
         run: docker-compose up -d dynamodb-local
-      - name: test api
-        run: pipenv run python testApi.py
-        timeout-minutes: 5
+      - name: tests
+        run: |
+          pipenv run python testApi.py
+          pipenv run python testCreateTable.py
+          pipenv run python testData.py
+          pipenv run python testLeaderboard.py
+        timeout-minutes: 7
         working-directory: ./test
       - name: check dynamodb
         run: docker-compose ps
-      - name: test leaderboard table
-        run: pipenv run python testCreateTable.py
-        timeout-minutes: 5
-        working-directory: ./test
-      - name: test leaderboard data
-        run: pipenv run python testData.py
-        timeout-minutes: 5
-        working-directory: ./test
-      - name: test leaderboard bot
-        run: pipenv run python testLeaderboard.py
-        timeout-minutes: 5
-        working-directory: ./test
+      # - name: test leaderboard table
+      #   run: pipenv run python testCreateTable.py
+      #   timeout-minutes: 5
+      #   working-directory: ./test
+      # - name: test leaderboard data
+      #   run: pipenv run python testData.py
+      #   timeout-minutes: 5
+      #   working-directory: ./test
+      # - name: test leaderboard bot
+      #   run: pipenv run python testLeaderboard.py
+      #   timeout-minutes: 5
+      #   working-directory: ./test
 
