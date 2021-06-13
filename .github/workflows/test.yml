@@ -5,19 +5,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: build
-        run: docker-compose build app-node
+      - name: build pipenv
+        run: |
+          pip install pipenv
+          pipenv install
         timeout-minutes: 3
+      - name: start db
+        run: docker-compose up -d dynamodb-local
       - name: test api
-        run: docker-compose run app-node pipenv run python testApi.py
+        run: pipenv run python testApi.py
         timeout-minutes: 5
       - name: test leaderboard table
-        run: docker-compose run app-node pipenv run python testCreateTable.py
+        run: pipenv run python testCreateTable.py
         timeout-minutes: 5
       - name: test leaderboard data
-        run: docker-compose run app-node pipenv run python testData.py
+        run: pipenv run python testData.py
         timeout-minutes: 5
       - name: test leaderboard bot
-        run: docker-compose run app-node pipenv run python testLeaderboard.py
+        run: pipenv run python testLeaderboard.py
         timeout-minutes: 5
 
