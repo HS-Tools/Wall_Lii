@@ -16,7 +16,7 @@ def add_leaderboards_to_db(database, *args):
         timeDB[region] = database.get_time(region)
         timeSnapshot[region] = database.parse_time(timeSnapshot[region])
         if timeSnapshot[region] >= timeDB[region]: ## allow equal time for easy testing
-            database.put_time(region, timeCurrent)
+            database.put_time(region, timeSnapshot[region])
             database.put_items(region, snapshot[region])
 
     return snapshot, timeSnapshot, timeDB

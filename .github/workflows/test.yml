@@ -10,8 +10,6 @@ jobs:
           pip install pipenv
           pipenv install
         timeout-minutes: 3
-      # - name: start db
-      #   run: docker-compose up -d dynamodb-local
       - name: Setup DynamoDB Local
         uses: rrainn/dynamodb-action@v2.0.0
         with:
@@ -25,8 +23,6 @@ jobs:
         run: pipenv run python testApi.py
         timeout-minutes: 7
         working-directory: ./test
-      - name: check dynamodb
-        run: docker-compose ps
       - name: test leaderboard table
         run: pipenv run python testCreateTable.py
         timeout-minutes: 5

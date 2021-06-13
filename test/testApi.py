@@ -7,7 +7,7 @@ class apiTest(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls
-        self.ratingsDict, self.lastUpdated, self.season = getLeaderboardSnapshot(['US'],'BG',1)
+        self.ratingsDict, self.lastUpdated, self.season = getLeaderboardSnapshot(['US'],'BG',1,verbose=False)
 
     def testTime(self):
         """
