@@ -16,6 +16,8 @@ jobs:
         run: pipenv run python testApi.py
         timeout-minutes: 5
         working-directory: ./test
+      - name: check dynamodb
+        run: docker-compose ps
       - name: test leaderboard table
         run: pipenv run python testCreateTable.py
         timeout-minutes: 5
