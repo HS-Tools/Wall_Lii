@@ -60,8 +60,8 @@ class RankingDatabaseClient:
         )
 
     def parse_time(self, time_str):
-        time_str = time_str[:-3] + ' UTC'
         # the -3 converts from nanoseconds to microseconds which the datetime class can handle
+        time_str = time_str[:-3] + ' UTC'
         time = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S.%f %Z')
         return int(time.timestamp())
 
