@@ -332,7 +332,12 @@ class LeaderBoardBot:
         key = {
             'Alias': alias,
         }
-        self.alias_table.delete_item(Key=key)
+        response = self.alias_table.get_item(Key=key)
+        if 'Item' in response:
+            self.alias_table.delete_item(Key=key)
+        if alias in self.alias:
+            del self.alias[alias]
+
 
     def getNewChannels(self):
         response = self.channel_table.scan(
