@@ -34,6 +34,9 @@ class testDataPutItems(unittest.TestCase):
     def tearDown(self):
         self.database.client.delete_table(TableName='testDataTable')
 
+    def testClassSetup(self):
+        self.assertEqual(1, self.tpl[2])
+
     def testPutItems(self):
         self.database.put_items('US', self.players)
         for key in self.tpl[0]['US'].keys():
