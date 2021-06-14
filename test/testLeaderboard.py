@@ -45,8 +45,9 @@ class testLeaderboardGet(unittest.TestCase):
         pass
 
     def tearDown(self):
+        self.bot.updateAlias()
         if jeef in self.bot.alias:
-            self.bot.alias_table.delete_item( Key={'Alias':jeef} )
+            self.bot.deleteAlias(jeef)
             self.bot.updateAlias()
         if jeef in self.bot.getChannels():
             self.bot.channel_table.delete_item( Key={'ChannelName':jeef} )
@@ -182,6 +183,7 @@ class testLeaderboardGet(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    print(f"testing leaderboardBot")
     from dotenv import load_dotenv, dotenv_values
     load_dotenv('.test-env')
     unittest.main()
