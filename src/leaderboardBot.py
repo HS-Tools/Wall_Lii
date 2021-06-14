@@ -18,6 +18,8 @@ eggs = { # Easter eggs
     '16969': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
 }
 
+help_msg =
+
 class LeaderBoardBot:
     resource = None
     table = None
@@ -47,6 +49,11 @@ class LeaderBoardBot:
                 return [args[0], None]
             else:
                 return [args[0], parseRegion(args[1])]
+
+    def getFormattedTag(self, tag):
+        tag = tag.lower()
+        return tag
+
 
     def getPlayerData(self, tag, table, region=None):
         items = []
@@ -80,46 +87,52 @@ class LeaderBoardBot:
         print(response)
         return [it for it in response['Items'] if it['Region'] == region]
 
-    def getLeaderboardThreshold(self, rank=200):
-        table = self.table
-        response = table.scan(
-            FilterExpression=Attr('Rank').eq(rank),
-        )
 
-        dict = {}
-
-        for item in response['Items']:
-            region = item['Region']
-            rating = item['Ratings'][-1]
-            dict[region] = rating
-        
-        return dict
-
-    def getRankText(self, tag, region=None, yesterday=False):
-        if tag in eggs.keys():
-            return eggs[tag]
-
+    def findPlayer(self, tag, region, yesterday):
+        ## format the data
         region = parseRegion(region)
         tag = self.getFormattedTag(tag)
+        table = self.yesterday_table if yesterday else self.table
 
+        ## check if tag on leaderboard
+        player_data = self.getPlayerData(tag, table, region)
+        if len(player_data) > 0:
+            return tag, region, player_data, ""
+
+        ## check if alias is on leaderboard
+        if tag in self.alias:
+            alias = self.alias[tag]
+            alias = self.getFormattedTag(alias)
+            player_data = self.getPlayerData(alias, table, region)
+        if len(player_data) > 0:
+            tag = alias
+            return tag, region, player_data, ""
+
+        ## check if easter egg before digit because of numerical eggs
+        if tag in eggs:
+            return tag, region, [], eggs[tag]
+
+        ## check if is digit
         if tag.isdigit(): ## jump to search by number
-            tag = int(tag)
-            if tag > 200 or tag < 1:
-                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
-
-            items = self.getEntryFromRank(tag, region, yesterday)
-
-            if len(items) > 0:
-                tag = items[0]['PlayerName']
+            num = int(tag)
+            if num <= 200 and num >= 1 and region is not None:
+                player_data = self.getEntryFromRank(num, region, yesterday)
+                return tag, region, player_data, ""
             else:
-                return "Invalid or no region given for rank lookup"
-        else:
-            items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
+                msg =  f"invalid number rank {tag} liiWait"
+                if num > 200 or num < 1:
+                    msg += ", I only track the top 200 players"
+                if region is None:
+                    msg += ", region must be provided"
+                return tag, region, [], msg
 
-        text = f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
+        ## return nothing
+        return tag, region, [], f"{tag} {"is" if not yesterday else "was"} not on {region if region else 'any BG'} leaderboards liiCat"
+
+
+    def formatRankStats(self, player_data, region, yesterday):
         highestRank = 9999
-
-        for item in items:
+        for item in player_data:
             if item['Rank'] < highestRank:
                 highestRank = item['Rank']
                 rank = item['Rank']
@@ -134,47 +147,21 @@ class LeaderBoardBot:
                     text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier {"today" if not yesterday else "Yesterday"} liiCat'
                 else:
                     text = f'{tag} {"is" if not yesterday else "was"} rank {rank} in {region} with {rating} mmr liiHappyCat'
-
         return text
 
-    def getFormattedTag(self, tag):
-        tag = tag.lower()
-
-        checked_aliases = []
-
-        while tag in self.alias and tag not in checked_aliases:
-            checked_aliases.append(tag)
-            tag = self.alias[tag].lower()
-
-        return tag
-
-
-    def getDailyStatsText(self, tag, region=None, yesterday=False):
-        if tag in eggs.keys():
-            return eggs[tag]
-
-        region = parseRegion(region)
-        tag = self.getFormattedTag(tag)
-
-        if tag.isdigit(): ## jump to search by number
-            tag = int(tag)
-            if tag > 200 or tag < 1:
-                return f"invalid number rank {tag}, I only track the top 200 players liiWait"
-            items = self.getEntryFromRank(tag, region, yesterday)
-
-            if len(items) > 0:
-                tag = items[0]['PlayerName']
-            else:
-                return "Invalid or no region given for rank lookup"
+    def getRankText(self, tag, region=None, yesterday=False):
+        tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
+        if len(player_data) > 0:
+            return self.formatRankStats(player_data, region, yesterday)
+        elif len(msg) > 0:
+            return msg
         else:
-            items = self.getPlayerData(tag, self.yesterday_table if yesterday else self.table, region)
+            return help_msg
 
+
+    def formatDailyStats(self, player_data, region, yesterday):
+        text = f'{self.formatRankText(player_data, region, yesterday=yesterday)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
         longestRecord = 1
-
-        if len(items) == 0:
-            return f"{tag} is not on {region if region else 'any BG'} leaderboards liiCat"
-
-        text = f'{self.getRankText(tag, region, yesterday=yesterday)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
 
         for item in items:
             if len(item['Ratings']) > longestRecord:
@@ -188,6 +175,31 @@ class LeaderBoardBot:
                 {ratings[-1]} with {len(ratings)-1} games played. {emote} Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
 
         return text
+
+
+    def getDailyStatsText(self, tag, region=None, yesterday=False):
+        tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
+        if len(player_data) > 0:
+            return self.formatDailyStats(player_data, region, yesterday)
+        elif len(msg) > 0:
+            return msg
+        else:
+            return help_text
+
+    def getLeaderboardThreshold(self, rank=200):
+        table = self.table
+        response = table.scan(
+            FilterExpression=Attr('Rank').eq(rank),
+        )
+
+        dict = {}
+
+        for item in response['Items']:
+            region = item['Region']
+            rating = item['Ratings'][-1]
+            dict[region] = rating
+
+        return dict
 
     def getMostMMRChanged(self, num, highest):
         # For each entry in the leaderboard, get the tag, region and mmr change
