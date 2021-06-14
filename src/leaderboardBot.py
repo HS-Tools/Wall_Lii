@@ -18,7 +18,7 @@ eggs = { # Easter eggs
     '16969': 'salami is rank 69 in Antartica with 16969 mmr ninaisFEESH'
 }
 
-help_msg =
+help_msg = "@liiHS I had an issue, send help liiWait"
 
 class LeaderBoardBot:
     resource = None
@@ -127,13 +127,16 @@ class LeaderBoardBot:
                 return tag, region, [], msg
 
         ## return nothing
-        return tag, region, [], f"{tag} {"is" if not yesterday else "was"} not on {region if region else 'any BG'} leaderboards liiCat"
+        return tag, region, [], f'{tag} {"is" if not yesterday else "was"} not on {region if region else "any BG"} leaderboards liiCat'
 
 
-    def formatRankStats(self, player_data, region, yesterday):
+    def formatRankStats(self, in_tag, region, yesterday, player_data):
+        tag = in_tag ## copy tag
         highestRank = 9999
         for item in player_data:
             if item['Rank'] < highestRank:
+                if in_tag.isdigit():
+                    tag = item['PlayerName']
                 highestRank = item['Rank']
                 rank = item['Rank']
                 region = item['Region']
@@ -152,19 +155,22 @@ class LeaderBoardBot:
     def getRankText(self, tag, region=None, yesterday=False):
         tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
         if len(player_data) > 0:
-            return self.formatRankStats(player_data, region, yesterday)
+            return self.formatRankStats(tag, region, yesterday, player_data)
         elif len(msg) > 0:
             return msg
         else:
             return help_msg
 
 
-    def formatDailyStats(self, player_data, region, yesterday):
+    def formatDailyStats(self, in_tag, region, yesterday, player_data):
         text = f'{self.formatRankText(player_data, region, yesterday=yesterday)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
         longestRecord = 1
+        tag = in_tag ## copy tag
 
         for item in items:
             if len(item['Ratings']) > longestRecord:
+                if in_tag.isdigit():
+                    tag = item['PlayerName']
                 longestRecord = len(item['Ratings'])
                 ratings = item['Ratings']
                 region = item['Region']
@@ -180,7 +186,7 @@ class LeaderBoardBot:
     def getDailyStatsText(self, tag, region=None, yesterday=False):
         tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
         if len(player_data) > 0:
-            return self.formatDailyStats(player_data, region, yesterday)
+            return self.formatDailyStats(tag, region, yesterday, player_data)
         elif len(msg) > 0:
             return msg
         else:
