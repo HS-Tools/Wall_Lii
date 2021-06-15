@@ -2,7 +2,7 @@
 
 folder="$1"
 
-pushd "$folders"
+pushd "$folder"
 
 java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -inMemory
 
