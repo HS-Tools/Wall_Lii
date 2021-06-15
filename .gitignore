@@ -136,3 +136,6 @@ dmypy.json
 
 # docker generated data
 docker/
+
+# dynamodb local files
+dynamodb-local
