@@ -2,7 +2,7 @@ from re import I
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import dotenv
-from parseRegion import REGIONS, parseRegion, isRegion
+from parseRegion import REGIONS, parseRegion, isRegion, printRegion
 import threading
 import requests
 import os
@@ -127,19 +127,17 @@ class LeaderBoardBot:
                 return tag, region, [], msg
 
         ## return nothing
-        return tag, region, [], f'{tag} {"is" if not yesterday else "was"} not on {region if region else "any BG"} leaderboards liiCat'
+        return tag, region, [], f'{tag} {"is" if not yesterday else "was"} not on {printRegion(region) if region else "any BG"} leaderboards liiCat'
 
 
-    def formatRankStats(self, in_tag, region, yesterday, player_data):
-        tag = in_tag ## copy tag
+    def formatRankText(self, yesterday, player_data):
         highestRank = 9999
         for item in player_data:
             if item['Rank'] < highestRank:
-                if in_tag.isdigit():
-                    tag = item['PlayerName']
+                tag = item['PlayerName']
                 highestRank = item['Rank']
                 rank = item['Rank']
-                region = item['Region']
+                region = printRegion(item['Region'])
 
                 if (len(item['Ratings']) <= 0):
                     break
@@ -155,25 +153,23 @@ class LeaderBoardBot:
     def getRankText(self, tag, region=None, yesterday=False):
         tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
         if len(player_data) > 0:
-            return self.formatRankStats(tag, region, yesterday, player_data)
+            return self.formatRankText(yesterday, player_data)
         elif len(msg) > 0:
             return msg
         else:
             return help_msg
 
 
-    def formatDailyStats(self, in_tag, region, yesterday, player_data):
-        text = f'{self.formatRankText(player_data, region, yesterday=yesterday)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
+    def formatDailyStatsText(self, yesterday, player_data):
+        text = f'{self.formatRankText(yesterday, player_data)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
         longestRecord = 1
-        tag = in_tag ## copy tag
 
         for item in items:
             if len(item['Ratings']) > longestRecord:
-                if in_tag.isdigit():
-                    tag = item['PlayerName']
+                tag = item['PlayerName']
                 longestRecord = len(item['Ratings'])
                 ratings = item['Ratings']
-                region = item['Region']
+                region = printRegion(item['Region'])
 
                 emote = 'liiHappyCat' if ratings[-1] > ratings[0] else 'liiCat'
 
@@ -186,7 +182,7 @@ class LeaderBoardBot:
     def getDailyStatsText(self, tag, region=None, yesterday=False):
         tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
         if len(player_data) > 0:
-            return self.formatDailyStats(tag, region, yesterday, player_data)
+            return self.formatDailyStatsText(yesterday, player_data)
         elif len(msg) > 0:
             return msg
         else:
