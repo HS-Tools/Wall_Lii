@@ -6,6 +6,12 @@ REGION_ALIASES = {
     'ASIA':'AP',
     'EUROPE':'EU'
 }
+REGION_PRINT = {
+    'US': 'Americas',
+    'EU': 'Europe',
+    'AP': 'Asia-Pacific'
+}
+
 
 def parseRegion(region):
     if type(region) == str:
@@ -23,3 +29,8 @@ def isRegion(region):
     if type(region) == str:
         region = region.upper()
     return (region in REGIONS) or (region in REGION_ALIASES.keys())
+
+def printRegion(region):
+    if region in REGION_PRINT:
+        return REGION_PRINT[region]
+    return region

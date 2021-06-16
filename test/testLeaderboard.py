@@ -108,6 +108,10 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
+    def testGetReadableRegion(self):
+        string = self.bot.getRankText('vaguerabbit', 'US')
+        self.assertIn('Americas ', string)
+
     def testParseArgDefault(self):
         args = self.bot.parseArgs('lii')
         self.assertEqual('lii', args[0])
