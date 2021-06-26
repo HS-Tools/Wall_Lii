@@ -96,7 +96,7 @@ if __name__ == '__main__':
         ## greet the channel when added
         for channel_name in new_channels:
             channel = twitchBot.get_channel(channel_name)
-            await channel.send(f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderbaord data for Hearthstone Battlegrounds. Type !help to see all my commands!")
+            await channel.send(f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!")
 
     @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
