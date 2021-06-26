@@ -93,6 +93,11 @@ if __name__ == '__main__':
         channels = leaderboardBot.getChannels()
         await twitchBot.join_channels(list(new_channels.keys()))
 
+        ## greet the channel when added
+        for channel_name in new_channels:
+            channel = twitchBot.get_channel(channel_name)
+            await channel.send(f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!")
+
     @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
