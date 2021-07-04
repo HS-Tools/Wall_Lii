@@ -5,11 +5,8 @@ name = "pypi"
 
 [packages]
 twitchio = "*"
-selenium = "*"
 schedule = "*"
-simpleobsws = "*"
 asyncio = "*"
-pyslobs = "*"
 requests = "*"
 pytz = "*"
 "discord.py" = "*"
