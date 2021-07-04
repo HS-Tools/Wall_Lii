@@ -1,14 +1,13 @@
-import threading
 import os
 import aiocron
-import asyncio
 import discord
 from datetime import datetime
 from pytz import timezone, utc
-from discord.ext import commands, tasks
+from discord.ext import commands
 from leaderboardBot import LeaderBoardBot
-from parseRegion import parseRegion, isRegion
+from parseRegion import isRegion
 from dotenv import load_dotenv
+
 load_dotenv()
 
 bot = commands.Bot(command_prefix='!')
@@ -215,6 +214,3 @@ if __name__ == '__main__':
     leaderboardBot = LeaderBoardBot()
 
     bot.run(os.environ['DISCORD_TOKEN'])
-
-    while True:
-        asyncio.sleep(0) # should save power
