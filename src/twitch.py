@@ -1,10 +1,8 @@
 import os
-import threading
 import aiocron
-import asyncio
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
-from parseRegion import parseRegion, isRegion
+from parseRegion import isRegion
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -85,6 +83,9 @@ async def help(ctx):
 
 if __name__ == '__main__':
 
+    async def run():
+        await twitchBot.run()
+
     @aiocron.crontab('* * * * *') ## Every minute check for new channels
     async def updateChannels():
         global channels
@@ -102,9 +103,4 @@ if __name__ == '__main__':
     async def updateAlias():
         leaderboardBot.getNewAlias()
 
-    twitchThread = threading.Thread(target=twitchBot.run)
-    twitchThread.setDaemon(True)
-    twitchThread.start()
-
-    while True:
-        asyncio.sleep(0)
+    twitchBot.run()
