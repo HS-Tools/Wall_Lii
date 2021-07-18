@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-twitchio = "*"
+twitchio = "==1.2.3"
 schedule = "*"
 asyncio = "*"
 requests = "*"
