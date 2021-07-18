@@ -17,7 +17,7 @@ twitchBot = commands.Bot(
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
-    initial_channels=channels.keys()
+    initial_channels=list(channels.keys())
 )
 
 def parseArgs(ctx):
