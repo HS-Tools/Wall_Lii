@@ -4,6 +4,7 @@ from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -17,8 +18,15 @@ twitchBot = commands.Bot(
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
-    initial_channels=list(channels.keys())
+    initial_channels=['liihs']
 )
+
+# Join 10 channels at a time so the bot doesn't get rate limited on joins
+for i in range(0, len(list(channels.keys())), 10):
+    lst = list(channels.keys())[i: i + 10]
+    print(lst)
+    twitchBot.join_channels(lst)
+    time.sleep(1)
 
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
