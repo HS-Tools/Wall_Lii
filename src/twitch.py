@@ -1,9 +1,11 @@
 import os
+import asyncio
 import aiocron
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -17,8 +19,21 @@ twitchBot = commands.Bot(
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
-    initial_channels=list(channels.keys())
+    initial_channels=['liihs']
 )
+
+async def initial_join():
+# Join 10 channels at a time so the bot doesn't get rate limited on joins
+    for i in range(0, len(list(channels.keys())), 10):
+        lst = list(channels.keys())[i: i + 10]
+        print(lst)
+        await twitchBot.join_channels(lst)
+        time.sleep(20)
+
+@twitchBot.event
+async def event_ready():
+    print('ready')
+    await initial_join()
 
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
@@ -82,9 +97,6 @@ async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name].')
 
 if __name__ == '__main__':
-
-    async def run():
-        await twitchBot.run()
 
     @aiocron.crontab('* * * * *') ## Every minute check for new channels
     async def updateChannels():
