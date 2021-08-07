@@ -30,7 +30,7 @@ async def initial_join():
         lst = list(channels.keys())[i: i + 10]
         print(lst)
         await twitchBot.join_channels(lst)
-        time.sleep(40)
+        await asyncio.sleep(40)
 
 @twitchBot.event
 async def event_ready():
