@@ -22,6 +22,8 @@ twitchBot = commands.Bot(
     initial_channels=['liihs']
 )
 
+twitchBot.loaded = False
+
 async def initial_join():
 # Join 10 channels at a time so the bot doesn't get rate limited on joins
     for i in range(0, len(list(channels.keys())), 10):
@@ -32,8 +34,10 @@ async def initial_join():
 
 @twitchBot.event
 async def event_ready():
-    print('ready')
-    await initial_join()
+    if not twitchBot.loaded:
+        print('ready')
+        twitchBot.loaded = True
+        await initial_join()
 
 def parseArgs(ctx):
     default = channels[ctx.channel.name]
