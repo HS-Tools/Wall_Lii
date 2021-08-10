@@ -21,8 +21,6 @@ twitchBot = commands.Bot(
     initial_channels=['liihs']
 )
 
-twitchBot.loaded = False
-
 def parseArgs(ctx):
     default = initialChannels[ctx.channel.name]
     args = ctx.content.split(' ')[1:]
