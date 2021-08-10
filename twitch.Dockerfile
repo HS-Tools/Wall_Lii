@@ -8,6 +8,8 @@ WORKDIR ${PROJECT_DIR}
 
 COPY . ${PROJECT_DIR}/
 
+RUN pip3 install -r requirements.txt
+
 WORKDIR ${PROJECT_DIR}/src
 
 RUN pipenv install
