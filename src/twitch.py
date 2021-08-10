@@ -11,32 +11,20 @@ load_dotenv()
 
 leaderboardBot = LeaderBoardBot()
 
-# Initial setup
-channels = leaderboardBot.getChannels()
+initialChannels = leaderboardBot.getChannels()
 
 twitchBot = commands.Bot(
-    irc_token=os.environ['TMI_TOKEN'],
+    token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
     initial_channels=['liihs']
 )
 
-async def initial_join():
-# Join 10 channels at a time so the bot doesn't get rate limited on joins
-    for i in range(0, len(list(channels.keys())), 10):
-        lst = list(channels.keys())[i: i + 10]
-        print(lst)
-        await twitchBot.join_channels(lst)
-        time.sleep(40)
-
-@twitchBot.event
-async def event_ready():
-    print('ready')
-    await initial_join()
+twitchBot.loaded = False
 
 def parseArgs(ctx):
-    default = channels[ctx.channel.name]
+    default = initialChannels[ctx.channel.name]
     args = ctx.content.split(' ')[1:]
     return leaderboardBot.parseArgs(default, *args)
 
@@ -100,14 +88,29 @@ if __name__ == '__main__':
 
     @aiocron.crontab('* * * * *') ## Every minute check for new channels
     async def updateChannels():
-        global channels
+        global initialChannels
 
-        new_channels = leaderboardBot.getNewChannels()
         channels = leaderboardBot.getChannels()
-        await twitchBot.join_channels(list(new_channels.keys()))
 
-        ## greet the channel when added
-        for channel_name in new_channels:
+        joined_channels = map(lambda x: x.name, twitchBot.connected_channels)
+
+        new_channels = []
+        greeting_channels = []
+
+        for channel in channels:
+            if channel not in joined_channels:
+                new_channels.append(channel)
+
+                if channel not in initialChannels:
+                    greeting_channels.append(channel)
+
+            if len(new_channels) >= 10:
+                break
+        
+        print(new_channels)
+        await twitchBot.join_channels(new_channels)
+
+        for channel_name in greeting_channels:
             channel = twitchBot.get_channel(channel_name)
             await channel.send(f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!")
 

@@ -334,6 +334,12 @@ class LeaderBoardBot:
         }
         self.alias_table.delete_item(Key=key)
 
+    def deleteChannel(self, channel):
+        key = {
+            'ChannelName': channel,
+        }
+        self.channel_table.delete_item(Key=key)
+
     def getNewChannels(self):
         response = self.channel_table.scan(
             FilterExpression=Attr('New').eq(True),

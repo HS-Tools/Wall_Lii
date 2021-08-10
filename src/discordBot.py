@@ -128,6 +128,25 @@ async def addchannel(ctx, *args):
 
             await ctx.send(f'{channelName} will have wall_lii added to it with the default name of {playerName}')
 
+
+@bot.command()
+async def deletechannel(ctx, *args):
+    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+        message = ctx.message
+        await message.delete()
+
+        if ctx.message.author.id == liiDiscordId:
+            if len(args) < 1:
+                await ctx.send('The command must have one word. !deletechannel [alias]')
+            else:
+                channel = args[0].lower()
+
+                leaderboardBot.deleteChannel(channel)
+                
+                await ctx.send(f'{channel} channel was removed from the list')
+        else:
+            await ctx.send('Only Lii can remove wall_lii from channels')
+
 # PI is on UTC time it seems
 @aiocron.crontab('59 6 * * *')
 async def sendDailyRecap():
