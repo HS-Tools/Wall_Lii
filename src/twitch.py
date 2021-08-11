@@ -1,11 +1,9 @@
 import os
-import asyncio
 import aiocron
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 
@@ -14,7 +12,7 @@ leaderboardBot = LeaderBoardBot()
 initialChannels = leaderboardBot.getChannels()
 
 twitchBot = commands.Bot(
-    token=os.environ['TMI_TOKEN'],
+    irc_token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
@@ -90,7 +88,7 @@ if __name__ == '__main__':
 
         channels = leaderboardBot.getChannels()
 
-        joined_channels = map(lambda x: x.name, twitchBot.connected_channels)
+        joined_channels = list(twitchBot._ws._channel_cache)
 
         new_channels = []
         greeting_channels = []
