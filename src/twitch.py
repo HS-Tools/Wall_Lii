@@ -11,6 +11,8 @@ leaderboardBot = LeaderBoardBot()
 
 initialChannels = leaderboardBot.getChannels()
 
+print(initialChannels)
+
 twitchBot = commands.Bot(
     token=os.environ['TMI_TOKEN'],
     irc_token=os.environ['TMI_TOKEN'],
@@ -100,6 +102,7 @@ if __name__ == '__main__':
 
                 if channel not in initialChannels:
                     greeting_channels.append(channel)
+                    initialChannels = leaderboardBot.getChannels()
 
             if len(new_channels) >= 10:
                 break
