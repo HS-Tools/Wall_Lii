@@ -11,8 +11,6 @@ leaderboardBot = LeaderBoardBot()
 
 initialChannels = leaderboardBot.getChannels()
 
-print(initialChannels)
-
 twitchBot = commands.Bot(
     token=os.environ['TMI_TOKEN'],
     irc_token=os.environ['TMI_TOKEN'],
@@ -28,6 +26,10 @@ def parseArgs(ctx):
     return leaderboardBot.parseArgs(default, *args)
 
 async def call(ctx, func, name, *args):
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+
     response = func(*args)
     if len(args) >= 2:
         if not isRegion(args[1]):
@@ -58,7 +60,11 @@ async def getDailyStats(ctx):
 async def tomorrow(ctx):
     args = parseArgs(ctx)
     name = args[0]
-    print(name)
+
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+
     await ctx.send(f"{name} will be rank 1 for sure liiYep")
 
 @twitchBot.command(name='yesterday')
