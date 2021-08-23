@@ -21,7 +21,7 @@ def add_leaderboards_to_db(database):
             victor_access_token = os.environ['VICTOR_ACCESS_TOKEN']
             victor_channel_id = os.environ['VICTOR_TWITCH_ID']
 
-            handlePredictions(database, snapshot, 'liihs', 'lii', region, client_id, access_token, twitch_id)
+            #handlePredictions(database, snapshot, 'liihs', 'lii', region, client_id, access_token, twitch_id)
             handlePredictions(database, snapshot, 'sunbaconrelaxer', 'diyingli', region, victor_client_id, victor_access_token, victor_channel_id)
             handlePredictions(database, snapshot, 'sunbaconrelaxer', 'twlevewinshs', region, victor_client_id, victor_access_token, victor_channel_id)
 
