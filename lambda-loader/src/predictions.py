@@ -6,11 +6,12 @@ PREDICTIONS_URL = 'https://api.twitch.tv/helix/predictions'
 STREAMS_URL = 'https://api.twitch.tv/helix/streams'
 
 class Predictions:
-  def __init__(self, channel_name, broadcaster_id, client_id, access_token):
+  def __init__(self, channel_name, broadcaster_id, client_id, access_token, ad_time=60):
     self.client_id = client_id
     self.access_token = access_token
     self.channel_name = channel_name
     self.broadcaster_id = broadcaster_id
+    self.ad_time = ad_time
 
     self.headers = {
       'Authorization': 'Bearer {}'.format(self.access_token),
@@ -77,11 +78,11 @@ class Predictions:
     else:
       return -1
 
-  def start_ad(self, length=60):
+  def start_ad(self):
     AD_URL = 'https://api.twitch.tv/helix/channels/commercial'
     data = {
       'broadcaster_id': self.broadcaster_id,
-      'length': length
+      'length': self.ad_time
     }
 
     r = requests.post(url=AD_URL, headers=self.headers ,json=data)
