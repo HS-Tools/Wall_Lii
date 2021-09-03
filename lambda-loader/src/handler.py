@@ -21,15 +21,15 @@ def add_leaderboards_to_db(database):
             victor_access_token = os.environ['VICTOR_ACCESS_TOKEN']
             victor_channel_id = os.environ['VICTOR_TWITCH_ID']
 
-            handlePredictions(database, snapshot, 'liihs', 'lii', region, client_id, access_token, twitch_id)
-            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'diyingli', region, victor_client_id, victor_access_token, victor_channel_id)
-            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'twlevewinshs', region, victor_client_id, victor_access_token, victor_channel_id)
+            handlePredictions(database, snapshot, 'liihs', 'lii', region, client_id, access_token, twitch_id, 60)
+            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'diyingli', region, victor_client_id, victor_access_token, victor_channel_id, 120)
+            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'twlevewinshs', region, victor_client_id, victor_access_token, victor_channel_id, 120)
 
             database.put_time(region, timeCurrent)
             database.put_items(region, snapshot[region])
 
-def handlePredictions(database, snapshot, channel_name, name, region, client_id, access_token, twitch_id):
-    predicter = Predictions(channel_name, twitch_id, client_id, access_token)
+def handlePredictions(database, snapshot, channel_name, name, region, client_id, access_token, twitch_id, ad_time):
+    predicter = Predictions(channel_name, twitch_id, client_id, access_token, ad_time)
 
     try:
         # Automatic prediction module
