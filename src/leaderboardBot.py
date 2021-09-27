@@ -35,6 +35,10 @@ class LeaderBoardBot:
         self.updateAlias()
 
     def parseArgs(self, default, *args):
+        args = list(args)
+        for i, arg in enumerate(args):
+            if '@' == arg[0]:
+                args[i] = arg[1:]
         if (len(args) == 0):
             return [default, None]
         elif (len(args) == 1):

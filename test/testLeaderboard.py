@@ -29,7 +29,7 @@ class testLeaderboardGet(unittest.TestCase):
             self.database.client.delete_table(TableName='testLeaderboardBot')
 
         self.database.create_table('testLeaderboardBot')
-        add_leaderboards_to_db(self.database, ['US'],'BG',1, False)
+        add_leaderboards_to_db(self.database, regions=['US'], gameMode='BG', season=1, verbose=False)
 
         self.bot = LeaderBoardBot( table_name='testLeaderboardBot', endpoint_url=url )
         self.bot.addDefaultAlias()
@@ -107,6 +107,8 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
+
+
     def testParseArgDefault(self):
         args = self.bot.parseArgs('lii')
         self.assertEqual('lii', args[0])
@@ -114,6 +116,11 @@ class testLeaderboardGet(unittest.TestCase):
 
     def testParseArgName(self):
         args = self.bot.parseArgs('lii', 'quinnabr',)
+        self.assertEqual('quinnabr', args[0])
+        self.assertIsNone(args[1])
+
+    def testParseArgNameWAt(self):
+        args = self.bot.parseArgs('lii', '@quinnabr')
         self.assertEqual('quinnabr', args[0])
         self.assertIsNone(args[1])
 

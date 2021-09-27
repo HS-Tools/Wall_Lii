@@ -4,8 +4,9 @@ from predictions import Predictions
 from dotenv import load_dotenv
 import os
 
-def add_leaderboards_to_db(database):
-    tup = api.getLeaderboardSnapshot(verbose=False)
+def add_leaderboards_to_db(database, **args):
+    args['verbose']=False
+    tup = api.getLeaderboardSnapshot(**args)
     snapshot = tup[0]
     lastUpdated = tup[1]
 
