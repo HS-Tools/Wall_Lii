@@ -22,7 +22,7 @@ def add_leaderboards_to_db(database):
             victor_channel_id = os.environ['VICTOR_TWITCH_ID']
 
             handlePredictions(database, snapshot, 'liihs', 'lii', region, client_id, access_token, twitch_id, 60)
-            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'diyingli', region, victor_client_id, victor_access_token, victor_channel_id, 120)
+            handlePredictions(database, snapshot, 'sunbaconrelaxer', 'madeforthis', region, victor_client_id, victor_access_token, victor_channel_id, 120)
             handlePredictions(database, snapshot, 'sunbaconrelaxer', 'twlevewinshs', region, victor_client_id, victor_access_token, victor_channel_id, 120)
 
             database.put_time(region, timeCurrent)
