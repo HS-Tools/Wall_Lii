@@ -1,33 +1,35 @@
 import os
-import threading
 import aiocron
-import asyncio
 from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
-from parseRegion import parseRegion, isRegion
+from parseRegion import isRegion
 from dotenv import load_dotenv
 
 load_dotenv()
 
 leaderboardBot = LeaderBoardBot()
 
-# Initial setup
-channels = leaderboardBot.getChannels()
+initialChannels = leaderboardBot.getChannels()
 
 twitchBot = commands.Bot(
+    token=os.environ['TMI_TOKEN'],
     irc_token=os.environ['TMI_TOKEN'],
     client_id=os.environ['CLIENT_ID'],
     nick=os.environ['BOT_NICK'],
     prefix=os.environ['BOT_PREFIX'],
-    initial_channels=channels.keys()
+    initial_channels=['liihs']
 )
 
 def parseArgs(ctx):
-    default = channels[ctx.channel.name]
+    default = initialChannels[ctx.channel.name]
     args = ctx.content.split(' ')[1:]
     return leaderboardBot.parseArgs(default, *args)
 
 async def call(ctx, func, name, *args):
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+
     response = func(*args)
     if len(args) >= 2:
         if not isRegion(args[1]):
@@ -58,7 +60,11 @@ async def getDailyStats(ctx):
 async def tomorrow(ctx):
     args = parseArgs(ctx)
     name = args[0]
-    print(name)
+
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+
     await ctx.send(f"{name} will be rank 1 for sure liiYep")
 
 @twitchBot.command(name='yesterday')
@@ -87,19 +93,35 @@ if __name__ == '__main__':
 
     @aiocron.crontab('* * * * *') ## Every minute check for new channels
     async def updateChannels():
-        global channels
+        global initialChannels
 
-        new_channels = leaderboardBot.getNewChannels()
         channels = leaderboardBot.getChannels()
-        await twitchBot.join_channels(list(new_channels.keys()))
+
+        joined_channels = list(twitchBot._ws._channel_cache)
+
+        new_channels = []
+        greeting_channels = []
+
+        for channel in channels:
+            if channel not in joined_channels:
+                new_channels.append(channel)
+
+                if channel not in initialChannels:
+                    greeting_channels.append(channel)
+                    initialChannels = leaderboardBot.getChannels()
+
+            if len(new_channels) >= 10:
+                break
+        
+        print(new_channels)
+        await twitchBot.join_channels(new_channels)
+
+        for channel_name in greeting_channels:
+            channel = twitchBot.get_channel(channel_name)
+            await channel.send(f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!")
 
     @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
 
-    twitchThread = threading.Thread(target=twitchBot.run)
-    twitchThread.setDaemon(True)
-    twitchThread.start()
-
-    while True:
-        asyncio.sleep(0)
+    twitchBot.run()
