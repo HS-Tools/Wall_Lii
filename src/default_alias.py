@@ -1,7 +1,7 @@
 alias = {
     'waterloo': 'waterloooooo',
-    'jeef': 'jeffispro',
-    'jeff': 'jeffispro',
+    'jeef': 'jeef',
+    'jeff': 'jeef',
     'victor': 'twlevewinshs',
     'sleepy': 'foreversleep',
     'dogdog': 'dog',
@@ -14,5 +14,5 @@ alias = {
     'mrincrediblehs': 'mrincredible',
     'sevel07': 'sevel',
     'jubjoe': 'felix',
-    'quinnabr': 'middnie'
+    'quinnabr': 'middnie',
 }
