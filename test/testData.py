@@ -109,8 +109,8 @@ class testDataPutItems(unittest.TestCase):
 
     def testClearPutItemSeason1(self):
         self.database.put_items('US', self.players)
-        item = self.database.get_item('US', 'vaguerabbit')
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        item = self.database.get_item('US', 'saphirexx')
+        self.assertEqual('saphirexx', item['PlayerName'] )
         self.assertEqual(1, item['Rank'] )
         self.assertEqual(22483, item['Ratings'][0] )
 
@@ -121,8 +121,8 @@ class testDataPutItems(unittest.TestCase):
 
         add_leaderboards_to_db(self.database, ['US'],'BG',0, False)
 
-        item = self.database.get_item('US', 'vaguerabbit')
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        item = self.database.get_item('US', 'saphirexx')
+        self.assertEqual('saphirexx', item['PlayerName'] )
         self.assertEqual(-1, item['Rank'] )
         self.assertEqual(22483, item['Ratings'][0] )
 

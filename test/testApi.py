@@ -25,7 +25,7 @@ class apiTest(unittest.TestCase):
         """
         There should be 200 accounts found
         """
-        key = 'vaguerabbit'
+        key = 'saphirexx'
         self.assertTrue(key in self.ratingsDict['US'].keys())
         self.assertEqual(1, self.ratingsDict['US'][key]['rank'])
         self.assertEqual(22483, self.ratingsDict['US'][key]['rating'])
