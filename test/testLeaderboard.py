@@ -53,10 +53,10 @@ class testLeaderboardGet(unittest.TestCase):
             self.bot.channel_table.delete_item( Key={'ChannelName':jeef} )
 
     def testGetPlayerData(self):
-        items = self.bot.getPlayerData('vaguerabbit', self.bot.table )
+        items = self.bot.getPlayerData('saphirexx', self.bot.table )
         self.assertEqual(1, len(items))
         item = items[0]
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        self.assertEqual('saphirexx', item['PlayerName'] )
         self.assertEqual(1, item['Rank'] )
         self.assertEqual(22483, item['Ratings'][0] )
 
@@ -64,19 +64,19 @@ class testLeaderboardGet(unittest.TestCase):
         items = self.bot.getEntryFromRank(1, 'US' )
         self.assertEqual(1, len(items))
         item = items[0]
-        self.assertEqual('vaguerabbit', item['PlayerName'] )
+        self.assertEqual('saphirexx', item['PlayerName'] )
         self.assertEqual(1, item['Rank'] )
         self.assertEqual(22483, item['Ratings'][0] )
 
     def testGetRankNumText(self):
         string = self.bot.getRankText('1','US')
-        self.assertIn('vaguerabbit ', string)
+        self.assertIn('saphirexx ', string)
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
     def testGetRankNumTextAlt(self):
         string = self.bot.getRankText('2','NA')
-        self.assertIn('testmmr ', string)
+        self.assertIn('mmrloophole ', string)
         self.assertIn(' 22019 ', string)
         self.assertIn(' 2 ', string)
 
@@ -85,26 +85,26 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertEqual("don't do drugs kids", string)
 
     def testGetRankText(self):
-        string = self.bot.getRankText('vaguerabbit', 'US')
-        self.assertIn('vaguerabbit ', string)
+        string = self.bot.getRankText('saphirexx', 'US')
+        self.assertIn('saphirexx ', string)
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
     def testGetRankTextAlt(self):
-        string = self.bot.getRankText(*('TestMMR', 'NA'))
-        self.assertIn('testmmr ', string)
+        string = self.bot.getRankText(*('MMRloophole', 'NA'))
+        self.assertIn('mmrloophole ', string)
         self.assertIn(' 22019 ', string)
         self.assertIn(' 2 ', string)
 
     def testGetRankTextNum(self):
         string = self.bot.getRankText('1','US')
-        self.assertIn('vaguerabbit ', string)
+        self.assertIn('saphirexx ', string)
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
     def testGetRankTextNoRegion(self):
-        string = self.bot.getRankText('vaguerabbit')
-        self.assertIn('vaguerabbit ', string)
+        string = self.bot.getRankText('saphirexx')
+        self.assertIn('saphirexx ', string)
         self.assertIn(' 22483 ', string)
         self.assertIn(' 1 ', string)
 
@@ -130,52 +130,52 @@ class testLeaderboardGet(unittest.TestCase):
 
     def testAliasJeef(self):
         string = self.bot.getRankText('jeef')
-        self.assertIn('jeffispro ', string)
+        self.assertIn('jeef ', string)
         self.assertIn(' 16033 ', string)
         self.assertIn(' 6 ', string)
 
     def testAliasJeff(self):
         string = self.bot.getRankText('jeff')
-        self.assertIn('jeffispro ', string)
+        self.assertIn('jeef ', string)
         self.assertIn(' 16033 ', string)
         self.assertIn(' 6 ', string)
 
     def testAlias_jeffispro(self):
-        string = self.bot.getRankText('jeffispro')
-        self.assertIn('jeffispro ', string)
+        string = self.bot.getRankText('jeef')
+        self.assertIn('jeef ', string)
         self.assertIn(' 16033 ', string)
         self.assertIn(' 6 ', string)
 
     def testAlias_add_jeeeeeeef(self):
         self.assertFalse( jeef in self.bot.alias.keys() )
-        self.bot.addAlias(jeef, 'jeffispro')
+        self.bot.addAlias(jeef, 'jeef')
         new = self.bot.getNewAlias()
-        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual('jeef', new[jeef])
         self.assertEqual(1+len(default_alias), len(new))
 
     def testAlias_add_jeeeeeeef2(self):
         self.assertFalse( jeef in self.bot.alias.keys() )
-        self.bot.addAlias(jeef, 'jeffispro')
+        self.bot.addAlias(jeef, 'jeef')
         new = self.bot.getNewAlias()
-        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual('jeef', new[jeef])
         self.assertEqual(1+len(default_alias), len(new))
         new = self.bot.getNewAlias()
-        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual('jeef', new[jeef])
         self.assertEqual(1+len(default_alias), len(new))
 
     def testChannel_add_jeeeeeeef(self):
         self.assertFalse( jeef in self.bot.getChannels() )
-        self.bot.addChannel(jeef, 'jeffispro')
+        self.bot.addChannel(jeef, 'jeef')
         new = self.bot.getNewChannels()
-        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual('jeef', new[jeef])
         self.assertEqual(1, len(new))
 
 
     def testChannel_add_jeeeeeeef2(self):
         self.assertFalse( jeef in self.bot.getChannels() )
-        self.bot.addChannel(jeef, 'jeffispro')
+        self.bot.addChannel(jeef, 'jeef')
         new = self.bot.getNewChannels()
-        self.assertEqual('jeffispro', new[jeef])
+        self.assertEqual('jeef', new[jeef])
         self.assertEqual(1, len(new))
         new = self.bot.getNewChannels()
         self.assertEqual(0, len(new))
