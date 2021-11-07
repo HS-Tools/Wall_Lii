@@ -64,9 +64,9 @@ def handler(event, context):
         for region in REGIONS:
             item = database.get_item(region, name)
             if item is None:
-                prediction_channels[region] = 0
+                prediction_channels[name][region] = 0
             else:
-                prediction_channels[region] = item['Ratings'][-1] ## last item
+                prediction_channels[name][region] = item['Ratings'][-1] ## last item
 
 
     snapshot, timeSnapshot, timeDB = add_leaderboards_to_db(database, verbose=False)
