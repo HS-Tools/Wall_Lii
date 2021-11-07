@@ -42,19 +42,19 @@ def handler(event, context):
             'client_id':os.environ['CLIENT_ID'],
             'access_token':os.environ['ACCESS_TOKEN'],
             'twitch_id':os.environ['LII_TWITCH_ID']
-            },
+        },
         'madeforthis':{
             'channel_name':'sunbaconrelaxer',
             'client_id':os.environ['VICTOR_CLIENT_ID'],
             'access_token':os.environ['VICTOR_ACCESS_TOKEN'],
             'twitch_id':os.environ['VICTOR_TWITCH_ID']
-            },
+        },
         'twlevewinshs':{
             'channel_name':'sunbaconrelaxer',
             'client_id':os.environ['VICTOR_CLIENT_ID'],
             'access_token':os.environ['VICTOR_ACCESS_TOKEN'],
             'twitch_id':os.environ['VICTOR_TWITCH_ID']
-            },
+        },
     }
     
     database = data.RankingDatabaseClient()
@@ -64,16 +64,15 @@ def handler(event, context):
         for region in REGIONS:
             item = database.get_item(region, name)
             if item is None:
-                prediction_channels[region] = 0
+                prediction_channels[name][region] = 0
             else:
-                prediction_channels[region] = item['Ratings'][-1] ## last item
-
+                prediction_channels[name][region] = item['Ratings'][-1] ## last item
 
     snapshot, timeSnapshot, timeDB = add_leaderboards_to_db(database, verbose=False)
 
     for name in prediction_channels:
         for region in snapshot:
-            if timeSnapshot[region] >= timeDB[region] and name in snapshot[region]: ## wierd edge case if you fall off the leaderboard
+            if timeSnapshot[region] >= timeDB[region] and name in snapshot[region]: ## weird edge case if you fall off the leaderboard
                 handlePredictions(prediction_channels[name][region], snapshot[region][name],
                     prediction_channels['channel_name'], prediction_channels['client_id'],
                     prediction_channels['access_token'], prediction_channels['twitch_id'])
