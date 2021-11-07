@@ -139,3 +139,5 @@ docker/
 
 # dynamodb local files
 dynamodb-local
+
+*.orig
