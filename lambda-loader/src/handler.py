@@ -43,7 +43,7 @@ def handler(event, context):
             'access_token':os.environ['ACCESS_TOKEN'],
             'twitch_id':os.environ['LII_TWITCH_ID']
             },
-        'diyingli':{
+        'madeforthis':{
             'channel_name':'sunbaconrelaxer',
             'client_id':os.environ['VICTOR_CLIENT_ID'],
             'access_token':os.environ['VICTOR_ACCESS_TOKEN'],
