@@ -168,7 +168,7 @@ class LeaderBoardBot:
         text = f'{self.formatRankText(yesterday, player_data)} and {"has not played any games today liiCat" if not yesterday else "did not play any games yesterday liiCat"}'
         longestRecord = 1
 
-        for item in items:
+        for item in player_data:
             if len(item['Ratings']) > longestRecord:
                 tag = item['PlayerName']
                 longestRecord = len(item['Ratings'])
