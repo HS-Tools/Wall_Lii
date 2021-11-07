@@ -68,7 +68,7 @@ def handler(event, context):
             else:
                 prediction_channels[name][region] = item['Ratings'][-1] ## last item
 
-    snapshot, timeSnapshot, timeDB = add_leaderboards_to_db(database, verbose=False)
+    snapshot, timeSnapshot, timeDB = add_leaderboards_to_db(database)
 
     for name in prediction_channels:
         for region in snapshot:
