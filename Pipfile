@@ -4,12 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-twitchio = "*"
-selenium = "*"
+twitchio = "==1.2.3"
 schedule = "*"
-simpleobsws = "*"
 asyncio = "*"
-pyslobs = "*"
 requests = "*"
 pytz = "*"
 "discord.py" = "*"
