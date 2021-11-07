@@ -10,11 +10,21 @@ Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to ena
 # How to run:
 `rpi.sh`
 
-# How to test in full container:
-1. build with `docker-compose build`
-2. run with `docker-compose run app-node`
-3. to clean up, `docker-compose down && rm -r docker/`
+# Testing
+This branch uses a local download of the dynamodb-local and an in memory database to make tests run much more quickly
+## Requirements
+- java
+    - `brew install java` on a mac
+- unzip
+- curl
 
-# How to test in partial container:
-1. run `docker-compose up`
-2. in a seperate terminal `pipenv run python testLeaderboard.py` or other test file
+## Setup
+1. download using `./scripts/download-dynamodb-local.sh`
+2. run using `./scripts/run-dynamodb-local.sh dynamodb-local`
+3. open a 2nd terminal
+
+## Run Tests
+`pipenv run python testFile.py`
+
+## Troubleshooting
+- If the old docker-compose test environment is still running then the java script program will not run. Stop the old docker-compose programs before starting the java based test environment.

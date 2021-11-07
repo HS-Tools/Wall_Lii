@@ -7,7 +7,7 @@ class apiTest(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         ## do 1 poll from the server to minimize repeated api calls
-        self.ratingsDict, self.lastUpdated, self.season = getLeaderboardSnapshot(['US'],'BG',1)
+        self.ratingsDict, self.lastUpdated, self.season = getLeaderboardSnapshot(['US'],'BG',1,verbose=False)
 
     def testTime(self):
         """
@@ -25,7 +25,7 @@ class apiTest(unittest.TestCase):
         """
         There should be 200 accounts found
         """
-        key = 'vaguerabbit'
+        key = 'saphirexx'
         self.assertTrue(key in self.ratingsDict['US'].keys())
         self.assertEqual(1, self.ratingsDict['US'][key]['rank'])
         self.assertEqual(22483, self.ratingsDict['US'][key]['rating'])

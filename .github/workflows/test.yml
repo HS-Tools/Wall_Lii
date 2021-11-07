@@ -1,0 +1,42 @@
+name: Run tests with docker compose
+on: pull_request
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: build pipenv
+        run: |
+          pip install pipenv
+          pipenv install
+        timeout-minutes: 3
+      - name: Setup DynamoDB Local
+        uses: rrainn/dynamodb-action@v2.0.0
+        with:
+          dbPath: # undefined by default, if this is undefined inMemory will be used
+          sharedDb: # undefined by default
+          delayTransientStatuses: # undefined by default
+          optimizeDbBeforeStartup: # undefined by default
+          port: 8000
+          cors: '*'
+      - name: tests
+        run: pipenv run python testApi.py
+        timeout-minutes: 7
+        working-directory: ./test
+      - name: test leaderboard table
+        run: pipenv run python testCreateTable.py
+        timeout-minutes: 5
+        working-directory: ./test
+      - name: test leaderboard data
+        run: pipenv run python testData.py
+        timeout-minutes: 5
+        working-directory: ./test
+      - name: test leaderboard bot
+        run: pipenv run python testLeaderboard.py
+        timeout-minutes: 5
+        working-directory: ./test
+
