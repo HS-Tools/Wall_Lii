@@ -74,7 +74,7 @@ def handler(event, context):
         for region in snapshot:
             if timeSnapshot[region] >= timeDB[region] and name in snapshot[region]: ## weird edge case if you fall off the leaderboard
                 handlePredictions(prediction_channels[name][region], snapshot[region][name],
-                    prediction_channels['channel_name'], prediction_channels['client_id'],
-                    prediction_channels['access_token'], prediction_channels['twitch_id'])
+                    prediction_channels[name]['channel_name'], prediction_channels[name]['client_id'],
+                    prediction_channels[name]['access_token'], prediction_channels[name]['twitch_id'])
 
 
