@@ -22,6 +22,9 @@ def add_leaderboards_to_db(database, *args):
     return snapshot, timeSnapshot, timeDB
 
 def handlePredictions(previous_rating, new_rating, channel_name, client_id, access_token, twitch_id):
+    print("previous_rating: " + str(previous_rating))
+    print("new_rating: " + str(new_rating))
+
     predicter = Predictions(channel_name, twitch_id, client_id, access_token)
     # Rating gain
     if new_rating > previous_rating:
@@ -73,8 +76,8 @@ def handler(event, context):
     for name in prediction_channels:
         for region in snapshot:
             if timeSnapshot[region] >= timeDB[region] and name in snapshot[region]: ## weird edge case if you fall off the leaderboard
-                handlePredictions(prediction_channels[name][region], snapshot[region][name],
-                    prediction_channels['channel_name'], prediction_channels['client_id'],
-                    prediction_channels['access_token'], prediction_channels['twitch_id'])
+                handlePredictions(prediction_channels[name][region], snapshot[region][name]['rating'],
+                    prediction_channels[name]['channel_name'], prediction_channels[name]['client_id'],
+                    prediction_channels[name]['access_token'], prediction_channels[name]['twitch_id'])
 
 
