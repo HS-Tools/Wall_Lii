@@ -72,6 +72,8 @@ def handler(event, context):
 
     for name in prediction_channels:
         for region in snapshot:
+            print(timeSnapshot[region])
+            print(timeDB[region])
             if timeSnapshot[region] >= timeDB[region] and name in snapshot[region]: ## weird edge case if you fall off the leaderboard
                 handlePredictions(prediction_channels[name][region], snapshot[region][name],
                     prediction_channels[name]['channel_name'], prediction_channels[name]['client_id'],
