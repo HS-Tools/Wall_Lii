@@ -59,7 +59,7 @@ Resources:
         EndOfDayInvoke:
           Type: Schedule
           Properties:
-            Schedule: cron(59 6 * * ? *)
+            Schedule: cron(59 7 * * ? *)
   CompositeKeyTable:
     Type: AWS::DynamoDB::Table
     Properties:
