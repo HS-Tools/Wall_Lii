@@ -4,6 +4,10 @@ Fetches Hearthstone Battlegrounds Leaderboard information regularly to enable us
 # Setup as a streamer
 Great news! No need to manually setup the bot to run for you. We have the bot running and freely available to all twitch stremers. Just go to liihs's [discord](https://discord.com/invite/C6NguFf). From there go to the channel `#wall-lii-requests` and use the directions in the pinned message.
 
+Once the bot is connected to you chat you will see it under the viewers list.
+
+You can test the commands, and if the bot doesn't respond to you, probably you have followers only chat enabled. To make sure that the bot can respond, you can make him a VIP or Moderator, like any other bot.
+
 # Commands:
 * !bgrank {battletag}: Gets the rank and mmr of a player in their highest rated region
 * !bgdaily {battletag}: Gets the starting mmr, current mmr and the list of mmr changes from all games played during the day. This resets at midnight PST time
