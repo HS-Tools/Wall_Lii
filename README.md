@@ -1,5 +1,8 @@
 # HS-BG-Leaderboards-Bot
-Fetches Hearthstone Battlegrounds Leaderboard information every 3 minutes to enable users to get the current rank of a player and to fetch their daily record of games.
+Fetches Hearthstone Battlegrounds Leaderboard information regularly to enable users to get the current rank of a player and to fetch their daily record of games. 
+
+# Setup as a streamer
+Great news! No need to manually setup the bot to run for you. We have the bot running and freely available to all twitch stremers. Just go to liihs's [discord](https://discord.com/invite/C6NguFf). From there go to the channel `#wall-lii-requests` and use the directions in the pinned message.
 
 # Commands:
 * !bgrank {battletag}: Gets the rank and mmr of a player in their highest rated region
