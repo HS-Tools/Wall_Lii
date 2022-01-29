@@ -117,7 +117,7 @@ if __name__ == '__main__':
             if len(new_channels) >= 10:
                 break
         
-        # print(new_channels)
+        print(new_channels)
         try:
             await twitchBot.join_channels(new_channels)
         except TimeoutError as err:
@@ -126,12 +126,10 @@ if __name__ == '__main__':
                 firstQuoteIndex = quoteIndices[0]
                 secondQuoteIndex = quoteIndices[1]
 
-            print(firstQuoteIndex)
-            print(secondQuoteIndex)
 
             brokenChannel = str(err)[firstQuoteIndex + 1: secondQuoteIndex]
 
-            print(brokenChannel)
+            print("Broken Channel" + brokenChannel)
 
             brokenChannels.append(brokenChannel)
 
