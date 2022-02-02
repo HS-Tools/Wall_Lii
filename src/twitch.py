@@ -6,6 +6,7 @@ from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
+from buddies import buddy_dict
 
 load_dotenv()
 
@@ -39,6 +40,18 @@ async def call(ctx, func, name, *args):
             response = "Invalid region provided.\n" + response
 
     await ctx.send(response)
+
+@twitchBot.command(name='buddy')
+async def getBuddy(ctx):
+    buddyName = ctx.content.split(' ')[1]
+
+    await ctx.send(buddy_dict[buddyName][1])
+
+@twitchBot.command(name='goldenbuddy')
+async def getBuddy(ctx):
+    buddyName = ctx.content.split(' ')[1]
+
+    await ctx.send(buddy_dict[buddyName][2])
 
 @twitchBot.event
 async def event_message(ctx):
