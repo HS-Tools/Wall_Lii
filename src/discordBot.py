@@ -54,22 +54,30 @@ async def call(ctx, func, name, *args):
 @bot.command()
 async def buddy(ctx, *args):
     buddyName = args[0].lower()
-    embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s buddy', description=buddy_dict[buddyName][1])
     try:
         await ctx.message.delete()
     except:
         pass
-    await ctx.send(embed=embed)
+
+    if buddyName not in buddy_dict.keys():
+        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+    else:
+        embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s buddy', description=buddy_dict[buddyName][1])
+        await ctx.send(embed=embed)
 
 @bot.command()
 async def goldenbuddy(ctx, *args):
     buddyName = args[0].lower()
-    embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s golden buddy', description=buddy_dict[buddyName][2])
     try:
         await ctx.message.delete()
     except:
         pass
-    await ctx.send(embed=embed)
+
+    if buddyName not in buddy_dict.keys():
+        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+    else:
+        embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s golden buddy', description=buddy_dict[buddyName][2])
+        await ctx.send(embed=embed)
 
 @bot.command()
 async def bgrank(ctx, *args):

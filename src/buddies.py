@@ -73,5 +73,6 @@ buddy_dict = {
     'tavish':['Tavish Stormpike', 'Crabby is a Tier 3 5/3. Ability:  After your Hero Power fires, give adjacent minions stats equal to the damage dealt', 'Golden Crabby is a Tier 3 10/6. Ability:  After your Hero Power fires, give adjacent minions stats equal to twice the damage dealt.'],
     'brukan':["Bru'kan", 'Spirit Raptor is a Tier 2 3/2. Ability:  After you call upon a new Element, this remembers it. Deathrattle: Call upon those Elements', 'Golden Spirit Raptor is a Tier 2 6/4. Ability:  After you call upon a new Element, this remembers it. Deathrattle: Call upon those Elements twice.'],
     'drekthar':["Drek'Thar", 'Frostwolf Lieutenant is a Tier 3 7/4. Ability:  Avenge (2): Give your minions +1 Attack permanently', 'Golden Frostwolf Lieutenant is a Tier 3 14/8. Ability:  Avenge (2): Give your minions +2 Attack permanently.'],
-    'vanndar':['Vanndar Stormpike', 'Stormpike Lieutenant is a Tier 3 4/7. Ability:  Avenge (2): Give your minions +1 Health permanently', 'Golden Stormpike Lieutenant is a Tier 3 8/14. Ability:  Avenge (2): Give your minions +2 Health permanently.']
+    'vanndar':['Vanndar Stormpike', 'Stormpike Lieutenant is a Tier 3 4/7. Ability:  Avenge (2): Give your minions +1 Health permanently', 'Golden Stormpike Lieutenant is a Tier 3 8/14. Ability:  Avenge (2): Give your minions +2 Health permanently.'],
+    'lii': ['Lii', 'Gomez is a Tier 6 10/10. Ability: Backseat for the rest of the game and play way better', 'Golden Gomez is a Tier 6 20/20. Ability: Win the game']
 }
