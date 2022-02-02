@@ -7,7 +7,7 @@ from discord.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
-from buddies import buddy_dict
+from buddies import buddyDict
 
 load_dotenv()
 
@@ -59,10 +59,10 @@ async def buddy(ctx, *args):
     except:
         pass
 
-    if buddyName not in buddy_dict.keys():
+    if buddyName not in buddyDict.keys():
         await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
-        embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s buddy', description=buddy_dict[buddyName][1])
+        embed = discord.Embed(title=f'{buddyDict[buddyName][0]}\'s buddy', description=buddyDict[buddyName][1])
         await ctx.send(embed=embed)
 
 @bot.command()
@@ -73,10 +73,10 @@ async def goldenbuddy(ctx, *args):
     except:
         pass
 
-    if buddyName not in buddy_dict.keys():
+    if buddyName not in buddyDict.keys():
         await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
-        embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s golden buddy', description=buddy_dict[buddyName][2])
+        embed = discord.Embed(title=f'{buddyDict[buddyName][0]}\'s golden buddy', description=buddyDict[buddyName][2])
         await ctx.send(embed=embed)
 
 @bot.command()

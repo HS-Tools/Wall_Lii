@@ -6,7 +6,7 @@ from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
-from buddies import buddy_dict
+from buddies import buddyDict
 
 load_dotenv()
 
@@ -45,19 +45,19 @@ async def call(ctx, func, name, *args):
 async def getBuddy(ctx):
     buddyName = ctx.content.split(' ')[1].lower()
 
-    if buddyName not in buddy_dict.keys():
+    if buddyName not in buddyDict.keys():
         await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
-        await ctx.send(buddy_dict[buddyName][1])
+        await ctx.send(buddyDict[buddyName][1])
 
 @twitchBot.command(name='goldenbuddy')
 async def getBuddy(ctx):
     buddyName = ctx.content.split(' ')[1].lower()
 
-    if buddyName not in buddy_dict.keys():
+    if buddyName not in buddyDict.keys():
         await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
-        await ctx.send(buddy_dict[buddyName][2])
+        await ctx.send(buddyDict[buddyName][2])
 
 @twitchBot.event
 async def event_message(ctx):
