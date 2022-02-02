@@ -1,4 +1,4 @@
-buddy_dict = {
+buddyDict = {
     'edwin':['Edwin VanCleef', 'SI:7 Scout is a Tier 3 3/3. Ability:  After you buy a minion, gain +1/+1', 'Golden SI:7 Scout is a Tier 3 6/6. Ability:  After you buy a minion, gain +2/+2.'],
     'illidan':['Illidan Stormrage', "Eclipsion Illidari is a Tier 2 6/3. Ability:  'Wingmen' also gives 'Immune while Attacking' for one attack only", "Golden Eclipsion Illidari is a Tier 2 12/6. Ability:  'Wingmen' also gives 'Immune while Attacking' for two attacks only."],
     'galakrond':['Galakrond', "Apostle of Galakrond is a Tier 3 5/7. Ability:  Battlecry: Replace minions in Bob's Tavern with ones of a higher Tavern Tier", "Golden Apostle of Galakrond is a Tier 3 10/14. Ability:  Battlecry: Replace minions in Bob's Tavern with ones of a higher Tavern Tier twice."],
