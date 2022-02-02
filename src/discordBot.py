@@ -53,7 +53,7 @@ async def call(ctx, func, name, *args):
 
 @bot.command()
 async def buddy(ctx, *args):
-    buddyName = args[0]
+    buddyName = args[0].lower()
     embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s buddy', description=buddy_dict[buddyName][1])
     try:
         await ctx.message.delete()
@@ -63,7 +63,7 @@ async def buddy(ctx, *args):
 
 @bot.command()
 async def goldenbuddy(ctx, *args):
-    buddyName = args[0]
+    buddyName = args[0].lower()
     embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s golden buddy', description=buddy_dict[buddyName][2])
     try:
         await ctx.message.delete()
