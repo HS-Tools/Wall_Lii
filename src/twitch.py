@@ -43,13 +43,13 @@ async def call(ctx, func, name, *args):
 
 @twitchBot.command(name='buddy')
 async def getBuddy(ctx):
-    buddyName = ctx.content.split(' ')[1]
+    buddyName = ctx.content.split(' ')[1].lower()
 
     await ctx.send(buddy_dict[buddyName][1])
 
 @twitchBot.command(name='goldenbuddy')
 async def getBuddy(ctx):
-    buddyName = ctx.content.split(' ')[1]
+    buddyName = ctx.content.split(' ')[1].lower()
 
     await ctx.send(buddy_dict[buddyName][2])
 
