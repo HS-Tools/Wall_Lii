@@ -7,6 +7,7 @@ from discord.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
+from buddies import buddy_dict
 
 load_dotenv()
 
@@ -49,6 +50,26 @@ async def call(ctx, func, name, *args):
     except:
         pass
     await ctx.send(embed = getEmbedObject(response, args[0], name))
+
+@bot.command()
+async def buddy(ctx, *args):
+    buddyName = args[0]
+    embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s buddy', description=buddy_dict[buddyName][1])
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def goldenbuddy(ctx, *args):
+    buddyName = args[0]
+    embed = discord.Embed(title=f'{buddy_dict[buddyName][0]}\'s golden buddy', description=buddy_dict[buddyName][2])
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def bgrank(ctx, *args):
