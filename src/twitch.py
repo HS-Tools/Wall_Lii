@@ -45,13 +45,19 @@ async def call(ctx, func, name, *args):
 async def getBuddy(ctx):
     buddyName = ctx.content.split(' ')[1].lower()
 
-    await ctx.send(buddy_dict[buddyName][1])
+    if buddyName not in buddy_dict.keys():
+        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+    else:
+        await ctx.send(buddy_dict[buddyName][1])
 
 @twitchBot.command(name='goldenbuddy')
 async def getBuddy(ctx):
     buddyName = ctx.content.split(' ')[1].lower()
 
-    await ctx.send(buddy_dict[buddyName][2])
+    if buddyName not in buddy_dict.keys():
+        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+    else:
+        await ctx.send(buddy_dict[buddyName][2])
 
 @twitchBot.event
 async def event_message(ctx):
