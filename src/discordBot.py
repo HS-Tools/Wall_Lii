@@ -63,7 +63,7 @@ async def buddy(ctx, *args):
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyOptions.keys())
         goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
-        if len(highests) > 0:
+        if len(goodScores) > 0:
             goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
             await ctx.send(
                 "Do you mean: {}".format(
