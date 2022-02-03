@@ -17,6 +17,7 @@ aiocron = "*"
 typing-extensions = "*"
 python-dotenv = "*"
 fuzzywuzzy = "*"
+python-levenshtein = "*"
 
 [dev-packages]
 
