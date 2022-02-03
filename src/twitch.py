@@ -7,6 +7,7 @@ from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
 from buddies import buddyDict
+from fuzzywuzzy import process
 
 load_dotenv()
 
@@ -43,19 +44,41 @@ async def call(ctx, func, name, *args):
 
 @twitchBot.command(name='buddy')
 async def getBuddy(ctx):
+    if len(ctx.content.split(' ')) < 2:
+        await ctx.send('Insert a hero name after !buddy to use this command')
+        return
+
     buddyName = ctx.content.split(' ')[1].lower()
 
     if buddyName not in buddyDict.keys():
-        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+        buddyOptions = list(buddyDict.keys())
+        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        if len(goodScores) > 0:
+            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            await ctx.send(
+                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+        else:
+            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
         await ctx.send(buddyDict[buddyName][1])
 
 @twitchBot.command(name='goldenbuddy')
-async def getBuddy(ctx):
+async def getGoldenBuddy(ctx):
+    if len(ctx.content.split(' ')) < 2:
+        await ctx.send('Insert a hero name after !goldenbuddy to use this command')
+        return
+
     buddyName = ctx.content.split(' ')[1].lower()
 
     if buddyName not in buddyDict.keys():
-        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+        buddyOptions = list(buddyDict.keys())
+        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        if len(goodScores) > 0:
+            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            await ctx.send(
+                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+        else:
+            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
         await ctx.send(buddyDict[buddyName][2])
 
