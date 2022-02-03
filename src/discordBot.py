@@ -54,6 +54,10 @@ async def call(ctx, func, name, *args):
 
 @bot.command()
 async def buddy(ctx, *args):
+    if len(args) < 1:
+        await ctx.send("Insert a hero name after !buddy to use this command")
+        return
+
     buddyName = args[0].lower()
     try:
         await ctx.message.delete()
@@ -75,6 +79,10 @@ async def buddy(ctx, *args):
 
 @bot.command()
 async def goldenbuddy(ctx, *args):
+    if len(args) < 1:
+        await ctx.send("Insert a hero name after !goldenbuddy to use this command")
+        return
+
     buddyName = args[0].lower()
     try:
         await ctx.message.delete()

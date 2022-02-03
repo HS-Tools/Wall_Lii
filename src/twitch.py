@@ -44,6 +44,10 @@ async def call(ctx, func, name, *args):
 
 @twitchBot.command(name='buddy')
 async def getBuddy(ctx):
+    if len(ctx.content.split(' ')) < 2:
+        await ctx.send('Insert a hero name after !buddy to use this command')
+        return
+
     buddyName = ctx.content.split(' ')[1].lower()
 
     if buddyName not in buddyDict.keys():
@@ -59,7 +63,11 @@ async def getBuddy(ctx):
         await ctx.send(buddyDict[buddyName][1])
 
 @twitchBot.command(name='goldenbuddy')
-async def getBuddy(ctx):
+async def getGoldenBuddy(ctx):
+    if len(ctx.content.split(' ')) < 2:
+        await ctx.send('Insert a hero name after !goldenbuddy to use this command')
+        return
+
     buddyName = ctx.content.split(' ')[1].lower()
 
     if buddyName not in buddyDict.keys():
