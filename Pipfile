@@ -16,6 +16,7 @@ boto3 = "*"
 aiocron = "*"
 typing-extensions = "*"
 python-dotenv = "*"
+fuzzywuzzy = "*"
 
 [dev-packages]
 
