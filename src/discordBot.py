@@ -61,13 +61,12 @@ async def buddy(ctx, *args):
         pass
 
     if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyOptions.keys())
+        buddyOptions = list(buddyDict.keys())
         goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
         if len(goodScores) > 0:
             goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
             await ctx.send(
-                "Do you mean: {}".format(
-                    goodScoresNames))
+                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
         else:
             await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
@@ -83,7 +82,14 @@ async def goldenbuddy(ctx, *args):
         pass
 
     if buddyName not in buddyDict.keys():
-        await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+        buddyOptions = list(buddyDict.keys())
+        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        if len(goodScores) > 0:
+            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            await ctx.send(
+                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+        else:
+            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
     else:
         embed = discord.Embed(title=f'{buddyDict[buddyName][0]}\'s golden buddy', description=buddyDict[buddyName][2])
         await ctx.send(embed=embed)
