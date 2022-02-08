@@ -128,11 +128,11 @@ async def goodBot(ctx):
 
 @twitchBot.command(name='wall_lii')
 async def wall_lii(ctx):
-    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name].')
+    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info')
 
 @twitchBot.command(name='help')
 async def help(ctx):
-    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name].')
+    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info')
 
 if __name__ == '__main__':
 
