@@ -191,7 +191,7 @@ if __name__ == '__main__':
     async def updateAlias():
         leaderboardBot.getNewAlias()
 
-    @aiocron.crontab('0 * * * *') ## Every hour check for new buddies
+    @aiocron.crontab('10 * * * *') ## Every hour check for new buddies
     async def check_for_new_buddies():
         global buddyDict
         temp_dict = get_buddy_dict()
