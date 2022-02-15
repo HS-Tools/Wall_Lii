@@ -7,7 +7,8 @@ from discord.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
-from buddies import buddyDict
+from buddies import easter_egg_buddies_dict
+from buddy_fetch import get_buddy_dict
 from fuzzywuzzy import process
 
 load_dotenv()
@@ -237,6 +238,14 @@ async def sendDailyRecap():
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
+@aiocron.crontab('0 * * * *') ## Every hour check for new buddies
+async def check_for_new_buddies():
+    global buddyDict
+    temp_dict = get_buddy_dict()
+    
+    if (temp_dict and len(temp_dict.keys()) > 0):
+        buddyDict = temp_dict
+
 @bot.command()
 async def test(ctx):
     climbers = leaderboardBot.getMostMMRChanged(5, True)
@@ -283,5 +292,6 @@ def get_pst_time():
 
 if __name__ == '__main__':
     leaderboardBot = LeaderBoardBot()
+    buddyDict = get_buddy_dict()
 
     bot.run(os.environ['DISCORD_TOKEN'])
