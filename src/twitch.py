@@ -6,7 +6,8 @@ from twitchio.ext import commands
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
-from buddies import buddyDict
+from buddies import easter_egg_buddies_dict
+from buddy_fetch import get_buddy_dict
 from fuzzywuzzy import process
 
 load_dotenv()
@@ -15,6 +16,7 @@ leaderboardBot = LeaderBoardBot()
 
 initialChannels = leaderboardBot.getChannels()
 brokenChannels = []
+buddyDict = get_buddy_dict()
 
 twitchBot = commands.Bot(
     token=os.environ['TMI_TOKEN'],
@@ -188,5 +190,13 @@ if __name__ == '__main__':
     @aiocron.crontab('* * * * *') ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
+
+    @aiocron.crontab('0 * * * *') ## Every hour check for new buddies
+    async def check_for_new_buddies():
+        global buddyDict
+        temp_dict = get_buddy_dict()
+        
+        if (temp_dict and len(temp_dict.keys()) > 0):
+            buddyDict = temp_dict
 
     twitchBot.run()
