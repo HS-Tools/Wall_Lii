@@ -59,10 +59,11 @@ def get_buddy_dict():
                 if data_json[j]['id'] == battlegrounds_heroes[key]+"_Buddy":
                     data = data_json[j]
                     buddy_string = f"{data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
-                    battlegrounds_heroes_buddies[key] = (key, buddy_string)
+                    battlegrounds_heroes_buddies[get_shortened_name(key)] = (key, buddy_string)
                 elif data_json[j]['id'] == battlegrounds_heroes[key]+"_Buddy_G":
                     data = data_json[j]
                     golden_buddy_string = f"Golden {data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
-                    battlegrounds_heroes_buddies[get_shortened_name(key)] = battlegrounds_heroes_buddies[key] + (golden_buddy_string, )
+                    battlegrounds_heroes_buddies[get_shortened_name(key)] = battlegrounds_heroes_buddies[get_shortened_name(key)] + (golden_buddy_string, )
     
+    print(battlegrounds_heroes_buddies.keys())
     return battlegrounds_heroes_buddies
