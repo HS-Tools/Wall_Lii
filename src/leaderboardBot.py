@@ -39,8 +39,8 @@ class LeaderBoardBot:
     def parseArgs(self, default, *args):
         args = list(args)
         for i, arg in enumerate(args):
-            if '@' == arg[0]:
-                args[i] = arg[1:] ## take the end of the string
+            if '/' == arg[0] or '!' == arg[0]:
+                return ["Please don't try to hack me", None]
         if (len(args) == 0):
             return [default, None]
         elif (len(args) == 1):
