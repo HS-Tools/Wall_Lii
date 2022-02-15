@@ -1,8 +1,11 @@
 import os
 import aiocron
 import re
+import sys
+import traceback
 from asyncio import TimeoutError
 from twitchio.ext import commands
+from twitchio.ext.commands import CommandNotFound
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 from dotenv import load_dotenv
@@ -142,13 +145,16 @@ async def bgdailii(ctx):
 async def goodBot(ctx):
     await ctx.send('MrDestructoid Just doing my job MrDestructoid')
 
-@twitchBot.command(name='wall_lii')
-async def wall_lii(ctx):
-    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info')
-
-@twitchBot.command(name='help')
+@twitchBot.command(name='help', aliases=['wall_lii'])
 async def help(ctx):
     await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info')
+
+@twitchBot.event()
+async def event_error(error, data):
+    if isinstance(error, CommandNotFound):
+        return
+    traceback.print_exception( type(error), error, error.__traceback__, file=sys.stderr)
+
 
 if __name__ == '__main__':
 
