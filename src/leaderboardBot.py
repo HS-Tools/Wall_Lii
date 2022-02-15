@@ -88,7 +88,6 @@ class LeaderBoardBot:
         response = table.scan(
             FilterExpression=Attr('Rank').eq(rank),
         )
-        print(response)
         return [it for it in response['Items'] if it['Region'] == region]
 
 
