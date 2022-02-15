@@ -50,6 +50,9 @@ async def getBuddy(ctx):
 
     buddyName = ctx.content.split(' ')[1].lower()
 
+    if buddyName[0] in ['!', '/']:
+        return
+
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyDict.keys())
         goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
@@ -69,6 +72,9 @@ async def getGoldenBuddy(ctx):
         return
 
     buddyName = ctx.content.split(' ')[1].lower()
+
+    if buddyName[0] in ['!', '/']:
+        return
 
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyDict.keys())
