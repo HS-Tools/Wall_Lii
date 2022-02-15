@@ -95,21 +95,18 @@ class LeaderBoardBot:
     def findPlayer(self, tag, region, yesterday):
         ## format the data
         region = parseRegion(region)
+
+        ## check if tag has an alias:
+        if tag in self.alias:
+            tag = self.alias[tag]
+
         tag = self.getFormattedTag(tag)
         table = self.yesterday_table if yesterday else self.table
 
         ## check if tag on leaderboard
         player_data = self.getPlayerData(tag, table, region)
-        if len(player_data) > 0:
-            return tag, region, player_data, ""
 
-        ## check if alias is on leaderboard
-        if tag in self.alias:
-            alias = self.alias[tag]
-            alias = self.getFormattedTag(alias)
-            player_data = self.getPlayerData(alias, table, region)
         if len(player_data) > 0:
-            tag = alias
             return tag, region, player_data, ""
 
         ## check if easter egg before digit because of numerical eggs
