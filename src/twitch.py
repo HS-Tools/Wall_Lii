@@ -175,7 +175,8 @@ if __name__ == '__main__':
             if len(new_channels) >= 10:
                 break
         
-        print(new_channels)
+        if (len(new_channels) > 0):
+            print("Joined these channels: " + str(new_channels))
         try:
             await twitchBot.join_channels(new_channels)
         except TimeoutError as err:
