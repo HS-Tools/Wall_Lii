@@ -238,7 +238,7 @@ async def sendDailyRecap():
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
-@aiocron.crontab('0 * * * *') ## Every hour check for new buddies
+@aiocron.crontab('10 * * * *') ## Every hour check for new buddies
 async def check_for_new_buddies():
     global buddyDict
     temp_dict = get_buddy_dict()
