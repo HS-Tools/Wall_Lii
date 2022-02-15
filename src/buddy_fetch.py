@@ -65,5 +65,4 @@ def get_buddy_dict():
                     golden_buddy_string = f"Golden {data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
                     battlegrounds_heroes_buddies[get_shortened_name(key)] = battlegrounds_heroes_buddies[get_shortened_name(key)] + (golden_buddy_string, )
     
-    print(battlegrounds_heroes_buddies.keys())
     return battlegrounds_heroes_buddies
