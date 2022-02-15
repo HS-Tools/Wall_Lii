@@ -8,5 +8,5 @@ docker build -t hs_leaderboards_discord -f ./discord.Dockerfile .
 docker kill $(docker ps -q)
 docker rm $(docker ps -a -q)
 
-docker run -d hs_leaderboards_discord
-docker run -d hs_leaderboards_twitch
+docker run --restart always -d hs_leaderboards_discord
+docker run --restart always -d hs_leaderboards_twitch
