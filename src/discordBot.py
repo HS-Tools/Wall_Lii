@@ -327,8 +327,29 @@ async def sendDailyRecap():
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
+aiocron.crontab('59 7 * * *')
+async def send_top16_daily_recap():
+    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1,16)
 
-@aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
+    discord_payload = ""
+
+    def append_to_discord_payload(string):
+        discord_payload += string
+        discord_payload += "\n"
+    for region in top16_players_in_each_region.keys():
+        append_to_discord_payload(f"**{region} Top 16 **")
+        for rank,player in top16_players_in_each_region[region]:
+            append_to_discord_payload(f"{rank}. **{player}**")
+        # Add a linebreak after each top 16.
+        append_to_discord_payload("")
+
+    embed = discord.Embed(title=f'Daily Top 16 Leaderboards @ {get_pst_time()}', description=discord_payload)
+
+    dedicated_channel = bot.get_channel(channelIds['wall_lii'])
+    recap = await dedicated_channel.send(embed=embed)
+    await recap.pin()
+
+@aiocron.crontab('10 * * * *') ## Every hour check for new buddies
 async def check_for_new_buddies():
     global buddyDict
     temp_dict = get_buddy_dict()
