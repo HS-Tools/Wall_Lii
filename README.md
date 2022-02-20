@@ -17,9 +17,21 @@ You can test the commands, and if the bot doesn't respond to you, probably you h
 - !wall_lii: Help command
 - !goodbot: Praise the bot
 
+# Contributing
+
+We welcome all contributors. Please be civil in Issues, Pull Requests, and all work regarding this project.
+
+Be sure to install pre-commit:
+
+Pre-Commit: https://pre-commit.com/
+
+```
+pre-commit install
+```
+
 # How to run:
 
-`rpi.sh`
+`start.sh`
 
 # Testing
 
