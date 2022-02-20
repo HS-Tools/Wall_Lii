@@ -22,7 +22,7 @@ jobs:
           delayTransientStatuses: # undefined by default
           optimizeDbBeforeStartup: # undefined by default
           port: 8000
-          cors: '*'
+          cors: "*"
       - name: tests
         run: pipenv run python testApi.py
         timeout-minutes: 7
@@ -39,4 +39,3 @@ jobs:
         run: pipenv run python testLeaderboard.py
         timeout-minutes: 5
         working-directory: ./test
-

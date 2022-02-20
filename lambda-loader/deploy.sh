@@ -12,4 +12,3 @@ aws cloudformation deploy --template-file processed.template.yaml --stack-name $
 
 rm processed.template.yaml
 rm -rf dist/
-

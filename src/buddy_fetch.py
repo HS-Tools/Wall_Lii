@@ -1,7 +1,8 @@
 import json
+
 import requests
 
-url = 'https://api.hearthstonejson.com/v1/latest/enUS/cards.json'
+url = "https://api.hearthstonejson.com/v1/latest/enUS/cards.json"
 response = requests.get(url)
 data_json = json.loads(response.text)
 
@@ -18,6 +19,7 @@ difficult_shortened_names = {
     "Mr. Bigglesworth": "cat",
 }
 
+
 def filterText(text):
     text = text.replace("<b>", "")
     text = text.replace("</b>", "")
@@ -26,10 +28,25 @@ def filterText(text):
     text = text.replace("\xa0", " ")
     return text
 
-def get_shortened_name(full_hero_name):
-    name_words = full_hero_name.split(' ')
 
-    titles = ["Lord", "Dancin'", "King", "Queen", "Fungalmancer", "Arch-Villain", "Captain", "Skycap'n", "Overlord", "Infinite", "Dinotamer", "Sir", "The"]
+def get_shortened_name(full_hero_name):
+    name_words = full_hero_name.split(" ")
+
+    titles = [
+        "Lord",
+        "Dancin'",
+        "King",
+        "Queen",
+        "Fungalmancer",
+        "Arch-Villain",
+        "Captain",
+        "Skycap'n",
+        "Overlord",
+        "Infinite",
+        "Dinotamer",
+        "Sir",
+        "The",
+    ]
 
     if full_hero_name in difficult_shortened_names.keys():
         return difficult_shortened_names[full_hero_name]
@@ -39,30 +56,38 @@ def get_shortened_name(full_hero_name):
     else:
         first_word = name_words[1]
 
-    return ''.join(c.lower() for c in first_word if c.isalnum())
+    return "".join(c.lower() for c in first_word if c.isalnum())
+
 
 def get_buddy_dict():
-    #dictionary to hold hero names and their ID's
+    # dictionary to hold hero names and their ID's
     battlegrounds_heroes = {}
-    #Variable of the final dictionary
+    # Variable of the final dictionary
     battlegrounds_heroes_buddies = {}
 
-    #Read through all the data and find the hero names and their ID's
+    # Read through all the data and find the hero names and their ID's
     for i in range(len(data_json)):
-        if 'battlegroundsHero' in data_json[i].keys():
-            battlegrounds_heroes[data_json[i]['name']] = data_json[i]['id']
+        if "battlegroundsHero" in data_json[i].keys():
+            battlegrounds_heroes[data_json[i]["name"]] = data_json[i]["id"]
 
-    #Loop through all the heroes in the dictionary and find their buddies
+    # Loop through all the heroes in the dictionary and find their buddies
     for key in battlegrounds_heroes:
         for j in range(len(data_json)):
-            if 'isBattlegroundsBuddy' in data_json[j].keys():
-                if data_json[j]['id'] == battlegrounds_heroes[key]+"_Buddy":
+            if "isBattlegroundsBuddy" in data_json[j].keys():
+                if data_json[j]["id"] == battlegrounds_heroes[key] + "_Buddy":
                     data = data_json[j]
                     buddy_string = f"{data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
-                    battlegrounds_heroes_buddies[get_shortened_name(key)] = (key, buddy_string)
-                elif data_json[j]['id'] == battlegrounds_heroes[key]+"_Buddy_G":
+                    battlegrounds_heroes_buddies[get_shortened_name(key)] = (
+                        key,
+                        buddy_string,
+                    )
+                elif data_json[j]["id"] == battlegrounds_heroes[key] + "_Buddy_G":
                     data = data_json[j]
                     golden_buddy_string = f"Golden {data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
-                    battlegrounds_heroes_buddies[get_shortened_name(key)] = battlegrounds_heroes_buddies[get_shortened_name(key)] + (golden_buddy_string, )
-    
+                    battlegrounds_heroes_buddies[
+                        get_shortened_name(key)
+                    ] = battlegrounds_heroes_buddies[get_shortened_name(key)] + (
+                        golden_buddy_string,
+                    )
+
     return battlegrounds_heroes_buddies

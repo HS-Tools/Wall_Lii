@@ -1,44 +1,44 @@
 import os
+from datetime import datetime
+
 import aiocron
 import discord
-from datetime import datetime
-from pytz import timezone, utc
 from discord.ext import commands
-from leaderboardBot import LeaderBoardBot
-from parseRegion import isRegion
 from dotenv import load_dotenv
+from fuzzywuzzy import process
+from pytz import timezone, utc
+
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict
-from fuzzywuzzy import process
+from leaderboardBot import LeaderBoardBot
+from parseRegion import isRegion
 
 load_dotenv()
 
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix="!")
 
 channelIds = {
-    'wall_lii': 811468284394209300,
-    'wall-lii-requests': 846867129834930207,
-    'test': 730782280674443327,
+    "wall_lii": 811468284394209300,
+    "wall-lii-requests": 846867129834930207,
+    "test": 730782280674443327,
 }
 
 liiDiscordId = 204806965585510400
 
-emotes = [
-    'liiHappyCat',
-    'liiCat',
-    'ninaisFEESH',
-    'liiWait'
-]
+emotes = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
+
 
 def getEmbedObject(text, player, command):
-    embed = discord.Embed(title=f'{player}\'s {command}', description=text)
+    embed = discord.Embed(title=f"{player}'s {command}", description=text)
 
     return embed
 
+
 def removeTwitchEmotes(s):
     for key in emotes:
-        s = s.replace(key, '')
+        s = s.replace(key, "")
     return s
+
 
 async def call(ctx, func, name, *args):
     response = removeTwitchEmotes(func(*args))
@@ -51,7 +51,8 @@ async def call(ctx, func, name, *args):
         await message.delete()
     except:
         pass
-    await ctx.send(embed = getEmbedObject(response, args[0], name))
+    await ctx.send(embed=getEmbedObject(response, args[0], name))
+
 
 @bot.command()
 async def buddy(ctx, *args):
@@ -66,22 +67,38 @@ async def buddy(ctx, *args):
         pass
 
     if buddyName in easter_egg_buddies_dict.keys():
-        embed = discord.Embed(title=f'{easter_egg_buddies_dict[buddyName][0]}\'s buddy', description=easter_egg_buddies_dict[buddyName][1])
+        embed = discord.Embed(
+            title=f"{easter_egg_buddies_dict[buddyName][0]}'s buddy",
+            description=easter_egg_buddies_dict[buddyName][1],
+        )
         await ctx.send(embed=embed)
         return
 
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        goodScores = process.extractBests(
+            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
+        )
         if len(goodScores) > 0:
-            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
             await ctx.send(
-                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+                "{} is not a valid hero, try again with {}".format(
+                    buddyName, goodScoresNames
+                )
+            )
         else:
-            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+            await ctx.send(
+                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
+                    buddyName
+                )
+            )
     else:
-        embed = discord.Embed(title=f'{buddyDict[buddyName][0]}\'s buddy', description=buddyDict[buddyName][1])
+        embed = discord.Embed(
+            title=f"{buddyDict[buddyName][0]}'s buddy",
+            description=buddyDict[buddyName][1],
+        )
         await ctx.send(embed=embed)
+
 
 @bot.command()
 async def goldenbuddy(ctx, *args):
@@ -96,122 +113,165 @@ async def goldenbuddy(ctx, *args):
         pass
 
     if buddyName in easter_egg_buddies_dict.keys():
-        embed = discord.Embed(title=f'{easter_egg_buddies_dict[buddyName][0]}\'s golden buddy', description=easter_egg_buddies_dict[buddyName][2])
+        embed = discord.Embed(
+            title=f"{easter_egg_buddies_dict[buddyName][0]}'s golden buddy",
+            description=easter_egg_buddies_dict[buddyName][2],
+        )
         await ctx.send(embed=embed)
         return
 
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        goodScores = process.extractBests(
+            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
+        )
         if len(goodScores) > 0:
-            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
             await ctx.send(
-                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+                "{} is not a valid hero, try again with {}".format(
+                    buddyName, goodScoresNames
+                )
+            )
         else:
-            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+            await ctx.send(
+                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
+                    buddyName
+                )
+            )
     else:
-        embed = discord.Embed(title=f'{buddyDict[buddyName][0]}\'s golden buddy', description=buddyDict[buddyName][2])
+        embed = discord.Embed(
+            title=f"{buddyDict[buddyName][0]}'s golden buddy",
+            description=buddyDict[buddyName][2],
+        )
         await ctx.send(embed=embed)
+
 
 @bot.command()
 async def bgrank(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', *args)
-    await call(ctx, leaderboardBot.getRankText, 'rank', *args)
+    args = leaderboardBot.parseArgs("lii", *args)
+    await call(ctx, leaderboardBot.getRankText, "rank", *args)
+
 
 @bot.command()
 async def bgdaily(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', *args)
-    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
+    args = leaderboardBot.parseArgs("lii", *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
+
 
 @bot.command()
 async def yesterday(ctx, *args):
-    args = leaderboardBot.parseArgs('lii', *args)
-    args.append(True)   ## send the yesterday value to the function
-    await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
+    args = leaderboardBot.parseArgs("lii", *args)
+    args.append(True)  ## send the yesterday value to the function
+    await call(ctx, leaderboardBot.getDailyStatsText, "yesterday", *args)
+
 
 @bot.command()
 async def bgdailii(ctx):
-    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', 'lii')
+    await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
+
 
 @bot.command()
 async def goodbot(ctx):
-    await ctx.send(':robot: Just doing my job :robot:')
+    await ctx.send(":robot: Just doing my job :robot:")
+
 
 @bot.command()
 async def addalias(ctx, *args):
-    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+    if (
+        ctx.message.channel.id == channelIds["wall-lii-requests"]
+        or ctx.message.channel.id == channelIds["test"]
+    ):
         message = ctx.message
         await message.delete()
 
         if len(args) < 2:
-            await ctx.send('The command must have two words. !addalias [alias] [name]')
+            await ctx.send("The command must have two words. !addalias [alias] [name]")
         else:
             alias = args[0].lower()
             name = args[1].lower()
 
             leaderboardBot.addAlias(alias, name)
             leaderboardBot.updateAlias()
-            if alias in leaderboardBot.alias.keys() and leaderboardBot.alias[alias] == name:
-                await ctx.send(f'{alias} is now an alias for {name}')
+            if (
+                alias in leaderboardBot.alias.keys()
+                and leaderboardBot.alias[alias] == name
+            ):
+                await ctx.send(f"{alias} is now an alias for {name}")
             else:
-                await ctx.send(f'failed to set alias {alias} to name {name}')
+                await ctx.send(f"failed to set alias {alias} to name {name}")
+
 
 @bot.command()
 async def deletealias(ctx, *args):
-    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+    if (
+        ctx.message.channel.id == channelIds["wall-lii-requests"]
+        or ctx.message.channel.id == channelIds["test"]
+    ):
         message = ctx.message
         await message.delete()
 
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
-                await ctx.send('The command must have one word. !deletealias [alias]')
+                await ctx.send("The command must have one word. !deletealias [alias]")
             else:
                 alias = args[0].lower()
 
                 leaderboardBot.deleteAlias(alias)
                 leaderboardBot.updateAlias()
-                
-                await ctx.send(f'{alias} alias was deleted')
+
+                await ctx.send(f"{alias} alias was deleted")
         else:
-            await ctx.send('Only Lii can delete aliases')
+            await ctx.send("Only Lii can delete aliases")
+
 
 @bot.command()
 async def addchannel(ctx, *args):
-    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+    if (
+        ctx.message.channel.id == channelIds["wall-lii-requests"]
+        or ctx.message.channel.id == channelIds["test"]
+    ):
         message = ctx.message
         await message.delete()
-        
+
         if len(args) < 2:
-            await ctx.send('The command must have two words. !addchannel [channelName] [playerName]')
+            await ctx.send(
+                "The command must have two words. !addchannel [channelName] [playerName]"
+            )
         else:
             channelName = args[0].lower()
             playerName = args[1].lower()
 
             leaderboardBot.addChannel(channelName, playerName)
 
-            await ctx.send(f'{channelName} will have wall_lii added to it with the default name of {playerName}')
+            await ctx.send(
+                f"{channelName} will have wall_lii added to it with the default name of {playerName}"
+            )
 
 
 @bot.command()
 async def deletechannel(ctx, *args):
-    if (ctx.message.channel.id == channelIds['wall-lii-requests'] or ctx.message.channel.id == channelIds['test']):
+    if (
+        ctx.message.channel.id == channelIds["wall-lii-requests"]
+        or ctx.message.channel.id == channelIds["test"]
+    ):
         message = ctx.message
         await message.delete()
 
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
-                await ctx.send('The command must have one word. !deletechannel [alias]')
+                await ctx.send("The command must have one word. !deletechannel [alias]")
             else:
                 channel = args[0].lower()
 
                 leaderboardBot.deleteChannel(channel)
-                
-                await ctx.send(f'{channel} channel was removed from the list')
+
+                await ctx.send(f"{channel} channel was removed from the list")
         else:
-            await ctx.send('Only Lii can remove wall_lii from channels')
+            await ctx.send("Only Lii can remove wall_lii from channels")
+
 
 # PI is on UTC time it seems
-@aiocron.crontab('59 7 * * *')
+@aiocron.crontab("59 7 * * *")
 async def sendDailyRecap():
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
@@ -220,12 +280,12 @@ async def sendDailyRecap():
     leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
     top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
 
-    climbersText = '**The top 5 climbers were:** \n'
-    losersText = '**The top 5 unluckiest were:** \n'
-    hardcore_gamersText = '**The top 5 grinders were:** \n'
-    highestText = '**The top 5 highest rated active players were:** \n'
-    threshholdText = '**The minimum rating to be on the leaderboards was: ** \n'
-    top16Text = '**The minimum rating to be top 16 on the leaderboards was: ** \n'
+    climbersText = "**The top 5 climbers were:** \n"
+    losersText = "**The top 5 unluckiest were:** \n"
+    hardcore_gamersText = "**The top 5 grinders were:** \n"
+    highestText = "**The top 5 highest rated active players were:** \n"
+    threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
+    top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
@@ -245,21 +305,37 @@ async def sendDailyRecap():
     for region, rating in top16_threshold.items():
         top16Text += f"{rating} in the {region} region \n"
 
-    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText + '\n' + threshholdText + '\n' + top16Text
+    text = (
+        climbersText
+        + "\n"
+        + losersText
+        + "\n"
+        + hardcore_gamersText
+        + "\n"
+        + highestText
+        + "\n"
+        + threshholdText
+        + "\n"
+        + top16Text
+    )
 
-    embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
+    embed = discord.Embed(
+        title=f"Daily Liiderboards for {get_pst_time()}", description=text
+    )
 
-    dedicated_channel = bot.get_channel(channelIds['wall_lii'])
+    dedicated_channel = bot.get_channel(channelIds["wall_lii"])
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
-@aiocron.crontab('10 * * * *') ## Every hour check for new buddies
+
+@aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
 async def check_for_new_buddies():
     global buddyDict
     temp_dict = get_buddy_dict()
-    
-    if (temp_dict and len(temp_dict.keys()) > 0):
+
+    if temp_dict and len(temp_dict.keys()) > 0:
         buddyDict = temp_dict
+
 
 @bot.command()
 async def test(ctx):
@@ -270,12 +346,12 @@ async def test(ctx):
     leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
     top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
 
-    climbersText = '**The top 5 climbers were:** \n'
-    losersText = '**The top 5 unluckiest were:** \n'
-    hardcore_gamersText = '**The top 5 grinders were:** \n'
-    highestText = '**The top 5 highest rated active players were:** \n'
-    threshholdText = '**The minimum rating to be on the leaderboards was: ** \n'
-    top16Text = '**The minimum rating to be top 16 on the leaderboards was: ** \n'
+    climbersText = "**The top 5 climbers were:** \n"
+    losersText = "**The top 5 unluckiest were:** \n"
+    hardcore_gamersText = "**The top 5 grinders were:** \n"
+    highestText = "**The top 5 highest rated active players were:** \n"
+    threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
+    top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
 
     for index, climber in enumerate(climbers):
         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
@@ -295,23 +371,39 @@ async def test(ctx):
     for region, rating in top16_threshold.items():
         top16Text += f"{rating} in the {region} region \n"
 
-    text = climbersText + '\n' + losersText + '\n' + hardcore_gamersText + '\n' + highestText + '\n' + threshholdText + '\n' + top16Text
+    text = (
+        climbersText
+        + "\n"
+        + losersText
+        + "\n"
+        + hardcore_gamersText
+        + "\n"
+        + highestText
+        + "\n"
+        + threshholdText
+        + "\n"
+        + top16Text
+    )
 
-    embed = discord.Embed(title=f'Daily Liiderboards for {get_pst_time()}', description=text)
+    embed = discord.Embed(
+        title=f"Daily Liiderboards for {get_pst_time()}", description=text
+    )
 
-    dedicated_channel = bot.get_channel(channelIds['test'])
+    dedicated_channel = bot.get_channel(channelIds["test"])
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
 
+
 def get_pst_time():
-    date_format='%m-%d'
+    date_format = "%m-%d"
     date = datetime.now(tz=utc)
-    date = date.astimezone(timezone('US/Pacific'))
-    ptDateTime=date.strftime(date_format)
+    date = date.astimezone(timezone("US/Pacific"))
+    ptDateTime = date.strftime(date_format)
     return ptDateTime
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     leaderboardBot = LeaderBoardBot()
     buddyDict = get_buddy_dict()
 
-    bot.run(os.environ['DISCORD_TOKEN'])
+    bot.run(os.environ["DISCORD_TOKEN"])
