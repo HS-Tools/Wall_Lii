@@ -201,29 +201,31 @@ class LeaderBoardBot:
         return dict
 
     def get_leaderboard_range(self, start_rank, end_rank):
-        '''
-          Given a start_rank and end_rank, for each region, return a list of players in descending order between those ranks, inclusive.
-        '''
+        """
+        Given a start_rank and end_rank, for each region, return a list of players in descending order between those ranks, inclusive.
+        """
         if start_rank > end_rank:
-            raise ValueError(f"start_rank:{start_rank} must be greater than or equal to end_rank:{end_rank}")
+            raise ValueError(
+                f"start_rank:{start_rank} must be greater than or equal to end_rank:{end_rank}"
+            )
 
         # Scan the whole database, filter for players whose rank is between our desired ranks.
         # We don't have any partition keys or secondary indexes on the database, so we must scan.
         response = self.table.scan(
-            FilterExpression=Attr('Rank').between(start_rank,end_rank),
+            FilterExpression=Attr("Rank").between(start_rank, end_rank),
         )
 
         dict = {}
         # Make a list for each region, add players of that region to the list.
-        for item in response['Items']:
-            region = item['Region']
+        for item in response["Items"]:
+            region = item["Region"]
             if region not in dict:
                 dict[region] = []
-            
-            rating = item['Ratings'][-1]
+            rank = item["Rank"]
+            rating = item["Ratings"][-1]
             player_name = item["PlayerName"]
-            dict[region].append((rating,player_name))
-        
+            dict[region].append((rank, rating, player_name))
+
         # Sort each region list by player's rank.
         for key in dict.keys():
             # When sorting a list of tuples, the default behavior is to use the first element of the tuples.
@@ -231,7 +233,6 @@ class LeaderBoardBot:
             dict[key].sort()
 
         return dict
-
 
     def getMostMMRChanged(self, num, highest):
         # For each entry in the leaderboard, get the tag, region and mmr change
