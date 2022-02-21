@@ -197,10 +197,28 @@ class testLeaderboardGet(unittest.TestCase):
         new = self.bot.getNewChannels()
         self.assertEqual(0, len(new))
 
+    def test_get_top16(self):
+        top_16_data = self.bot.get_leaderboard_range(1, 16)
+        for region in top_16_data.keys():
+            assert len(top_16_data[region]) == 16
+            player_name_set = set()
+            rank_counter = 1
+            previous_rating = float("inf")
+            for rank, rating, name in top_16_data[region]:
+                # Assert that all players in top 16 are unique.
+                assert name not in player_name_set
+                player_name_set.add(name)
+                # Assert that ranks are descending 1->16
+                assert rank == rank_counter
+                rank_counter += 1
+                # Assert that ratings are in descending order.
+                assert rating <= previous_rating
+                previous_rating = rating
+
 
 if __name__ == "__main__":
     print(f"testing leaderboardBot")
-    from dotenv import dotenv_values, load_dotenv
+    from dotenv import load_dotenv, dotenv_values
 
     load_dotenv(".test-env")
     unittest.main()
