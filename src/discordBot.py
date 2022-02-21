@@ -336,16 +336,21 @@ async def send_top16_daily_recap():
 
     discord_payload = ""
 
-    def append_to_discord_payload(string):
-        discord_payload += string
-        discord_payload += "\n"
+    def append_to_discord_payload(string, payload):
+        payload += string
+        payload += "\n"
+        return payload
 
     for region in top16_players_in_each_region.keys():
-        append_to_discord_payload(f"**{region} Top 16 **")
+        discord_payload = append_to_discord_payload(
+            f"**{region} Top 16 **", discord_payload
+        )
         for rank, rating, player in top16_players_in_each_region[region]:
-            append_to_discord_payload(f"{rank}. **{player}** with **{rating}** MMR.")
+            discord_payload = append_to_discord_payload(
+                f"{rank}. **{player}** with **{rating}** MMR.", discord_payload
+            )
         # Add a linebreak after each top 16.
-        append_to_discord_payload("")
+        discord_payload += "\n"
 
     embed = discord.Embed(
         title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
