@@ -218,7 +218,7 @@ class testLeaderboardGet(unittest.TestCase):
 
 if __name__ == "__main__":
     print(f"testing leaderboardBot")
-    from dotenv import load_dotenv, dotenv_values
+    from dotenv import dotenv_values, load_dotenv
 
     load_dotenv(".test-env")
     unittest.main()
