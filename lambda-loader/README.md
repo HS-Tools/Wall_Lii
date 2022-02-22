@@ -11,6 +11,7 @@ It also seems that the fulfillment logic is mixed with the data storing logic in
 We want to decouple the fetching and persistence of data from the bot fulfillment.
 
 We will select one persistent data store from the following likely options:
+
 - [Redis](https://aws.amazon.com/redis/)
 - [DynamoDB](https://aws.amazon.com/dynamodb/)
 - [Some managed SQL Database if we want to relate the data to other sources down the road.](https://aws.amazon.com/rds/)

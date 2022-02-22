@@ -7,4 +7,3 @@ pipenv run python testApi.py
 
 echo "test leaderboard bot"
 pipenv run python testLeaderboard.py
-

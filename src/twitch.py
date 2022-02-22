@@ -1,14 +1,16 @@
 import os
-import aiocron
 import re
 from asyncio import TimeoutError
-from twitchio.ext import commands
-from leaderboardBot import LeaderBoardBot
-from parseRegion import isRegion
+
+import aiocron
 from dotenv import load_dotenv
+from fuzzywuzzy import process
+from twitchio.ext import commands
+
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict
-from fuzzywuzzy import process
+from leaderboardBot import LeaderBoardBot
+from parseRegion import isRegion
 
 load_dotenv()
 
@@ -19,18 +21,20 @@ brokenChannels = []
 buddyDict = get_buddy_dict()
 
 twitchBot = commands.Bot(
-    token=os.environ['TMI_TOKEN'],
-    irc_token=os.environ['TMI_TOKEN'],
-    client_id=os.environ['CLIENT_ID'],
-    nick=os.environ['BOT_NICK'],
-    prefix=os.environ['BOT_PREFIX'],
-    initial_channels=['liihs']
+    token=os.environ["TMI_TOKEN"],
+    irc_token=os.environ["TMI_TOKEN"],
+    client_id=os.environ["CLIENT_ID"],
+    nick=os.environ["BOT_NICK"],
+    prefix=os.environ["BOT_PREFIX"],
+    initial_channels=["liihs"],
 )
+
 
 def parseArgs(ctx):
     default = initialChannels[ctx.channel.name]
-    args = ctx.content.split(' ')[1:]
+    args = ctx.content.split(" ")[1:]
     return leaderboardBot.parseArgs(default, *args)
+
 
 async def call(ctx, func, name, *args):
     if args[0][0] == "!":
@@ -44,15 +48,16 @@ async def call(ctx, func, name, *args):
 
     await ctx.send(response)
 
-@twitchBot.command(name='buddy')
+
+@twitchBot.command(name="buddy")
 async def getBuddy(ctx):
-    if len(ctx.content.split(' ')) < 2:
-        await ctx.send('Insert a hero name after !buddy to use this command')
+    if len(ctx.content.split(" ")) < 2:
+        await ctx.send("Insert a hero name after !buddy to use this command")
         return
 
-    buddyName = ctx.content.split(' ')[1].lower()
+    buddyName = ctx.content.split(" ")[1].lower()
 
-    if buddyName[0] in ['!', '/']:
+    if buddyName[0] in ["!", "/"]:
         return
 
     if buddyName in easter_egg_buddies_dict.keys():
@@ -61,63 +66,86 @@ async def getBuddy(ctx):
 
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        goodScores = process.extractBests(
+            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
+        )
         if len(goodScores) > 0:
-            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
             await ctx.send(
-                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+                "{} is not a valid hero, try again with {}".format(
+                    buddyName, goodScoresNames
+                )
+            )
         else:
-            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+            await ctx.send(
+                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
+                    buddyName
+                )
+            )
     else:
         await ctx.send(buddyDict[buddyName][1])
 
-@twitchBot.command(name='goldenbuddy')
+
+@twitchBot.command(name="goldenbuddy")
 async def getGoldenBuddy(ctx):
-    if len(ctx.content.split(' ')) < 2:
-        await ctx.send('Insert a hero name after !goldenbuddy to use this command')
+    if len(ctx.content.split(" ")) < 2:
+        await ctx.send("Insert a hero name after !goldenbuddy to use this command")
         return
 
-    buddyName = ctx.content.split(' ')[1].lower()
+    buddyName = ctx.content.split(" ")[1].lower()
 
     if buddyName in easter_egg_buddies_dict.keys():
         await ctx.send(easter_egg_buddies_dict[buddyName][2])
         return
 
-    if buddyName[0] in ['!', '/']:
+    if buddyName[0] in ["!", "/"]:
         return
 
     if buddyName not in buddyDict.keys():
         buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3)
+        goodScores = process.extractBests(
+            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
+        )
         if len(goodScores) > 0:
-            goodScoresNames = ' or '.join(list(rate[0] for rate in goodScores))
+            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
             await ctx.send(
-                "{} is not a valid hero, try again with {}".format(buddyName, goodScoresNames))
+                "{} is not a valid hero, try again with {}".format(
+                    buddyName, goodScoresNames
+                )
+            )
         else:
-            await ctx.send("{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(buddyName))
+            await ctx.send(
+                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
+                    buddyName
+                )
+            )
     else:
         await ctx.send(buddyDict[buddyName][2])
+
 
 @twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
-    if ctx.author.name.lower() == os.environ['BOT_NICK'].lower():
+    if ctx.author.name.lower() == os.environ["BOT_NICK"].lower():
         return
     await twitchBot.handle_commands(ctx)
 
-@twitchBot.command(name='bgrank')
+
+@twitchBot.command(name="bgrank")
 async def getRank(ctx):
-    if ctx.channel.name == 'ixxdeee':
+    if ctx.channel.name == "ixxdeee":
         return
     args = parseArgs(ctx)
-    await call(ctx, leaderboardBot.getRankText, 'rank', *args)
+    await call(ctx, leaderboardBot.getRankText, "rank", *args)
 
-@twitchBot.command(name='bgdaily')
+
+@twitchBot.command(name="bgdaily")
 async def getDailyStats(ctx):
     args = parseArgs(ctx)
-    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', *args)
+    await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
 
-@twitchBot.command(name='tomorrow')
+
+@twitchBot.command(name="tomorrow")
 async def tomorrow(ctx):
     args = parseArgs(ctx)
     name = args[0]
@@ -128,31 +156,41 @@ async def tomorrow(ctx):
 
     await ctx.send(f"{name} will be rank 1 for sure liiYep")
 
-@twitchBot.command(name='yesterday')
+
+@twitchBot.command(name="yesterday")
 async def getYesterdayStats(ctx):
     args = parseArgs(ctx)
-    args.append(True)   ## send the yesterday value to the function
-    await call(ctx, leaderboardBot.getDailyStatsText, 'yesterday', *args)
+    args.append(True)  ## send the yesterday value to the function
+    await call(ctx, leaderboardBot.getDailyStatsText, "yesterday", *args)
 
-@twitchBot.command(name='bgdailii')
+
+@twitchBot.command(name="bgdailii")
 async def bgdailii(ctx):
-    await call(ctx, leaderboardBot.getDailyStatsText, 'daily', 'lii')
+    await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
 
-@twitchBot.command(name='goodbot')
+
+@twitchBot.command(name="goodbot")
 async def goodBot(ctx):
-    await ctx.send('MrDestructoid Just doing my job MrDestructoid')
+    await ctx.send("MrDestructoid Just doing my job MrDestructoid")
 
-@twitchBot.command(name='wall_lii')
+
+@twitchBot.command(name="wall_lii")
 async def wall_lii(ctx):
-    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info')
+    await ctx.send(
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info"
+    )
 
-@twitchBot.command(name='help')
+
+@twitchBot.command(name="help")
 async def help(ctx):
-    await ctx.send('HeyGuys I\'m a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info')
+    await ctx.send(
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info"
+    )
 
-if __name__ == '__main__':
 
-    @aiocron.crontab('* * * * *') ## Every minute check for new channels
+if __name__ == "__main__":
+
+    @aiocron.crontab("* * * * *")  ## Every minute check for new channels
     async def updateChannels():
         global initialChannels
         global brokenChannels
@@ -174,8 +212,8 @@ if __name__ == '__main__':
 
             if len(new_channels) >= 10:
                 break
-        
-        if (len(new_channels) > 0):
+
+        if len(new_channels) > 0:
             print("Joined these channels: " + str(new_channels))
         try:
             await twitchBot.join_channels(new_channels)
@@ -185,8 +223,7 @@ if __name__ == '__main__':
                 firstQuoteIndex = quoteIndices[0]
                 secondQuoteIndex = quoteIndices[1]
 
-
-            brokenChannel = str(err)[firstQuoteIndex + 1: secondQuoteIndex]
+            brokenChannel = str(err)[firstQuoteIndex + 1 : secondQuoteIndex]
 
             print("Broken Channel" + brokenChannel)
 
@@ -194,18 +231,20 @@ if __name__ == '__main__':
 
         for channel_name in greeting_channels:
             channel = twitchBot.get_channel(channel_name)
-            await channel.send(f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!")
+            await channel.send(
+                f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
+            )
 
-    @aiocron.crontab('* * * * *') ## Every minute check for new alias
+    @aiocron.crontab("* * * * *")  ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
 
-    @aiocron.crontab('10 * * * *') ## Every hour check for new buddies
+    @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
     async def check_for_new_buddies():
         global buddyDict
         temp_dict = get_buddy_dict()
-        
-        if (temp_dict and len(temp_dict.keys()) > 0):
+
+        if temp_dict and len(temp_dict.keys()) > 0:
             buddyDict = temp_dict
 
     twitchBot.run()
