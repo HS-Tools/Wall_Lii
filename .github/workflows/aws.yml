@@ -3,34 +3,34 @@ name: Cloudformation CI
 on:
   push:
     branches:
-    - master
-    - main
+      - master
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-region: ${{ secrets.REGION }}
-    - name: Package and Deploy to AWS CloudFormation
-      run: |
-        mkdir -p lambda-loader/dist
-        cp -r lambda-loader/src/* lambda-loader/dist/
-        pip3 install -r lambda-loader/requirements.txt -t lambda-loader/dist/
-        ls lambda-loader/dist/ 
-        aws cloudformation package --template-file ./lambda-loader/template.yaml \
-          --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
-          --region ${{ secrets.REGION }} \
-          --output-template-file processed.template.yaml
-        aws cloudformation deploy --template-file processed.template.yaml \
-          --stack-name ${{ secrets.STACK_NAME }} \
-          --region ${{ secrets.REGION }} \
-          --capabilities CAPABILITY_IAM
+      - uses: actions/checkout@master
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-region: ${{ secrets.REGION }}
+      - name: Package and Deploy to AWS CloudFormation
+        run: |
+          mkdir -p lambda-loader/dist
+          cp -r lambda-loader/src/* lambda-loader/dist/
+          pip3 install -r lambda-loader/requirements.txt -t lambda-loader/dist/
+          ls lambda-loader/dist/
+          aws cloudformation package --template-file ./lambda-loader/template.yaml \
+            --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
+            --region ${{ secrets.REGION }} \
+            --output-template-file processed.template.yaml
+          aws cloudformation deploy --template-file processed.template.yaml \
+            --stack-name ${{ secrets.STACK_NAME }} \
+            --region ${{ secrets.REGION }} \
+            --capabilities CAPABILITY_IAM
     # - name: Build and upload twitch and discord images
     #   run: |
     #     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 729861370591.dkr.ecr.us-east-1.amazonaws.com

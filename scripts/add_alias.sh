@@ -26,5 +26,3 @@ aws dynamodb put-item \
 
 ## print out the updated table
 aws dynamodb scan --table-name 'player-alias-table'
-
-
