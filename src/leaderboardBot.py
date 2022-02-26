@@ -14,10 +14,10 @@ from default_channels import channels as default_channels
 from parseRegion import REGIONS, isRegion, parseRegion, printRegion
 
 eggs = {  # Easter eggs
-    "salami": "salami is rank 69 in Antartica with 16969 mmr ninaisFEESH",
+    "salami": "salami is rank 69 in Antartica with 16969 mmr boobFEESH",
     "gomez": "gomez is a cat, cats do not play BG",
     "420": "don't do drugs kids",
-    "16969": "salami is rank 69 in Antartica with 16969 mmr ninaisFEESH",
+    "16969": "salami is rank 69 in Antartica with 16969 mmr boobisFEESH",
 }
 
 help_msg = "@liiHS I had an issue, send help liiWait"
