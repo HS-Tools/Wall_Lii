@@ -140,7 +140,7 @@ class testLeaderboardGet(unittest.TestCase):
     def testParseArgRegionSwap(self):
         args = self.bot.parseArgs(
             "EU",
-            "Lii",
+            "lii",
         )
         self.assertEqual("lii", args[0])
         self.assertEqual("EU", args[1])
