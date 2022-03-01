@@ -137,19 +137,20 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertEqual("lii", args[0])
         self.assertEqual("EU", args[1])
 
-    def testParseArgRegionSwap(self):
-        args = self.bot.parseArgs(
-            "EU",
-            "lii",
-        )
-        self.assertEqual("lii", args[0])
-        self.assertEqual("EU", args[1])
-
     def testParseArgUserRegion(self):
         args = self.bot.parseArgs(
             "lii",
             "quinnabr",
             "EU",
+        )
+        self.assertEqual("quinnabr", args[0])
+        self.assertEqual("EU", args[1])
+
+    def testParseArgRegionSwap(self):
+        args = self.bot.parseArgs(
+            "lii",
+            "EU",
+            "quinnabr",
         )
         self.assertEqual("quinnabr", args[0])
         self.assertEqual("EU", args[1])
