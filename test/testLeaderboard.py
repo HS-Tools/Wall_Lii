@@ -146,6 +146,15 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertEqual("quinnabr", args[0])
         self.assertEqual("EU", args[1])
 
+    def testParseArgRegionSwap(self):
+        args = self.bot.parseArgs(
+            "lii",
+            "EU",
+            "quinnabr",
+        )
+        self.assertEqual("quinnabr", args[0])
+        self.assertEqual("EU", args[1])
+
     def testAliasJeef(self):
         string = self.bot.getRankText("jeef")
         self.assertIn("jeef ", string)

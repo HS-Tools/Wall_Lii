@@ -52,10 +52,13 @@ class LeaderBoardBot:
             else:
                 return [args[0], None]
         else:
-            if not isRegion(args[1]):
-                return [args[0], None]
-            else:
+            if isRegion(args[1]):
                 return [args[0], parseRegion(args[1])]
+            elif isRegion(args[0]):
+                # swap region and arguement order
+                return [args[1], parseRegion(args[0])]
+            else:
+                return [args[0], None]
 
     def getFormattedTag(self, tag):
         tag = tag.lower()
