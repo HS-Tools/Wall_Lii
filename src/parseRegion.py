@@ -3,6 +3,7 @@ REGION_ALIASES = {
     "NA": "US",
     "AMERICA": "US",
     "AMERICAS": "US",
+    "AM": "US",
     "ASIA": "AP",
     "EUROPE": "EU",
 }
