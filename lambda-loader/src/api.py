@@ -47,6 +47,6 @@ def getLeaderboardSnapshot(
 if __name__ == "__main__":  ## run the function if this program is called
     ratingsDict, lastUpdated, season = getLeaderboardSnapshot()
     for region in ["US", "EU", "AP"]:
-        print(f"{region} fetched at {updatedDict[region]}")
+        print(f"{region} fetched at {lastUpdated[region]}")
         for account in ratingsDict[region].keys():
             print("\t", ratingsDict[region][account])
