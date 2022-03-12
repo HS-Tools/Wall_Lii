@@ -23,6 +23,8 @@ difficult_shortened_names = {
 def filterText(text):
     text = text.replace("<b>", "")
     text = text.replace("</b>", "")
+    text = text.replace("<i>", "")
+    text = text.replace("</i>", "")
     text = text.replace("[x]", "")
     text = text.replace("\n", " ")
     text = text.replace("\xa0", " ")
