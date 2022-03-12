@@ -328,9 +328,7 @@ async def sendDailyRecap():
     await recap.pin()
 
 
-aiocron.crontab("59 7 * * *")
-
-
+@aiocron.crontab("59 7 * * *")
 async def send_top16_daily_recap():
     top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
 
@@ -373,6 +371,7 @@ async def check_for_new_buddies():
 
 @bot.command()
 async def test(ctx):
+
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
