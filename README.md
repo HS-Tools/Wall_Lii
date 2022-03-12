@@ -35,24 +35,7 @@ pre-commit install
 
 # Testing
 
-This branch uses a local download of the dynamodb-local and an in memory database to make tests run much more quickly
-
-## Requirements
-
-- java
-  - `brew install java` on a mac
-- unzip
-- curl
-
-## Setup
-
-1. download using `./scripts/download-dynamodb-local.sh`
-2. run using `./scripts/run-dynamodb-local.sh dynamodb-local`
-3. open a 2nd terminal
-
-## Run Tests
-
-`pipenv run python testFile.py`
+We have unit tests. Instructions for running them locally can be found [here](./test). Tests are also run in CI.
 
 ## Troubleshooting
 

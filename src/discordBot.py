@@ -328,6 +328,38 @@ async def sendDailyRecap():
     await recap.pin()
 
 
+@aiocron.crontab("59 7 * * *")
+async def send_top16_daily_recap():
+    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
+
+    discord_payload = ""
+
+    def append_to_discord_payload(string, payload):
+        payload += string
+        payload += "\n"
+        return payload
+
+    for region in top16_players_in_each_region.keys():
+        discord_payload = append_to_discord_payload(
+            f"**{region} Top 16 **", discord_payload
+        )
+        for rank, rating, player in top16_players_in_each_region[region]:
+            discord_payload = append_to_discord_payload(
+                f"{rank}. **{player}** with **{rating}** MMR.", discord_payload
+            )
+        # Add a linebreak after each top 16.
+        discord_payload += "\n"
+
+    embed = discord.Embed(
+        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
+        description=discord_payload,
+    )
+
+    dedicated_channel = bot.get_channel(channelIds["wall_lii"])
+    recap = await dedicated_channel.send(embed=embed)
+    await recap.pin()
+
+
 @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
 async def check_for_new_buddies():
     global buddyDict
@@ -339,6 +371,7 @@ async def check_for_new_buddies():
 
 @bot.command()
 async def test(ctx):
+
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
