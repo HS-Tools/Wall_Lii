@@ -271,7 +271,7 @@ async def deletechannel(ctx, *args):
 
 
 # PI is on UTC time it seems
-@aiocron.crontab("59 7 * * *")
+@aiocron.crontab("59 6 * * *")
 async def sendDailyRecap():
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
@@ -328,7 +328,7 @@ async def sendDailyRecap():
     await recap.pin()
 
 
-@aiocron.crontab("59 7 * * *")
+@aiocron.crontab("59 6 * * *")
 async def send_top16_daily_recap():
     top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
 
