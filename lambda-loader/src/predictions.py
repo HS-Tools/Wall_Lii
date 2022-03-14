@@ -24,7 +24,7 @@ class Predictions:
 
         self.create_body = {
             "broadcaster_id": self.broadcaster_id,
-            "title": f"Will {self.channel_name} Gain MMR?",
+            "title": f"Will {self.channel_name} Gain MMR? (Automatic Prediction)",
             "outcomes": [{"title": "YEP."}, {"title": "NOP."}],
             "prediction_window": 120,
         }
