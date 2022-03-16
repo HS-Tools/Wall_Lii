@@ -59,7 +59,7 @@ def handler(event, context):
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
         },
-        "twlevewinshs": {
+        "sbr": {
             "channel_name": "sunbaconrelaxer",
             "client_id": os.environ["VICTOR_CLIENT_ID"],
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
