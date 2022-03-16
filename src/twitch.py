@@ -229,6 +229,9 @@ if __name__ == "__main__":
 
             brokenChannels.append(brokenChannel)
 
+        # Update initialChannels in case there's a chance to the configuration of a channel's name
+        initialChannels = leaderboardBot.getChannels()
+
         for channel_name in greeting_channels:
             channel = twitchBot.get_channel(channel_name)
             await channel.send(
