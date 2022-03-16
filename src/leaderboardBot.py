@@ -93,11 +93,12 @@ class LeaderBoardBot:
         ## format the data
         region = parseRegion(region)
 
+        tag = self.getFormattedTag(tag)
+
         ## check if tag has an alias:
         if tag in self.alias:
             tag = self.alias[tag]
 
-        tag = self.getFormattedTag(tag)
         table = self.yesterday_table if yesterday else self.table
 
         ## check if tag on leaderboard
