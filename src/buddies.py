@@ -31,4 +31,9 @@ easter_egg_buddies_dict = {
         "Nicholena",
         "Tufa is a Tier 3 6/6. Battlecry: Force the entire lobby to concede and stare in awe at this cute floof.",
     ),
+    "faelin": (
+        "Ambassador Faelin",
+        "Submersible Chef is a Tier 4 4/3. Ability: Battlecry: Add a random Tier 1, 3, and 5 minion to your hand.",
+        "Golden Submersible Chef is a Tier 4 8/6. Ability: Add a random Tier 1, 3, and 5 minion to your hand twice.",
+    ),
 }
