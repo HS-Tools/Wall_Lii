@@ -24,7 +24,7 @@ class Predictions:
 
         self.create_body = {
             "broadcaster_id": self.broadcaster_id,
-            "title": f"Will {self.channel_name} Gain MMR? (Automatic Prediction)",
+            "title": f"Will {self.channel_name} Gain MMR?",
             "outcomes": [{"title": "YEP."}, {"title": "NOP."}],
             "prediction_window": 120,
         }
@@ -121,11 +121,11 @@ class Predictions:
 
 # load_dotenv()
 
-# client_id = os.environ['CLIENT_ID']
-# access_token = os.environ['ACCESS_TOKEN']
-# channel_id = os.environ['LII_TWITCH_ID']
+# client_id = os.environ['VICTOR_CLIENT_ID']
+# access_token = os.environ['VICTOR_ACCESS_TOKEN']
+# channel_id = os.environ['VICTOR_TWITCH_ID']
 
-# p = Predictions('liihs', channel_id, client_id, access_token)
+# p = Predictions('sunbaconrelaxer', channel_id, client_id, access_token)
 
 # p.start_ad()
 
