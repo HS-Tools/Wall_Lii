@@ -58,12 +58,14 @@ def handler(event, context):
             "client_id": os.environ["VICTOR_CLIENT_ID"],
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
+            "ad_time": 120,
         },
         "sbr": {
             "channel_name": "sunbaconrelaxer",
             "client_id": os.environ["VICTOR_CLIENT_ID"],
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
+            "ad_time": 120,
         },
     }
 
