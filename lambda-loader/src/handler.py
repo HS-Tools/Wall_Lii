@@ -30,6 +30,10 @@ def handlePredictions(
     print("previous_rating: " + str(previous_rating))
     print("new_rating: " + str(new_rating))
 
+    # Apparently the previous_rating resets to 1 when the table resets
+    if not previous_rating or previous_rating <= 1:
+        pass
+
     predicter = Predictions(channel_name, twitch_id, client_id, access_token)
     # Rating gain
     if new_rating > previous_rating:
