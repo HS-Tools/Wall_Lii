@@ -256,7 +256,7 @@ class RankingDatabaseClient:
         return True
 
     def __getMidnightTTL(self):
-        tz = timezone("US/Pacific")
+        tz = timezone("America/Los_Angeles")
         today = date.today()
         midnight_without_tzinfo = datetime.combine(today, dtime())
         midnight_with_tzinfo = tz.localize(midnight_without_tzinfo)
