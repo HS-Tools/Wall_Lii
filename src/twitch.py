@@ -57,7 +57,7 @@ async def getBuddy(ctx):
 
     buddyName = ctx.content.split(" ")[1].lower()
 
-    if buddyName[0] in ["!", "/"]:
+    if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
         return
 
     if buddyName in easter_egg_buddies_dict.keys():
@@ -98,7 +98,7 @@ async def getGoldenBuddy(ctx):
         await ctx.send(easter_egg_buddies_dict[buddyName][2])
         return
 
-    if buddyName[0] in ["!", "/"]:
+    if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
         return
 
     if buddyName not in buddyDict.keys():
