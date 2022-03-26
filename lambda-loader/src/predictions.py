@@ -113,7 +113,8 @@ class Predictions:
 
         # Start a new prediction and run ad
         if self.check_if_live():
-            self.start_ad()
+            if self.ad_time > 0:
+                self.start_ad()
             self.create_prediction()
         else:
             print(f"Didn't start prediction cause {self.channel_name} isn't live")

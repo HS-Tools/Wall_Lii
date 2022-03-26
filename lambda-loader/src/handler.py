@@ -71,6 +71,13 @@ def handler(event, context):
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
             "ad_time": 120,
         },
+        "tyler": {
+            "channel_name": "tylerootd",
+            "client_id": os.environ["TYLER_CLIENT_ID"],
+            "access_token": os.environ["TYLER_ACCESS_TOKEN"],
+            "twitch_id": os.environ["TYLER_TWITCH_ID"],
+            "ad_time": 0,
+        },
     }
 
     database = data.RankingDatabaseClient()
