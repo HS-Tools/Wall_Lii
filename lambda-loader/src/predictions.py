@@ -8,9 +8,7 @@ STREAMS_URL = "https://api.twitch.tv/helix/streams"
 
 
 class Predictions:
-    def __init__(
-        self, channel_name, broadcaster_id, client_id, access_token, ad_time=60
-    ):
+    def __init__(self, channel_name, broadcaster_id, client_id, access_token, ad_time):
         self.client_id = client_id
         self.access_token = access_token
         self.channel_name = channel_name

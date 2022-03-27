@@ -25,7 +25,13 @@ def add_leaderboards_to_db(database, *args):
 
 
 def handlePredictions(
-    previous_rating, new_rating, channel_name, client_id, access_token, twitch_id
+    previous_rating,
+    new_rating,
+    channel_name,
+    client_id,
+    access_token,
+    twitch_id,
+    ad_time,
 ):
     print("previous_rating: " + str(previous_rating))
     print("new_rating: " + str(new_rating))
@@ -34,7 +40,7 @@ def handlePredictions(
     if not previous_rating or previous_rating <= 1:
         pass
 
-    predicter = Predictions(channel_name, twitch_id, client_id, access_token)
+    predicter = Predictions(channel_name, twitch_id, client_id, access_token, ad_time)
     # Rating gain
     if new_rating > previous_rating:
         predicter.run(True)
@@ -105,4 +111,5 @@ def handler(event, context):
                     prediction_channels[name]["client_id"],
                     prediction_channels[name]["access_token"],
                     prediction_channels[name]["twitch_id"],
+                    prediction_channels[name]["ad_time"],
                 )
