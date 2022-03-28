@@ -79,8 +79,23 @@ async def buddy(ctx, *args):
         goodScores = process.extractBests(
             query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
         )
+
         if len(goodScores) > 0:
             goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
+
+            for score in goodScores:
+                suggestedName = score[0]
+                ratio = score[1]
+
+                if ratio >= 90:
+                    embed = discord.Embed(
+                        title=f"{buddyDict[suggestedName][0]}'s buddy",
+                        description=buddyDict[suggestedName][1],
+                    )
+
+                    await ctx.send(embed=embed)
+                    return
+
             await ctx.send(
                 "{} is not a valid hero, try again with {}".format(
                     buddyName, goodScoresNames
@@ -127,6 +142,20 @@ async def goldenbuddy(ctx, *args):
         )
         if len(goodScores) > 0:
             goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
+
+            for score in goodScores:
+                suggestedName = score[0]
+                ratio = score[1]
+
+                if ratio >= 90:
+                    embed = discord.Embed(
+                        title=f"{buddyDict[suggestedName][0]}'s golden buddy",
+                        description=buddyDict[suggestedName][2],
+                    )
+
+                    await ctx.send(embed=embed)
+                    return
+
             await ctx.send(
                 "{} is not a valid hero, try again with {}".format(
                     buddyName, goodScoresNames
