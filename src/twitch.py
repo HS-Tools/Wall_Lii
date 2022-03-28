@@ -69,6 +69,15 @@ async def getBuddy(ctx):
         goodScores = process.extractBests(
             query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
         )
+
+        for score in goodScores:
+            suggestedName = score[0]
+            ratio = score[1]
+
+            if ratio >= 90:
+                await ctx.send(buddyDict[suggestedName][1])
+                return
+
         if len(goodScores) > 0:
             goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
             await ctx.send(
@@ -106,6 +115,15 @@ async def getGoldenBuddy(ctx):
         goodScores = process.extractBests(
             query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
         )
+
+        for score in goodScores:
+            suggestedName = score[0]
+            ratio = score[1]
+
+            if ratio >= 90:
+                await ctx.send(buddyDict[suggestedName][2])
+                return
+
         if len(goodScores) > 0:
             goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
             await ctx.send(
