@@ -5,11 +5,10 @@ import aiocron
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from fuzzywuzzy import process
 from pytz import timezone, utc
 
 from buddies import easter_egg_buddies_dict
-from buddy_fetch import get_buddy_dict
+from buddy_fetch import get_buddy_dict, parse_buddy
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 
@@ -66,53 +65,16 @@ async def buddy(ctx, *args):
     except:
         pass
 
-    if buddyName in easter_egg_buddies_dict.keys():
+    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
+
+    if results[0] is not None:
         embed = discord.Embed(
-            title=f"{easter_egg_buddies_dict[buddyName][0]}'s buddy",
-            description=easter_egg_buddies_dict[buddyName][1],
+            title=f"{results[0]}'s buddy",
+            description=results[1],
         )
         await ctx.send(embed=embed)
-        return
-
-    if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(
-            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
-        )
-
-        if len(goodScores) > 0:
-            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
-
-            for score in goodScores:
-                suggestedName = score[0]
-                ratio = score[1]
-
-                if ratio >= 90:
-                    embed = discord.Embed(
-                        title=f"{buddyDict[suggestedName][0]}'s buddy",
-                        description=buddyDict[suggestedName][1],
-                    )
-
-                    await ctx.send(embed=embed)
-                    return
-
-            await ctx.send(
-                "{} is not a valid hero, try again with {}".format(
-                    buddyName, goodScoresNames
-                )
-            )
-        else:
-            await ctx.send(
-                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
-                    buddyName
-                )
-            )
     else:
-        embed = discord.Embed(
-            title=f"{buddyDict[buddyName][0]}'s buddy",
-            description=buddyDict[buddyName][1],
-        )
-        await ctx.send(embed=embed)
+        await ctx.send(results[1])
 
 
 @bot.command()
@@ -127,52 +89,16 @@ async def goldenbuddy(ctx, *args):
     except:
         pass
 
-    if buddyName in easter_egg_buddies_dict.keys():
+    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
+
+    if results[0] is not None:
         embed = discord.Embed(
-            title=f"{easter_egg_buddies_dict[buddyName][0]}'s golden buddy",
-            description=easter_egg_buddies_dict[buddyName][2],
+            title=f"{results[0]}'s golden buddy",
+            description=results[2],
         )
         await ctx.send(embed=embed)
-        return
-
-    if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(
-            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
-        )
-        if len(goodScores) > 0:
-            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
-
-            for score in goodScores:
-                suggestedName = score[0]
-                ratio = score[1]
-
-                if ratio >= 90:
-                    embed = discord.Embed(
-                        title=f"{buddyDict[suggestedName][0]}'s golden buddy",
-                        description=buddyDict[suggestedName][2],
-                    )
-
-                    await ctx.send(embed=embed)
-                    return
-
-            await ctx.send(
-                "{} is not a valid hero, try again with {}".format(
-                    buddyName, goodScoresNames
-                )
-            )
-        else:
-            await ctx.send(
-                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
-                    buddyName
-                )
-            )
     else:
-        embed = discord.Embed(
-            title=f"{buddyDict[buddyName][0]}'s golden buddy",
-            description=buddyDict[buddyName][2],
-        )
-        await ctx.send(embed=embed)
+        await ctx.send(results[2])
 
 
 @bot.command()
