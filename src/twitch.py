@@ -4,11 +4,10 @@ from asyncio import TimeoutError
 
 import aiocron
 from dotenv import load_dotenv
-from fuzzywuzzy import process
 from twitchio.ext import commands
 
 from buddies import easter_egg_buddies_dict
-from buddy_fetch import get_buddy_dict
+from buddy_fetch import get_buddy_dict, parse_buddy
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 
@@ -60,39 +59,10 @@ async def getBuddy(ctx):
     if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
         return
 
-    if buddyName in easter_egg_buddies_dict.keys():
-        await ctx.send(easter_egg_buddies_dict[buddyName][1])
-        return
+    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(
-            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
-        )
-
-        for score in goodScores:
-            suggestedName = score[0]
-            ratio = score[1]
-
-            if ratio >= 90:
-                await ctx.send(buddyDict[suggestedName][1])
-                return
-
-        if len(goodScores) > 0:
-            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
-            await ctx.send(
-                "{} is not a valid hero, try again with {}".format(
-                    buddyName, goodScoresNames
-                )
-            )
-        else:
-            await ctx.send(
-                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
-                    buddyName
-                )
-            )
-    else:
-        await ctx.send(buddyDict[buddyName][1])
+    await ctx.send(results[1])
+    return
 
 
 @twitchBot.command(name="goldenbuddy")
@@ -102,43 +72,13 @@ async def getGoldenBuddy(ctx):
         return
 
     buddyName = ctx.content.split(" ")[1].lower()
-
-    if buddyName in easter_egg_buddies_dict.keys():
-        await ctx.send(easter_egg_buddies_dict[buddyName][2])
-        return
-
     if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
         return
 
-    if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(
-            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
-        )
+    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-        for score in goodScores:
-            suggestedName = score[0]
-            ratio = score[1]
-
-            if ratio >= 90:
-                await ctx.send(buddyDict[suggestedName][2])
-                return
-
-        if len(goodScores) > 0:
-            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
-            await ctx.send(
-                "{} is not a valid hero, try again with {}".format(
-                    buddyName, goodScoresNames
-                )
-            )
-        else:
-            await ctx.send(
-                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
-                    buddyName
-                )
-            )
-    else:
-        await ctx.send(buddyDict[buddyName][2])
+    await ctx.send(results[2])
+    return
 
 
 @twitchBot.event
