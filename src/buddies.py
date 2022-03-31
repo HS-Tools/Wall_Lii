@@ -36,4 +36,9 @@ easter_egg_buddies_dict = {
         "Submersible Chef is a Tier 4 4/3. Ability: Battlecry: Add a random Tier 1, 3, and 5 minion to your hand.",
         "Golden Submersible Chef is a Tier 4 8/6. Ability: Add a random Tier 1, 3, and 5 minion to your hand twice.",
     ),
+    "harain": {
+        "LiiHS",
+        "LiiHS is a Tier 4 6/9. Ability: LiiHS is his best buddy. twitch.tv/liihs",
+        "Golden LiiHS is a Tier 4 69/69. Ability: Unlocked after enough UWUs are spammed to break his mental",
+    },
 }
