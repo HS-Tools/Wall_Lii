@@ -117,13 +117,15 @@ class LeaderBoardBot:
             if num <= 200 and num >= 1 and region is not None:
                 player_data = self.getEntryFromRank(num, region, yesterday)
                 return tag, region, player_data, ""
+            elif num > 200 or num < 1:
+                return tag, region, [], "I only track the top 200 players"
             else:
-                msg = f"invalid number rank {tag} liiWait"
-                if num > 200 or num < 1:
-                    msg += ", I only track the top 200 players"
-                if region is None:
-                    msg += ", region must be provided"
-                return tag, region, [], msg
+                return (
+                    tag,
+                    region,
+                    [],
+                    f"You must provide a region after the number i.e. !bgrank {num} na",
+                )
 
         ## return nothing
         return (
