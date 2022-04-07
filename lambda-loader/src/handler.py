@@ -25,12 +25,22 @@ def add_leaderboards_to_db(database, *args):
 
 
 def handlePredictions(
-    previous_rating, new_rating, channel_name, client_id, access_token, twitch_id
+    previous_rating,
+    new_rating,
+    channel_name,
+    client_id,
+    access_token,
+    twitch_id,
+    ad_time,
 ):
     print("previous_rating: " + str(previous_rating))
     print("new_rating: " + str(new_rating))
 
-    predicter = Predictions(channel_name, twitch_id, client_id, access_token)
+    # Apparently the previous_rating resets to 1 when the table resets
+    if not previous_rating or previous_rating <= 1:
+        pass
+
+    predicter = Predictions(channel_name, twitch_id, client_id, access_token, ad_time)
     # Rating gain
     if new_rating > previous_rating:
         predicter.run(True)
@@ -58,12 +68,21 @@ def handler(event, context):
             "client_id": os.environ["VICTOR_CLIENT_ID"],
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
+            "ad_time": 120,
         },
-        "twlevewinshs": {
+        "sbr": {
             "channel_name": "sunbaconrelaxer",
             "client_id": os.environ["VICTOR_CLIENT_ID"],
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
+            "ad_time": 120,
+        },
+        "tyler": {
+            "channel_name": "tylerootd",
+            "client_id": os.environ["TYLER_CLIENT_ID"],
+            "access_token": os.environ["TYLER_ACCESS_TOKEN"],
+            "twitch_id": os.environ["TYLER_TWITCH_ID"],
+            "ad_time": 0,
         },
     }
 
@@ -92,4 +111,5 @@ def handler(event, context):
                     prediction_channels[name]["client_id"],
                     prediction_channels[name]["access_token"],
                     prediction_channels[name]["twitch_id"],
+                    prediction_channels[name]["ad_time"],
                 )

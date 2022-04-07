@@ -31,4 +31,9 @@ easter_egg_buddies_dict = {
         "Nicholena",
         "Tufa is a Tier 3 6/6. Battlecry: Force the entire lobby to concede and stare in awe at this cute floof.",
     ),
+    "harain": (
+        "Harain",
+        "LiiHS is a Tier 4 6/9. Ability: LiiHS is his best buddy. twitch.tv/liihs",
+        "Golden LiiHS is a Tier 4 69/69. Ability: Unlocked after enough UWUs are spammed to break his mental",
+    ),
 }

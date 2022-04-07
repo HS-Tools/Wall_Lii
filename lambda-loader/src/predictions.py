@@ -8,9 +8,7 @@ STREAMS_URL = "https://api.twitch.tv/helix/streams"
 
 
 class Predictions:
-    def __init__(
-        self, channel_name, broadcaster_id, client_id, access_token, ad_time=60
-    ):
+    def __init__(self, channel_name, broadcaster_id, client_id, access_token, ad_time):
         self.client_id = client_id
         self.access_token = access_token
         self.channel_name = channel_name
@@ -113,7 +111,8 @@ class Predictions:
 
         # Start a new prediction and run ad
         if self.check_if_live():
-            self.start_ad()
+            if self.ad_time > 0:
+                self.start_ad()
             self.create_prediction()
         else:
             print(f"Didn't start prediction cause {self.channel_name} isn't live")
@@ -121,11 +120,11 @@ class Predictions:
 
 # load_dotenv()
 
-# client_id = os.environ['CLIENT_ID']
-# access_token = os.environ['ACCESS_TOKEN']
-# channel_id = os.environ['LII_TWITCH_ID']
+# client_id = os.environ['VICTOR_CLIENT_ID']
+# access_token = os.environ['VICTOR_ACCESS_TOKEN']
+# channel_id = os.environ['VICTOR_TWITCH_ID']
 
-# p = Predictions('liihs', channel_id, client_id, access_token)
+# p = Predictions('sunbaconrelaxer', channel_id, client_id, access_token)
 
 # p.start_ad()
 

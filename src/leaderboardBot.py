@@ -93,11 +93,12 @@ class LeaderBoardBot:
         ## format the data
         region = parseRegion(region)
 
+        tag = self.getFormattedTag(tag)
+
         ## check if tag has an alias:
         if tag in self.alias:
             tag = self.alias[tag]
 
-        tag = self.getFormattedTag(tag)
         table = self.yesterday_table if yesterday else self.table
 
         ## check if tag on leaderboard
@@ -116,13 +117,15 @@ class LeaderBoardBot:
             if num <= 200 and num >= 1 and region is not None:
                 player_data = self.getEntryFromRank(num, region, yesterday)
                 return tag, region, player_data, ""
+            elif num > 200 or num < 1:
+                return tag, region, [], "I only track the top 200 players"
             else:
-                msg = f"invalid number rank {tag} liiWait"
-                if num > 200 or num < 1:
-                    msg += ", I only track the top 200 players"
-                if region is None:
-                    msg += ", region must be provided"
-                return tag, region, [], msg
+                return (
+                    tag,
+                    region,
+                    [],
+                    f"You must provide a region after the number i.e. !bgrank {num} na",
+                )
 
         ## return nothing
         return (

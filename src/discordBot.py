@@ -5,11 +5,10 @@ import aiocron
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from fuzzywuzzy import process
 from pytz import timezone, utc
 
 from buddies import easter_egg_buddies_dict
-from buddy_fetch import get_buddy_dict
+from buddy_fetch import get_buddy_dict, parse_buddy
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 
@@ -66,38 +65,16 @@ async def buddy(ctx, *args):
     except:
         pass
 
-    if buddyName in easter_egg_buddies_dict.keys():
-        embed = discord.Embed(
-            title=f"{easter_egg_buddies_dict[buddyName][0]}'s buddy",
-            description=easter_egg_buddies_dict[buddyName][1],
-        )
-        await ctx.send(embed=embed)
-        return
+    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(
-            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
-        )
-        if len(goodScores) > 0:
-            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
-            await ctx.send(
-                "{} is not a valid hero, try again with {}".format(
-                    buddyName, goodScoresNames
-                )
-            )
-        else:
-            await ctx.send(
-                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
-                    buddyName
-                )
-            )
-    else:
+    if results[0] is not None:
         embed = discord.Embed(
-            title=f"{buddyDict[buddyName][0]}'s buddy",
-            description=buddyDict[buddyName][1],
+            title=f"{results[0]}'s buddy",
+            description=results[1],
         )
         await ctx.send(embed=embed)
+    else:
+        await ctx.send(results[1])
 
 
 @bot.command()
@@ -112,38 +89,16 @@ async def goldenbuddy(ctx, *args):
     except:
         pass
 
-    if buddyName in easter_egg_buddies_dict.keys():
-        embed = discord.Embed(
-            title=f"{easter_egg_buddies_dict[buddyName][0]}'s golden buddy",
-            description=easter_egg_buddies_dict[buddyName][2],
-        )
-        await ctx.send(embed=embed)
-        return
+    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if buddyName not in buddyDict.keys():
-        buddyOptions = list(buddyDict.keys())
-        goodScores = process.extractBests(
-            query=buddyName, choices=buddyOptions, score_cutoff=65, limit=3
-        )
-        if len(goodScores) > 0:
-            goodScoresNames = " or ".join(list(rate[0] for rate in goodScores))
-            await ctx.send(
-                "{} is not a valid hero, try again with {}".format(
-                    buddyName, goodScoresNames
-                )
-            )
-        else:
-            await ctx.send(
-                "{} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters".format(
-                    buddyName
-                )
-            )
-    else:
+    if results[0] is not None:
         embed = discord.Embed(
-            title=f"{buddyDict[buddyName][0]}'s golden buddy",
-            description=buddyDict[buddyName][2],
+            title=f"{results[0]}'s golden buddy",
+            description=results[2],
         )
         await ctx.send(embed=embed)
+    else:
+        await ctx.send(results[2])
 
 
 @bot.command()
@@ -271,7 +226,7 @@ async def deletechannel(ctx, *args):
 
 
 # PI is on UTC time it seems
-@aiocron.crontab("59 7 * * *")
+@aiocron.crontab("59 6 * * *")
 async def sendDailyRecap():
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
@@ -328,7 +283,7 @@ async def sendDailyRecap():
     await recap.pin()
 
 
-@aiocron.crontab("59 7 * * *")
+@aiocron.crontab("59 6 * * *")
 async def send_top16_daily_recap():
     embed = generateTop16Embed()
     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
