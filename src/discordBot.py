@@ -285,34 +285,22 @@ async def sendDailyRecap():
 
 @aiocron.crontab("59 6 * * *")
 async def send_top16_daily_recap():
-    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
-
-    discord_payload = ""
-
-    def append_to_discord_payload(string, payload):
-        payload += string
-        payload += "\n"
-        return payload
-
-    for region in top16_players_in_each_region.keys():
-        discord_payload = append_to_discord_payload(
-            f"**{region} Top 16 **", discord_payload
-        )
-        for rank, rating, player in top16_players_in_each_region[region]:
-            discord_payload = append_to_discord_payload(
-                f"{rank}. **{player}** with **{rating}** MMR.", discord_payload
-            )
-        # Add a linebreak after each top 16.
-        discord_payload += "\n"
-
-    embed = discord.Embed(
-        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
-        description=discord_payload,
-    )
-
+    embed = generateTop16Embed()
     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
+
+
+@bot.command()
+async def top16(ctx):
+    embed = generateTop16Embed()
+
+    message = ctx.message
+    try:
+        await message.delete()
+    except:
+        pass
+    await ctx.send(embed=embed)
 
 
 @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
@@ -388,6 +376,23 @@ def get_pst_time():
     date = date.astimezone(timezone("US/Pacific"))
     ptDateTime = date.strftime(date_format)
     return ptDateTime
+
+
+def generateTop16Embed():
+    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
+
+    embed = discord.Embed(
+        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
+    )
+
+    for region in top16_players_in_each_region.keys():
+        valueString = ""
+        for rank, rating, player in top16_players_in_each_region[region]:
+            valueString += f"{rank}. **{player}** with **{rating}** MMR.\n"
+
+        embed.add_field(name=region, value=valueString, inline=True)
+
+    return embed
 
 
 if __name__ == "__main__":
