@@ -36,4 +36,8 @@ easter_egg_buddies_dict = {
         "LiiHS is a Tier 4 6/9. Ability: LiiHS is his best buddy. twitch.tv/liihs",
         "Golden LiiHS is a Tier 4 69/69. Ability: Unlocked after enough UWUs are spammed to break his mental",
     ),
+    "dellroth": (
+        "Dellroth",
+        "Nightmare plant is a Tier 3 5/5. Ability: Battlecry: All minions summoned during combat will be a nightmare plant",
+    ),
 }
