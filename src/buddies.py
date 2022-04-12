@@ -40,4 +40,12 @@ easter_egg_buddies_dict = {
         "Dellroth",
         "Nightmare plant is a Tier 3 5/5. Ability: Battlecry: All minions summoned during combat will be a nightmare plant",
     ),
+    "wall_lii": (
+        "Wall_Lii",
+        "LiiVe is a Tier S 1/1. Ability: Wall_Lii's best friend https://i.imgur.com/nQeN6nJ.png",
+    ),
+    "pocky": (
+        "Pocky",
+        "Luna is a Tier 2 6/5. Ability: The ultimate kitty in terms of attack and defense",
+    ),
 }
