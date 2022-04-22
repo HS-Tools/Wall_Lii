@@ -139,6 +139,8 @@ async def addalias(ctx, *args):
         message = ctx.message
         await message.delete()
 
+        args = removeSquareBrackets(args)
+
         if len(args) < 2:
             await ctx.send("The command must have two words. !addalias [alias] [name]")
         else:
@@ -165,6 +167,8 @@ async def deletealias(ctx, *args):
         message = ctx.message
         await message.delete()
 
+        args = removeSquareBrackets(args)
+
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
                 await ctx.send("The command must have one word. !deletealias [alias]")
@@ -188,13 +192,15 @@ async def addchannel(ctx, *args):
         message = ctx.message
         await message.delete()
 
-        if len(args) < 2:
+        args = removeSquareBrackets(args)
+
+        if len(args) < 1:
             await ctx.send(
                 "The command must have two words. !addchannel [channelName] [playerName]"
             )
         else:
             channelName = args[0].lower()
-            playerName = args[1].lower()
+            playerName = args[1].lower() if len(args) > 1 else args[0].lower()
 
             leaderboardBot.addChannel(channelName, playerName)
 
@@ -211,6 +217,8 @@ async def deletechannel(ctx, *args):
     ):
         message = ctx.message
         await message.delete()
+
+        args = removeSquareBrackets(args)
 
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
@@ -393,6 +401,17 @@ def generateTop16Embed():
         embed.add_field(name=region, value=valueString, inline=True)
 
     return embed
+
+
+def removeSquareBrackets(args):
+    newArgs = []
+
+    for arg in args:
+        newArg = arg.lstrip("[")
+        newArg = newArg.rstrip("]")
+        newArgs.append(newArg)
+
+    return newArgs
 
 
 if __name__ == "__main__":
