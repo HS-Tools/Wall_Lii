@@ -51,34 +51,27 @@ async def call(ctx, func, name, *args):
 @twitchBot.command(name="buddy")
 async def getBuddy(ctx):
     if len(ctx.content.split(" ")) < 2:
-        await ctx.send("Insert a hero name after !buddy to use this command")
         return
 
     buddyName = ctx.content.split(" ")[1].lower()
 
-    if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
-        return
-
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    await ctx.send(results[1])
-    return
+    if results:
+        await ctx.send(results[1])
 
 
 @twitchBot.command(name="goldenbuddy")
 async def getGoldenBuddy(ctx):
     if len(ctx.content.split(" ")) < 2:
-        await ctx.send("Insert a hero name after !goldenbuddy to use this command")
         return
 
     buddyName = ctx.content.split(" ")[1].lower()
-    if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
-        return
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    await ctx.send(results[2])
-    return
+    if results:
+        await ctx.send(results[2])
 
 
 @twitchBot.event
@@ -135,14 +128,14 @@ async def goodBot(ctx):
 @twitchBot.command(name="wall_lii")
 async def wall_lii(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info"
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]."
     )
 
 
 @twitchBot.command(name="help")
 async def help(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info"
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]."
     )
 
 
