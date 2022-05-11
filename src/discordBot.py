@@ -56,7 +56,6 @@ async def call(ctx, func, name, *args):
 @bot.command()
 async def buddy(ctx, *args):
     if len(args) < 1:
-        await ctx.send("Insert a hero name after !buddy to use this command")
         return
 
     buddyName = args[0].lower()
@@ -67,20 +66,17 @@ async def buddy(ctx, *args):
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if results[0] is not None:
+    if results and results[0] is not None:
         embed = discord.Embed(
             title=f"{results[0]}'s buddy",
             description=results[1],
         )
         await ctx.send(embed=embed)
-    else:
-        await ctx.send(results[1])
 
 
 @bot.command()
 async def goldenbuddy(ctx, *args):
     if len(args) < 1:
-        await ctx.send("Insert a hero name after !goldenbuddy to use this command")
         return
 
     buddyName = args[0].lower()
@@ -91,14 +87,12 @@ async def goldenbuddy(ctx, *args):
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if results[0] is not None:
+    if results and results[0] is not None:
         embed = discord.Embed(
             title=f"{results[0]}'s golden buddy",
             description=results[2],
         )
         await ctx.send(embed=embed)
-    else:
-        await ctx.send(results[2])
 
 
 @bot.command()
