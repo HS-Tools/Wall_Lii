@@ -48,4 +48,14 @@ easter_egg_buddies_dict = {
         "Pocky",
         "Luna is a Tier 2 6/5. Ability: The ultimate kitty in terms of attack and defense",
     ),
+    "beter": (
+        "Beterbabbit",
+        "Smogger is a Tier 3 3/3. Ability: Give a friendly elemental stats equal to your Tavern Tier",
+        "Golden Smogger is a Tier 3 6/6. Ability: Give a friendly elemental stats equal your Tavern Tier twice",
+    ),
+    "beterbabbit": (
+        "Beterbabbit",
+        "Smogger is a Tier 3 3/3. Ability: Give a friendly elemental stats equal to your Tavern Tier",
+        "Golden Smogger is a Tier 3 6/6. Ability: Give a friendly elemental stats equal your Tavern Tier twice",
+    ),
 }
