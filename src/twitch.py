@@ -61,6 +61,16 @@ async def getBuddy(ctx):
         await ctx.send(results[1])
 
 
+@twitchBot.command(name="Shush")
+async def getBuddy(ctx):
+    await ctx.send("Shush")
+
+
+@twitchBot.command(name="shush")
+async def getBuddy(ctx):
+    await ctx.send("Shush")
+
+
 @twitchBot.command(name="goldenbuddy")
 async def getGoldenBuddy(ctx):
     if len(ctx.content.split(" ")) < 2:
