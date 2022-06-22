@@ -16,7 +16,6 @@ load_dotenv()
 leaderboardBot = LeaderBoardBot()
 
 initialChannels = leaderboardBot.getChannels()
-brokenChannels = []
 buddyDict = get_buddy_dict()
 
 twitchBot = commands.Bot(
@@ -154,41 +153,33 @@ if __name__ == "__main__":
     @aiocron.crontab("* * * * *")  ## Every minute check for new channels
     async def updateChannels():
         global initialChannels
-        global brokenChannels
 
         channels = leaderboardBot.getChannels()
 
-        joined_channels = list(twitchBot._ws._channel_cache)
+        joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
+
+        print(f"Joined channels: {joined_channels}")
 
         new_channels = []
         greeting_channels = []
 
         for channel in channels:
-            if channel not in joined_channels and channel not in brokenChannels:
+            if channel not in joined_channels:
                 new_channels.append(channel)
 
                 if channel not in initialChannels:
                     greeting_channels.append(channel)
                     initialChannels = leaderboardBot.getChannels()
 
-            if len(new_channels) >= 10:
+            if len(new_channels) >= 50:
                 break
 
         if len(new_channels) > 0:
             print("Joined these channels: " + str(new_channels))
         try:
             await twitchBot.join_channels(new_channels)
-        except TimeoutError as err:
-            quoteIndices = [m.start() for m in re.finditer('"', str(err))]
-            if len(quoteIndices) == 2:
-                firstQuoteIndex = quoteIndices[0]
-                secondQuoteIndex = quoteIndices[1]
-
-            brokenChannel = str(err)[firstQuoteIndex + 1 : secondQuoteIndex]
-
-            print("Broken Channel" + brokenChannel)
-
-            brokenChannels.append(brokenChannel)
+        except Exception as err:
+            print(f"Joining error: ${err}")
 
         # Update initialChannels in case there's a chance to the configuration of a channel's name
         initialChannels = leaderboardBot.getChannels()
