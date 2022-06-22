@@ -31,7 +31,7 @@ twitchBot = commands.Bot(
 
 def parseArgs(ctx):
     default = initialChannels[ctx.channel.name]
-    args = ctx.content.split(" ")[1:]
+    args = ctx.message.content.split(" ")[1:]
     return leaderboardBot.parseArgs(default, *args)
 
 
@@ -50,10 +50,10 @@ async def call(ctx, func, name, *args):
 
 @twitchBot.command(name="buddy")
 async def getBuddy(ctx):
-    if len(ctx.content.split(" ")) < 2:
+    if len(ctx.message.content.split(" ")) < 2:
         return
 
-    buddyName = ctx.content.split(" ")[1].lower()
+    buddyName = ctx.message.content.split(" ")[1].lower()
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
@@ -73,10 +73,10 @@ async def getBuddy(ctx):
 
 @twitchBot.command(name="goldenbuddy")
 async def getGoldenBuddy(ctx):
-    if len(ctx.content.split(" ")) < 2:
+    if len(ctx.message.content.split(" ")) < 2:
         return
 
-    buddyName = ctx.content.split(" ")[1].lower()
+    buddyName = ctx.message.content.split(" ")[1].lower()
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
@@ -87,14 +87,14 @@ async def getGoldenBuddy(ctx):
 @twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
-    if ctx.author.name.lower() == os.environ["BOT_NICK"].lower():
+    if ctx.message.author.name.lower() == os.environ["BOT_NICK"].lower():
         return
     await twitchBot.handle_commands(ctx)
 
 
 @twitchBot.command(name="bgrank")
 async def getRank(ctx):
-    if ctx.channel.name == "ixxdeee":
+    if ctx.message.channel.name == "ixxdeee":
         return
     args = parseArgs(ctx)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
@@ -151,64 +151,64 @@ async def help(ctx):
 
 if __name__ == "__main__":
 
-    @aiocron.crontab("* * * * *")  ## Every minute check for new channels
-    async def updateChannels():
-        global initialChannels
-        global brokenChannels
+    # @aiocron.crontab("* * * * *")  ## Every minute check for new channels
+    # async def updateChannels():
+    #     global initialChannels
+    #     global brokenChannels
 
-        channels = leaderboardBot.getChannels()
+    #     channels = leaderboardBot.getChannels()
 
-        joined_channels = list(twitchBot._ws._channel_cache)
+    #     joined_channels = list(twitchBot._ws._channel_cache)
 
-        new_channels = []
-        greeting_channels = []
+    #     new_channels = []
+    #     greeting_channels = []
 
-        for channel in channels:
-            if channel not in joined_channels and channel not in brokenChannels:
-                new_channels.append(channel)
+    #     for channel in channels:
+    #         if channel not in joined_channels and channel not in brokenChannels:
+    #             new_channels.append(channel)
 
-                if channel not in initialChannels:
-                    greeting_channels.append(channel)
-                    initialChannels = leaderboardBot.getChannels()
+    #             if channel not in initialChannels:
+    #                 greeting_channels.append(channel)
+    #                 initialChannels = leaderboardBot.getChannels()
 
-            if len(new_channels) >= 10:
-                break
+    #         if len(new_channels) >= 10:
+    #             break
 
-        if len(new_channels) > 0:
-            print("Joined these channels: " + str(new_channels))
-        try:
-            await twitchBot.join_channels(new_channels)
-        except TimeoutError as err:
-            quoteIndices = [m.start() for m in re.finditer('"', str(err))]
-            if len(quoteIndices) == 2:
-                firstQuoteIndex = quoteIndices[0]
-                secondQuoteIndex = quoteIndices[1]
+    #     if len(new_channels) > 0:
+    #         print("Joined these channels: " + str(new_channels))
+    #     try:
+    #         await twitchBot.join_channels(new_channels)
+    #     except TimeoutError as err:
+    #         quoteIndices = [m.start() for m in re.finditer('"', str(err))]
+    #         if len(quoteIndices) == 2:
+    #             firstQuoteIndex = quoteIndices[0]
+    #             secondQuoteIndex = quoteIndices[1]
 
-            brokenChannel = str(err)[firstQuoteIndex + 1 : secondQuoteIndex]
+    #         brokenChannel = str(err)[firstQuoteIndex + 1 : secondQuoteIndex]
 
-            print("Broken Channel" + brokenChannel)
+    #         print("Broken Channel" + brokenChannel)
 
-            brokenChannels.append(brokenChannel)
+    #         brokenChannels.append(brokenChannel)
 
-        # Update initialChannels in case there's a chance to the configuration of a channel's name
-        initialChannels = leaderboardBot.getChannels()
+    #     # Update initialChannels in case there's a chance to the configuration of a channel's name
+    #     initialChannels = leaderboardBot.getChannels()
 
-        for channel_name in greeting_channels:
-            channel = twitchBot.get_channel(channel_name)
-            await channel.send(
-                f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
-            )
+    #     for channel_name in greeting_channels:
+    #         channel = twitchBot.get_channel(channel_name)
+    #         await channel.send(
+    #             f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
+    #         )
 
-    @aiocron.crontab("* * * * *")  ## Every minute check for new alias
-    async def updateAlias():
-        leaderboardBot.getNewAlias()
+    # @aiocron.crontab("* * * * *")  ## Every minute check for new alias
+    # async def updateAlias():
+    #     leaderboardBot.getNewAlias()
 
-    @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-    async def check_for_new_buddies():
-        global buddyDict
-        temp_dict = get_buddy_dict()
+    # @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
+    # async def check_for_new_buddies():
+    #     global buddyDict
+    #     temp_dict = get_buddy_dict()
 
-        if temp_dict and len(temp_dict.keys()) > 0:
-            buddyDict = temp_dict
+    #     if temp_dict and len(temp_dict.keys()) > 0:
+    #         buddyDict = temp_dict
 
     twitchBot.run()
