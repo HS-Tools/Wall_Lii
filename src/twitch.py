@@ -1,10 +1,12 @@
 import os
-import re
+import sys
+import traceback
 from asyncio import TimeoutError
 
 import aiocron
 from dotenv import load_dotenv
 from twitchio.ext import commands
+from twitchio.ext.commands import CommandNotFound
 
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict, parse_buddy
@@ -26,6 +28,13 @@ twitchBot = commands.Bot(
     prefix=os.environ["BOT_PREFIX"],
     initial_channels=["liihs"],
 )
+
+
+@twitchBot.event()
+async def event_command_error(error, data):
+    if type(data) == CommandNotFound:
+        return
+    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 def parseArgs(ctx):
@@ -158,8 +167,6 @@ if __name__ == "__main__":
 
         joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
 
-        print(f"Joined channels: {joined_channels}")
-
         new_channels = []
         greeting_channels = []
 
@@ -181,7 +188,7 @@ if __name__ == "__main__":
         except Exception as err:
             print(f"Joining error: ${err}")
 
-        # Update initialChannels in case there's a chance to the configuration of a channel's name
+        # Update initialChannels in case there's a change to the configuration of a channel's name
         initialChannels = leaderboardBot.getChannels()
 
         for channel_name in greeting_channels:
