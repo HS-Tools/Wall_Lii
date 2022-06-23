@@ -1,7 +1,4 @@
 import os
-import sys
-import traceback
-from asyncio import TimeoutError
 
 import aiocron
 from dotenv import load_dotenv
@@ -29,12 +26,9 @@ twitchBot = commands.Bot(
     initial_channels=["liihs"],
 )
 
-
-@twitchBot.event()
-async def event_command_error(error, data):
-    if type(data) == CommandNotFound:
-        return
-    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+# @twitchBot.event()
+# async def event_command_error(error, data):
+#     if type(data) == CommandNotFound:
 
 
 def parseArgs(ctx):
