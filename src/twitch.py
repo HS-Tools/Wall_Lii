@@ -96,8 +96,6 @@ async def event_message(ctx):
 
 @twitchBot.command(name="bgrank")
 async def getRank(ctx):
-    if ctx.message.channel.name == "ixxdeee":
-        return
     args = parseArgs(ctx)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
 
