@@ -100,33 +100,4 @@ def get_buddy_dict():
 def parse_buddy(name, buddies={}, eggs={}):
     if name in eggs:
         return eggs[name]
-
-    elif name in buddies:
-        return buddies[name]
-
-    else:
-        buddyOptions = list(buddies.keys())
-        goodScores = fuzzysearch.extractBests(
-            query=name, choices=buddyOptions, score_cutoff=65, limit=3
-        )
-        for name_scored, ratio_scored in goodScores:
-            if ratio_scored >= 85:
-                return buddies[name_scored]
-
-        if len(goodScores) > 0:
-            ## create a fake entry for no valid hero
-            goodScoresNames = " or ".join(
-                list(name_scored for name_scored, ratio_scored in goodScores)
-            )
-            return (
-                None,
-                f"{name} is not a valid hero, try again with {goodScoresNames}",
-                f"{name} is not a valid hero, try again with {goodScoresNames}",
-            )
-
-        else:
-            return (
-                None,
-                f"{name} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters",
-                f"{name} is not a valid hero,try the name of the hero with no spaces or non alphabetic characters",
-            )
+    return None
