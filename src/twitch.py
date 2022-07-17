@@ -1,10 +1,9 @@
 import os
-import re
-from asyncio import TimeoutError
 
 import aiocron
 from dotenv import load_dotenv
 from twitchio.ext import commands
+from twitchio.ext.commands import CommandNotFound
 
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict, parse_buddy
@@ -16,7 +15,6 @@ load_dotenv()
 leaderboardBot = LeaderBoardBot()
 
 initialChannels = leaderboardBot.getChannels()
-brokenChannels = []
 buddyDict = get_buddy_dict()
 
 twitchBot = commands.Bot(
@@ -28,10 +26,14 @@ twitchBot = commands.Bot(
     initial_channels=["liihs"],
 )
 
+# @twitchBot.event()
+# async def event_command_error(error, data):
+#     if type(data) == CommandNotFound:
+
 
 def parseArgs(ctx):
     default = initialChannels[ctx.channel.name]
-    args = ctx.content.split(" ")[1:]
+    args = ctx.message.content.split(" ")[1:]
     return leaderboardBot.parseArgs(default, *args)
 
 
@@ -50,49 +52,50 @@ async def call(ctx, func, name, *args):
 
 @twitchBot.command(name="buddy")
 async def getBuddy(ctx):
-    if len(ctx.content.split(" ")) < 2:
-        await ctx.send("Insert a hero name after !buddy to use this command")
+    if len(ctx.message.content.split(" ")) < 2:
         return
 
-    buddyName = ctx.content.split(" ")[1].lower()
-
-    if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
-        return
+    buddyName = ctx.message.content.split(" ")[1].lower()
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    await ctx.send(results[1])
-    return
+    if results:
+        await ctx.send(results[1])
+
+
+@twitchBot.command(name="Shush")
+async def getBuddy(ctx):
+    await ctx.send("Shush")
+
+
+@twitchBot.command(name="shush")
+async def getBuddy(ctx):
+    await ctx.send("Shush")
 
 
 @twitchBot.command(name="goldenbuddy")
 async def getGoldenBuddy(ctx):
-    if len(ctx.content.split(" ")) < 2:
-        await ctx.send("Insert a hero name after !goldenbuddy to use this command")
+    if len(ctx.message.content.split(" ")) < 2:
         return
 
-    buddyName = ctx.content.split(" ")[1].lower()
-    if len(buddyName) <= 0 or buddyName[0] in ["!", "/"]:
-        return
+    buddyName = ctx.message.content.split(" ")[1].lower()
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    await ctx.send(results[2])
-    return
+    if results:
+        await ctx.send(results[2])
 
 
 @twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
-    if ctx.author.name.lower() == os.environ["BOT_NICK"].lower():
+    if ctx.message.author.name.lower() == os.environ["BOT_NICK"].lower():
         return
     await twitchBot.handle_commands(ctx)
 
 
 @twitchBot.command(name="bgrank")
 async def getRank(ctx):
-    if ctx.channel.name == "ixxdeee":
-        return
     args = parseArgs(ctx)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
 
@@ -135,14 +138,14 @@ async def goodBot(ctx):
 @twitchBot.command(name="wall_lii")
 async def wall_lii(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info"
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]."
     )
 
 
 @twitchBot.command(name="help")
 async def help(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]. Also try !buddy [hero] and !goldenbuddy [hero] for buddy info"
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]."
     )
 
 
@@ -151,43 +154,33 @@ if __name__ == "__main__":
     @aiocron.crontab("* * * * *")  ## Every minute check for new channels
     async def updateChannels():
         global initialChannels
-        global brokenChannels
 
         channels = leaderboardBot.getChannels()
 
-        joined_channels = list(twitchBot._ws._channel_cache)
+        joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
 
         new_channels = []
         greeting_channels = []
 
         for channel in channels:
-            if channel not in joined_channels and channel not in brokenChannels:
+            if channel not in joined_channels:
                 new_channels.append(channel)
 
                 if channel not in initialChannels:
                     greeting_channels.append(channel)
                     initialChannels = leaderboardBot.getChannels()
 
-            if len(new_channels) >= 10:
+            if len(new_channels) >= 50:
                 break
 
         if len(new_channels) > 0:
             print("Joined these channels: " + str(new_channels))
         try:
             await twitchBot.join_channels(new_channels)
-        except TimeoutError as err:
-            quoteIndices = [m.start() for m in re.finditer('"', str(err))]
-            if len(quoteIndices) == 2:
-                firstQuoteIndex = quoteIndices[0]
-                secondQuoteIndex = quoteIndices[1]
+        except Exception as err:
+            print(f"Joining error: ${err}")
 
-            brokenChannel = str(err)[firstQuoteIndex + 1 : secondQuoteIndex]
-
-            print("Broken Channel" + brokenChannel)
-
-            brokenChannels.append(brokenChannel)
-
-        # Update initialChannels in case there's a chance to the configuration of a channel's name
+        # Update initialChannels in case there's a change to the configuration of a channel's name
         initialChannels = leaderboardBot.getChannels()
 
         for channel_name in greeting_channels:

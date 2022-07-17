@@ -56,7 +56,6 @@ async def call(ctx, func, name, *args):
 @bot.command()
 async def buddy(ctx, *args):
     if len(args) < 1:
-        await ctx.send("Insert a hero name after !buddy to use this command")
         return
 
     buddyName = args[0].lower()
@@ -67,20 +66,17 @@ async def buddy(ctx, *args):
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if results[0] is not None:
+    if results and results[0] is not None:
         embed = discord.Embed(
             title=f"{results[0]}'s buddy",
             description=results[1],
         )
         await ctx.send(embed=embed)
-    else:
-        await ctx.send(results[1])
 
 
 @bot.command()
 async def goldenbuddy(ctx, *args):
     if len(args) < 1:
-        await ctx.send("Insert a hero name after !goldenbuddy to use this command")
         return
 
     buddyName = args[0].lower()
@@ -91,14 +87,12 @@ async def goldenbuddy(ctx, *args):
 
     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
 
-    if results[0] is not None:
+    if results and results[0] is not None:
         embed = discord.Embed(
             title=f"{results[0]}'s golden buddy",
             description=results[2],
         )
         await ctx.send(embed=embed)
-    else:
-        await ctx.send(results[2])
 
 
 @bot.command()
@@ -139,6 +133,8 @@ async def addalias(ctx, *args):
         message = ctx.message
         await message.delete()
 
+        args = removeSquareBrackets(args)
+
         if len(args) < 2:
             await ctx.send("The command must have two words. !addalias [alias] [name]")
         else:
@@ -165,6 +161,8 @@ async def deletealias(ctx, *args):
         message = ctx.message
         await message.delete()
 
+        args = removeSquareBrackets(args)
+
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
                 await ctx.send("The command must have one word. !deletealias [alias]")
@@ -188,13 +186,15 @@ async def addchannel(ctx, *args):
         message = ctx.message
         await message.delete()
 
-        if len(args) < 2:
+        args = removeSquareBrackets(args)
+
+        if len(args) < 1:
             await ctx.send(
                 "The command must have two words. !addchannel [channelName] [playerName]"
             )
         else:
             channelName = args[0].lower()
-            playerName = args[1].lower()
+            playerName = args[1].lower() if len(args) > 1 else args[0].lower()
 
             leaderboardBot.addChannel(channelName, playerName)
 
@@ -211,6 +211,8 @@ async def deletechannel(ctx, *args):
     ):
         message = ctx.message
         await message.delete()
+
+        args = removeSquareBrackets(args)
 
         if ctx.message.author.id == liiDiscordId:
             if len(args) < 1:
@@ -285,34 +287,22 @@ async def sendDailyRecap():
 
 @aiocron.crontab("59 6 * * *")
 async def send_top16_daily_recap():
-    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
-
-    discord_payload = ""
-
-    def append_to_discord_payload(string, payload):
-        payload += string
-        payload += "\n"
-        return payload
-
-    for region in top16_players_in_each_region.keys():
-        discord_payload = append_to_discord_payload(
-            f"**{region} Top 16 **", discord_payload
-        )
-        for rank, rating, player in top16_players_in_each_region[region]:
-            discord_payload = append_to_discord_payload(
-                f"{rank}. **{player}** with **{rating}** MMR.", discord_payload
-            )
-        # Add a linebreak after each top 16.
-        discord_payload += "\n"
-
-    embed = discord.Embed(
-        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
-        description=discord_payload,
-    )
-
+    embed = generateTop16Embed()
     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
     recap = await dedicated_channel.send(embed=embed)
     await recap.pin()
+
+
+@bot.command()
+async def top16(ctx):
+    embed = generateTop16Embed()
+
+    message = ctx.message
+    try:
+        await message.delete()
+    except:
+        pass
+    await ctx.send(embed=embed)
 
 
 @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
@@ -388,6 +378,34 @@ def get_pst_time():
     date = date.astimezone(timezone("US/Pacific"))
     ptDateTime = date.strftime(date_format)
     return ptDateTime
+
+
+def generateTop16Embed():
+    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
+
+    embed = discord.Embed(
+        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
+    )
+
+    for region in top16_players_in_each_region.keys():
+        valueString = ""
+        for rank, rating, player in top16_players_in_each_region[region]:
+            valueString += f"{rank}. **{player}** with **{rating}** MMR.\n"
+
+        embed.add_field(name=region, value=valueString, inline=True)
+
+    return embed
+
+
+def removeSquareBrackets(args):
+    newArgs = []
+
+    for arg in args:
+        newArg = arg.lstrip("[")
+        newArg = newArg.rstrip("]")
+        newArgs.append(newArg)
+
+    return newArgs
 
 
 if __name__ == "__main__":

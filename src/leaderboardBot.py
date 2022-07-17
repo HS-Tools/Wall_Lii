@@ -14,10 +14,10 @@ from default_channels import channels as default_channels
 from parseRegion import REGIONS, isRegion, parseRegion, printRegion
 
 eggs = {  # Easter eggs
-    "salami": "salami is rank 69 in Antartica with 16969 mmr boobFEESH",
+    "salami": "salami is rank 69 in Antarctica with 16969 mmr CORM",
     "gomez": "gomez is a cat, cats do not play BG",
     "420": "don't do drugs kids",
-    "16969": "salami is rank 69 in Antartica with 16969 mmr boobisFEESH",
+    "16969": "salami is rank 69 in Antarctica with 16969 mmr CORM",
 }
 
 help_msg = "@liiHS I had an issue, send help liiWait"
@@ -117,13 +117,15 @@ class LeaderBoardBot:
             if num <= 200 and num >= 1 and region is not None:
                 player_data = self.getEntryFromRank(num, region, yesterday)
                 return tag, region, player_data, ""
+            elif num > 200 or num < 1:
+                return tag, region, [], "I only track the top 200 players"
             else:
-                msg = f"invalid number rank {tag} liiWait"
-                if num > 200 or num < 1:
-                    msg += ", I only track the top 200 players"
-                if region is None:
-                    msg += ", region must be provided"
-                return tag, region, [], msg
+                return (
+                    tag,
+                    region,
+                    [],
+                    f"You must provide a region after the number i.e. !bgrank {num} na",
+                )
 
         ## return nothing
         return (

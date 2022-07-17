@@ -61,7 +61,7 @@ def handler(event, context):
             "client_id": os.environ["CLIENT_ID"],
             "access_token": os.environ["ACCESS_TOKEN"],
             "twitch_id": os.environ["LII_TWITCH_ID"],
-            "ad_time": 0,
+            "ad_time": 60,
         },
         "madeforthis": {
             "channel_name": "sunbaconrelaxer",
