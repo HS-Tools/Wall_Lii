@@ -70,7 +70,7 @@ def handler(event, context):
             "twitch_id": os.environ["VICTOR_TWITCH_ID"],
             "ad_time": 120,
         },
-        "sbr": {
+        "akaza": {
             "channel_name": "sunbaconrelaxer",
             "client_id": os.environ["VICTOR_CLIENT_ID"],
             "access_token": os.environ["VICTOR_ACCESS_TOKEN"],
