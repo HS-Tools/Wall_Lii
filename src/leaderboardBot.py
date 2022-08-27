@@ -95,14 +95,15 @@ class LeaderBoardBot:
 
         tag = self.getFormattedTag(tag)
 
-        ## check if tag has an alias:
-        if tag in self.alias:
-            tag = self.alias[tag]
-
         table = self.yesterday_table if yesterday else self.table
 
         ## check if tag on leaderboard
         player_data = self.getPlayerData(tag, table, region)
+
+        ## check if tag has an alias since no data was found
+        if len(player_data) == 0 and tag in self.alias:
+            tag = self.alias[tag]
+            player_data = self.getPlayerData(tag, table, region)
 
         if len(player_data) > 0:
             return tag, region, player_data, ""
