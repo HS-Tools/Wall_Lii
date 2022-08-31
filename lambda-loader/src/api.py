@@ -1,5 +1,6 @@
-from datetime import datetime
 import json
+from datetime import datetime
+
 import grequests
 
 
@@ -17,7 +18,7 @@ def parseSnapshot(text, verbose=True, region="Unknown"):
     for account in accounts:
         if verbose:
             print(f"\t{account}")
-        if (account != None and account["accountid"] != None):
+        if account != None and account["accountid"] != None:
             name = account["accountid"].encode("utf-8").lower().decode("utf-8")
             output[name] = {"rank": account["rank"], "rating": account["rating"]}
 
@@ -25,11 +26,15 @@ def parseSnapshot(text, verbose=True, region="Unknown"):
 
 
 def getLeaderboardSnapshot(
-    regions=["US", "EU", "AP"], gameMode="BG", season=None, verbose=True, total_count=200
+    regions=["US", "EU", "AP"],
+    gameMode="BG",
+    season=None,
+    verbose=True,
+    total_count=200,
 ):
     PLAYERS_PER_PAGE = 25
     ratingsDict = {region: {} for region in regions}
-    updatedDict = {region: None for region in regions} # replace None with current time
+    updatedDict = {region: None for region in regions}  # replace None with current time
 
     # game mode key changed from BG to battlegrounds
     if gameMode == "BG":
@@ -42,14 +47,12 @@ def getLeaderboardSnapshot(
             apiUrl = f"{apiUrl}&seasonId={season}"
 
         pageUrls = []
-        for page in range( (total_count // PLAYERS_PER_PAGE) + 1 ):
+        for page in range((total_count // PLAYERS_PER_PAGE) + 1):
             pageUrls.append(f"{apiUrl}&page={page}")
-            
+
         rs = (grequests.get(url) for url in pageUrls)
         for r in grequests.map(rs):
-            rDict, updatedDict[region], season = parseSnapshot(
-                r.text, verbose, region
-            )
+            rDict, updatedDict[region], season = parseSnapshot(r.text, verbose, region)
             for key in rDict:
                 ratingsDict[region][key] = rDict[key]
 
