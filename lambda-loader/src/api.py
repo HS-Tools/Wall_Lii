@@ -30,7 +30,7 @@ def getLeaderboardSnapshot(
     gameMode="BG",
     season=None,
     verbose=True,
-    total_count=200,
+    total_count=500,
 ):
     PLAYERS_PER_PAGE = 25
     ratingsDict = {region: {} for region in regions}

@@ -115,11 +115,11 @@ class LeaderBoardBot:
         ## check if is digit
         if tag.isdigit():  ## jump to search by number
             num = int(tag)
-            if num <= 200 and num >= 1 and region is not None:
+            if num <= 500 and num >= 1 and region is not None:
                 player_data = self.getEntryFromRank(num, region, yesterday)
                 return tag, region, player_data, ""
-            elif num > 200 or num < 1:
-                return tag, region, [], "I only track the top 200 players"
+            elif num > 500 or num < 1:
+                return tag, region, [], "I only track the top 500 players"
             else:
                 return (
                     tag,
@@ -192,7 +192,7 @@ class LeaderBoardBot:
         else:
             return help_text
 
-    def getLeaderboardThreshold(self, rank=200):
+    def getLeaderboardThreshold(self, rank=500):
         table = self.table
         response = table.scan(
             FilterExpression=Attr("Rank").eq(rank),
