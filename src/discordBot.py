@@ -14,7 +14,7 @@ from parseRegion import isRegion
 
 load_dotenv()
 
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
 
 channelIds = {
     "wall_lii": 811468284394209300,
