@@ -1,0 +1,1222 @@
+{
+    "seasonId": 7,
+    "leaderboard": {
+        "rows": [
+            {
+                "rank": 1,
+                "accountid": "あれっくす",
+                "rating": 3828
+            },
+            {
+                "rank": 2,
+                "accountid": "awesumpossum",
+                "rating": 3627
+            },
+            {
+                "rank": 3,
+                "accountid": "ペンギンさん",
+                "rating": 3606
+            },
+            {
+                "rank": 4,
+                "accountid": "MrSqueezy",
+                "rating": 3574
+            },
+            {
+                "rank": 5,
+                "accountid": "LettuceKing",
+                "rating": 3560
+            },
+            {
+                "rank": 6,
+                "accountid": "duhduhdamage",
+                "rating": 3536
+            },
+            {
+                "rank": 7,
+                "accountid": "MATSURI",
+                "rating": 3395
+            },
+            {
+                "rank": 8,
+                "accountid": "Yusing",
+                "rating": 3340
+            },
+            {
+                "rank": 9,
+                "accountid": "billmack",
+                "rating": 3255
+            },
+            {
+                "rank": 10,
+                "accountid": "Cahh",
+                "rating": 3219
+            },
+            {
+                "rank": 11,
+                "accountid": "Stryder",
+                "rating": 3183
+            },
+            {
+                "rank": 12,
+                "accountid": "dee5",
+                "rating": 3145
+            },
+            {
+                "rank": 13,
+                "accountid": "soupercell",
+                "rating": 3101
+            },
+            {
+                "rank": 14,
+                "accountid": "pogosparky",
+                "rating": 3092
+            },
+            {
+                "rank": 15,
+                "accountid": "Emanon",
+                "rating": 3063
+            },
+            {
+                "rank": 16,
+                "accountid": "Zonda",
+                "rating": 3041
+            },
+            {
+                "rank": 17,
+                "accountid": "SleepyHS",
+                "rating": 2990
+            },
+            {
+                "rank": 18,
+                "accountid": "minK",
+                "rating": 2990
+            },
+            {
+                "rank": 19,
+                "accountid": "Deecee",
+                "rating": 2957
+            },
+            {
+                "rank": 20,
+                "accountid": "Patoulove",
+                "rating": 2942
+            },
+            {
+                "rank": 21,
+                "accountid": "Layer52",
+                "rating": 2939
+            },
+            {
+                "rank": 22,
+                "accountid": "Alucard",
+                "rating": 2930
+            },
+            {
+                "rank": 23,
+                "accountid": "Hongel",
+                "rating": 2921
+            },
+            {
+                "rank": 24,
+                "accountid": "AdaptOrDie51",
+                "rating": 2908
+            },
+            {
+                "rank": 25,
+                "accountid": "KenKen",
+                "rating": 2907
+            }
+        ],
+        "columns": [
+            "rank",
+            "accountid",
+            "rating"
+        ],
+        "pagination": {
+            "totalPages": 3436,
+            "totalSize": 85884
+        }
+    },
+    "displayMetaData": {
+        "standard": {
+            "title": "Standard",
+            "description": "",
+            "leaderboardId": "STD",
+            "bgsLeaderboardId": "standard",
+            "columns": [
+                {
+                    "title": "Rank",
+                    "column_id": "rank",
+                    "column_label": "Rank",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt7d93887f0e2e7b8d",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:50:10.776Z",
+                    "updated_at": "2021-03-08T23:50:15.133Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 2,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.599Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Battletag",
+                    "column_id": "accountid",
+                    "column_label": "BattleTag",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blte2cccf9bcb2cb964",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:51:04.843Z",
+                    "updated_at": "2021-03-08T23:51:04.843Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.609Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                }
+            ],
+            "currentSeasonId": null,
+            "firstSeasonId": 63,
+            "firstSeasonStartDate": "2019-01-01",
+            "bannerIcon": {
+                "parent_uid": "bltd505a8aa7c510958",
+                "uid": "blt3457140239e5082a",
+                "created_by": "blt0810fe204aa7e30e",
+                "updated_by": "blt0810fe204aa7e30e",
+                "created_at": "2021-03-18T16:22:06.735Z",
+                "updated_at": "2021-03-18T16:22:06.735Z",
+                "content_type": "image/png",
+                "file_size": "13027",
+                "filename": "standard-blank.png",
+                "title": "standard-blank.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-29T19:48:30.848Z",
+                    "user": "blt0810fe204aa7e30e"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt3457140239e5082a/60537e2e02ccfb4d0f672a85/standard-blank.png"
+            },
+            "rankIcon": {
+                "parent_uid": "bltd505a8aa7c510958",
+                "uid": "blta06f6bc2f2b50cc1",
+                "created_by": "blt0810fe204aa7e30e",
+                "updated_by": "blt0810fe204aa7e30e",
+                "created_at": "2021-03-11T20:30:47.502Z",
+                "updated_at": "2021-03-11T20:30:47.502Z",
+                "content_type": "image/png",
+                "file_size": "3706",
+                "filename": "std-rank.png",
+                "title": "std-rank.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-29T19:48:30.861Z",
+                    "user": "blt0810fe204aa7e30e"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blta06f6bc2f2b50cc1/604a7df7c6713d4e7a4d534f/std-rank.png"
+            },
+            "assets": {
+                "file": []
+            },
+            "seasonsWithStartDate": {
+                "63": 1546300800000,
+                "64": 1548979200000,
+                "65": 1551398400000,
+                "66": 1554076800000,
+                "67": 1556668800000,
+                "68": 1559347200000,
+                "69": 1561939200000,
+                "70": 1564617600000,
+                "71": 1567296000000,
+                "72": 1569888000000,
+                "73": 1572566400000,
+                "74": 1575158400000,
+                "75": 1577836800000,
+                "76": 1580515200000,
+                "77": 1583020800000,
+                "78": 1585699200000,
+                "79": 1588291200000,
+                "80": 1590969600000,
+                "81": 1593561600000,
+                "82": 1596240000000,
+                "83": 1598918400000,
+                "84": 1601510400000,
+                "85": 1604188800000,
+                "86": 1606780800000,
+                "87": 1609459200000,
+                "88": 1612137600000,
+                "89": 1614556800000,
+                "90": 1617235200000,
+                "91": 1619827200000,
+                "92": 1622505600000,
+                "93": 1625097600000,
+                "94": 1627776000000,
+                "95": 1630454400000,
+                "96": 1633046400000,
+                "97": 1635724800000,
+                "98": 1638316800000,
+                "99": 1640995200000,
+                "100": 1643673600000,
+                "101": 1646092800000,
+                "102": 1648771200000,
+                "103": 1651363200000,
+                "104": 1654041600000,
+                "105": 1656633600000,
+                "106": 1659312000000
+            }
+        },
+        "wild": {
+            "title": "Wild",
+            "description": "",
+            "leaderboardId": "WLD",
+            "bgsLeaderboardId": "wild",
+            "columns": [
+                {
+                    "title": "Rank",
+                    "column_id": "rank",
+                    "column_label": "Rank",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt7d93887f0e2e7b8d",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:50:10.776Z",
+                    "updated_at": "2021-03-08T23:50:15.133Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 2,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.599Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Battletag",
+                    "column_id": "accountid",
+                    "column_label": "BattleTag",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blte2cccf9bcb2cb964",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:51:04.843Z",
+                    "updated_at": "2021-03-08T23:51:04.843Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.609Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                }
+            ],
+            "currentSeasonId": null,
+            "firstSeasonId": 63,
+            "firstSeasonStartDate": "2019-01-01",
+            "bannerIcon": {
+                "parent_uid": "blt9b6e0e39ca31f0e2",
+                "uid": "blt1faecc4f2a26c996",
+                "created_by": "bltad9ef5d61983a595",
+                "updated_by": "bltad9ef5d61983a595",
+                "created_at": "2020-01-13T21:59:40.833Z",
+                "updated_at": "2020-01-13T21:59:40.833Z",
+                "content_type": "image/png",
+                "file_size": "33201",
+                "filename": "icon_wild.png",
+                "title": "icon_wild.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-29T19:48:57.210Z",
+                    "user": "blt0810fe204aa7e30e"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt1faecc4f2a26c996/5e1ce84c195bad0d9e55278a/icon_wild.png"
+            },
+            "rankIcon": {
+                "parent_uid": "bltd505a8aa7c510958",
+                "uid": "blt13a1ec5b90eb8994",
+                "created_by": "blt0810fe204aa7e30e",
+                "updated_by": "blt0810fe204aa7e30e",
+                "created_at": "2021-03-11T20:52:16.904Z",
+                "updated_at": "2021-03-11T20:52:16.904Z",
+                "content_type": "image/png",
+                "file_size": "5272",
+                "filename": "wld-rank.png",
+                "title": "wld-rank.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-29T19:48:57.218Z",
+                    "user": "blt0810fe204aa7e30e"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt13a1ec5b90eb8994/604a83005e4a6c4d10deb1e2/wld-rank.png"
+            },
+            "assets": {
+                "file": [
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "bltf0a43a88f99dce3a",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:28.332Z",
+                        "updated_at": "2021-03-11T20:52:28.332Z",
+                        "content_type": "image/png",
+                        "file_size": "29644",
+                        "filename": "wild-branch-rightbottom.png",
+                        "title": "wild-branch-rightbottom.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:57.179Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/bltf0a43a88f99dce3a/604a830cee3eea3d58383413/wild-branch-rightbottom.png"
+                    },
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "blt53bb896cf40866e2",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:28.332Z",
+                        "updated_at": "2021-03-11T20:52:28.332Z",
+                        "content_type": "image/png",
+                        "file_size": "18442",
+                        "filename": "wild-branch-righttop.png",
+                        "title": "wild-branch-righttop.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:57.186Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt53bb896cf40866e2/604a830c02ccfb4d0f67288c/wild-branch-righttop.png"
+                    },
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "bltd4c85a77a180f601",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:28.328Z",
+                        "updated_at": "2021-03-11T20:52:28.328Z",
+                        "content_type": "image/png",
+                        "file_size": "12319",
+                        "filename": "wild-branch-leftbottom.png",
+                        "title": "wild-branch-leftbottom.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:57.194Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/bltd4c85a77a180f601/604a830c415d5f4e8032566b/wild-branch-leftbottom.png"
+                    },
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "blt53ae61f18a038592",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:16.843Z",
+                        "updated_at": "2021-03-11T20:52:16.843Z",
+                        "content_type": "image/png",
+                        "file_size": "57418",
+                        "filename": "wild-branch-lefttop.png",
+                        "title": "wild-branch-lefttop.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:57.202Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt53ae61f18a038592/604a8300c6713d4e7a4d5353/wild-branch-lefttop.png"
+                    }
+                ]
+            },
+            "seasonsWithStartDate": {
+                "63": 1546300800000,
+                "64": 1548979200000,
+                "65": 1551398400000,
+                "66": 1554076800000,
+                "67": 1556668800000,
+                "68": 1559347200000,
+                "69": 1561939200000,
+                "70": 1564617600000,
+                "71": 1567296000000,
+                "72": 1569888000000,
+                "73": 1572566400000,
+                "74": 1575158400000,
+                "75": 1577836800000,
+                "76": 1580515200000,
+                "77": 1583020800000,
+                "78": 1585699200000,
+                "79": 1588291200000,
+                "80": 1590969600000,
+                "81": 1593561600000,
+                "82": 1596240000000,
+                "83": 1598918400000,
+                "84": 1601510400000,
+                "85": 1604188800000,
+                "86": 1606780800000,
+                "87": 1609459200000,
+                "88": 1612137600000,
+                "89": 1614556800000,
+                "90": 1617235200000,
+                "91": 1619827200000,
+                "92": 1622505600000,
+                "93": 1625097600000,
+                "94": 1627776000000,
+                "95": 1630454400000,
+                "96": 1633046400000,
+                "97": 1635724800000,
+                "98": 1638316800000,
+                "99": 1640995200000,
+                "100": 1643673600000,
+                "101": 1646092800000,
+                "102": 1648771200000,
+                "103": 1651363200000,
+                "104": 1654041600000,
+                "105": 1656633600000,
+                "106": 1659312000000
+            }
+        },
+        "battlegrounds": {
+            "title": "Battlegrounds",
+            "description": "The players featured below have employed in-the-moment decision making and unyielding dedication to make the most of Bob's offerings and achieve a most noteworthy feat!",
+            "leaderboardId": "BG",
+            "bgsLeaderboardId": "battlegrounds",
+            "columns": [
+                {
+                    "title": "Rank",
+                    "column_id": "rank",
+                    "column_label": "Rank",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt7d93887f0e2e7b8d",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:50:10.776Z",
+                    "updated_at": "2021-03-08T23:50:15.133Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 2,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.599Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Battletag",
+                    "column_id": "accountid",
+                    "column_label": "BattleTag",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blte2cccf9bcb2cb964",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:51:04.843Z",
+                    "updated_at": "2021-03-08T23:51:04.843Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.609Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Rating",
+                    "column_id": "rating",
+                    "column_label": "Rating",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt322921202cfd6a53",
+                    "created_by": "blt0810fe204aa7e30e",
+                    "updated_by": "blt0810fe204aa7e30e",
+                    "created_at": "2021-03-11T19:17:54.919Z",
+                    "updated_at": "2021-03-11T19:17:54.919Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:37.202Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                }
+            ],
+            "currentSeasonId": 6,
+            "firstSeasonId": null,
+            "firstSeasonStartDate": null,
+            "bannerIcon": {
+                "parent_uid": "blt9b6e0e39ca31f0e2",
+                "uid": "blt47d8a1ce3088970a",
+                "created_by": "bltad9ef5d61983a595",
+                "updated_by": "bltad9ef5d61983a595",
+                "created_at": "2020-01-13T21:59:33.488Z",
+                "updated_at": "2020-01-13T21:59:33.488Z",
+                "content_type": "image/png",
+                "file_size": "42396",
+                "filename": "icon_battlegrounds.png",
+                "title": "icon_battlegrounds.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2020-02-04T16:44:43.747Z",
+                    "user": "bltad9ef5d61983a595"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt47d8a1ce3088970a/5e1ce845e452e70d590e6260/icon_battlegrounds.png"
+            },
+            "rankIcon": {
+                "parent_uid": "bltd505a8aa7c510958",
+                "uid": "blt8873c62d012db55b",
+                "created_by": "blt0810fe204aa7e30e",
+                "updated_by": "blt0810fe204aa7e30e",
+                "created_at": "2021-03-11T20:52:16.909Z",
+                "updated_at": "2021-03-11T20:52:16.909Z",
+                "content_type": "image/png",
+                "file_size": "8702",
+                "filename": "bg-rank.png",
+                "title": "bg-rank.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-29T19:48:37.565Z",
+                    "user": "blt0810fe204aa7e30e"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt8873c62d012db55b/604a83000b1d853be8ad5c26/bg-rank.png"
+            },
+            "assets": {
+                "file": [
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "blt5ebed64b43ccbd0e",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:16.907Z",
+                        "updated_at": "2021-03-11T20:52:16.907Z",
+                        "content_type": "image/png",
+                        "file_size": "33318",
+                        "filename": "bg-frame-left.png",
+                        "title": "bg-frame-left.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:37.545Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt5ebed64b43ccbd0e/604a8300ee3eea3d5838340f/bg-frame-left.png"
+                    },
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "bltc376797fcf54e2c9",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:16.848Z",
+                        "updated_at": "2021-03-11T20:52:16.848Z",
+                        "content_type": "image/png",
+                        "file_size": "25189",
+                        "filename": "bg-frame-right.png",
+                        "title": "bg-frame-right.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:37.555Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/bltc376797fcf54e2c9/604a8300415d5f4e80325667/bg-frame-right.png"
+                    }
+                ]
+            },
+            "seasonsWithStartDate": {}
+        },
+        "classic": {
+            "title": "Classic",
+            "description": "",
+            "leaderboardId": "CLS",
+            "bgsLeaderboardId": "classic",
+            "columns": [
+                {
+                    "title": "Rank",
+                    "column_id": "rank",
+                    "column_label": "Rank",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt7d93887f0e2e7b8d",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:50:10.776Z",
+                    "updated_at": "2021-03-08T23:50:15.133Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 2,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.599Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Battletag",
+                    "column_id": "accountid",
+                    "column_label": "BattleTag",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blte2cccf9bcb2cb964",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:51:04.843Z",
+                    "updated_at": "2021-03-08T23:51:04.843Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.609Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                }
+            ],
+            "currentSeasonId": null,
+            "firstSeasonId": 89,
+            "firstSeasonStartDate": "2021-03-25",
+            "bannerIcon": {
+                "parent_uid": "blt9b6e0e39ca31f0e2",
+                "uid": "blt984afcadecc7f602",
+                "created_by": "blt1c60cb2fa365a29d",
+                "updated_by": "blt1c60cb2fa365a29d",
+                "created_at": "2021-03-02T19:35:52.239Z",
+                "updated_at": "2021-03-02T19:35:52.239Z",
+                "content_type": "image/webp",
+                "file_size": "6408",
+                "filename": "icon_classic.webp",
+                "title": "icon_classic.webp",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-25T17:08:54.526Z",
+                    "user": "blt1c60cb2fa365a29d"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt984afcadecc7f602/603e939802ccfb4d0f6725ef/icon_classic.webp"
+            },
+            "rankIcon": {
+                "parent_uid": "bltd505a8aa7c510958",
+                "uid": "blt694ae7b860873be8",
+                "created_by": "blt0810fe204aa7e30e",
+                "updated_by": "blt0810fe204aa7e30e",
+                "created_at": "2021-03-11T20:52:16.906Z",
+                "updated_at": "2021-03-11T20:52:16.906Z",
+                "content_type": "image/png",
+                "file_size": "6447",
+                "filename": "cls-rank.png",
+                "title": "cls-rank.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-03-29T19:48:45.992Z",
+                    "user": "blt0810fe204aa7e30e"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt694ae7b860873be8/604a8300c484333be943e89c/cls-rank.png"
+            },
+            "assets": {
+                "file": [
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "blt7a8901810afffffa",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:16.912Z",
+                        "updated_at": "2021-03-11T20:52:16.912Z",
+                        "content_type": "image/png",
+                        "file_size": "13740",
+                        "filename": "classic-deco-right.png",
+                        "title": "classic-deco-right.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:45.971Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt7a8901810afffffa/604a83006968b53d529ee7f2/classic-deco-right.png"
+                    },
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "blt4a11db8dbe976a7e",
+                        "created_by": "blt0810fe204aa7e30e",
+                        "updated_by": "blt0810fe204aa7e30e",
+                        "created_at": "2021-03-11T20:52:16.905Z",
+                        "updated_at": "2021-03-11T20:52:16.905Z",
+                        "content_type": "image/png",
+                        "file_size": "12881",
+                        "filename": "classic-deco-left.png",
+                        "title": "classic-deco-left.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-03-29T19:48:45.981Z",
+                            "user": "blt0810fe204aa7e30e"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt4a11db8dbe976a7e/604a830002ccfb4d0f672888/classic-deco-left.png"
+                    }
+                ]
+            },
+            "seasonsWithStartDate": {
+                "89": 1614556800000,
+                "90": 1617235200000,
+                "91": 1619827200000,
+                "92": 1622505600000,
+                "93": 1625097600000,
+                "94": 1627776000000,
+                "95": 1630454400000,
+                "96": 1633046400000,
+                "97": 1635724800000,
+                "98": 1638316800000,
+                "99": 1640995200000,
+                "100": 1643673600000,
+                "101": 1646092800000,
+                "102": 1648771200000,
+                "103": 1651363200000,
+                "104": 1654041600000,
+                "105": 1656633600000,
+                "106": 1659312000000
+            }
+        },
+        "mercenaries": {
+            "title": "Mercenaries",
+            "description": "The players featured below have employed top notch Party construction skills, in-the-moment decision making, and unyielding dedication to achieve a most noteworthy feat!",
+            "leaderboardId": "MRC",
+            "bgsLeaderboardId": "mercenaries",
+            "columns": [
+                {
+                    "title": "Rank",
+                    "column_id": "rank",
+                    "column_label": "Rank",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt7d93887f0e2e7b8d",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:50:10.776Z",
+                    "updated_at": "2021-03-08T23:50:15.133Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 2,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.599Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Battletag",
+                    "column_id": "accountid",
+                    "column_label": "BattleTag",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blte2cccf9bcb2cb964",
+                    "created_by": "blt4f39e374ab3a3b80",
+                    "updated_by": "blt4f39e374ab3a3b80",
+                    "created_at": "2021-03-08T23:51:04.843Z",
+                    "updated_at": "2021-03-08T23:51:04.843Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:30.609Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                },
+                {
+                    "title": "Rating",
+                    "column_id": "rating",
+                    "column_label": "Rating",
+                    "tags": [],
+                    "locale": "en-us",
+                    "uid": "blt322921202cfd6a53",
+                    "created_by": "blt0810fe204aa7e30e",
+                    "updated_by": "blt0810fe204aa7e30e",
+                    "created_at": "2021-03-11T19:17:54.919Z",
+                    "updated_at": "2021-03-11T19:17:54.919Z",
+                    "_content_type_uid": "leaderboard_column",
+                    "ACL": {},
+                    "_version": 1,
+                    "_in_progress": false,
+                    "publish_details": {
+                        "environment": "blt89cbc1f4ff7b773c",
+                        "locale": "en-us",
+                        "time": "2021-03-29T19:48:37.202Z",
+                        "user": "blt0810fe204aa7e30e"
+                    }
+                }
+            ],
+            "currentSeasonId": null,
+            "firstSeasonId": 2,
+            "firstSeasonStartDate": "2021-12-01",
+            "bannerIcon": {
+                "parent_uid": "bltb3120b75e7e4c8fc",
+                "uid": "blt09a4dc8eb0d4b5d8",
+                "created_by": "blt4f39e374ab3a3b80",
+                "updated_by": "blt4f39e374ab3a3b80",
+                "created_at": "2021-07-16T20:32:29.602Z",
+                "updated_at": "2021-07-16T20:32:29.602Z",
+                "content_type": "image/png",
+                "file_size": "64935",
+                "filename": "logo_merc.png",
+                "title": "logo_merc.png",
+                "ACL": [],
+                "_version": 1,
+                "is_dir": false,
+                "tags": [],
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2021-10-12T17:35:29.730Z",
+                    "user": "blt4f39e374ab3a3b80"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blt09a4dc8eb0d4b5d8/60f1ecddce1eb95db45dfc39/logo_merc.png"
+            },
+            "rankIcon": {
+                "parent_uid": "bltd505a8aa7c510958",
+                "uid": "blta3ef33f5b586ef96",
+                "created_by": "blt4f39e374ab3a3b80",
+                "updated_by": "bltac78499384499eda",
+                "created_at": "2021-08-23T21:15:59.242Z",
+                "updated_at": "2022-07-20T16:29:50.562Z",
+                "content_type": "image/png",
+                "file_size": "5295",
+                "filename": "icon_rank_mercenaries.png",
+                "title": "icon_rank_mercenaries.png",
+                "ACL": [],
+                "_version": 2,
+                "is_dir": false,
+                "tags": [],
+                "description": "",
+                "publish_details": {
+                    "environment": "blt89cbc1f4ff7b773c",
+                    "locale": "en-us",
+                    "time": "2022-08-05T20:07:39.341Z",
+                    "user": "blt4f39e374ab3a3b80"
+                },
+                "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/blta3ef33f5b586ef96/62d82d7e6533ca11b7de90b1/icon_rank_mercenaries.png"
+            },
+            "assets": {
+                "file": [
+                    {
+                        "parent_uid": "bltd505a8aa7c510958",
+                        "uid": "bltb781013a81cadc17",
+                        "created_by": "blt4f39e374ab3a3b80",
+                        "updated_by": "blt4f39e374ab3a3b80",
+                        "created_at": "2021-08-23T21:15:59.380Z",
+                        "updated_at": "2021-08-23T21:15:59.380Z",
+                        "content_type": "image/png",
+                        "file_size": "82706",
+                        "filename": "decoration_mercenaries.png",
+                        "title": "decoration_mercenaries.png",
+                        "ACL": [],
+                        "_version": 1,
+                        "is_dir": false,
+                        "tags": [],
+                        "publish_details": {
+                            "environment": "blt89cbc1f4ff7b773c",
+                            "locale": "en-us",
+                            "time": "2021-10-12T17:35:29.723Z",
+                            "user": "blt4f39e374ab3a3b80"
+                        },
+                        "url": "https://images.blz-contentstack.com/v3/assets/bltc965041283bac56c/bltb781013a81cadc17/6124100f8ae2653b28a721c8/decoration_mercenaries.png"
+                    }
+                ]
+            },
+            "seasonsWithStartDate": {
+                "2": 1638316800000,
+                "3": 1640995200000,
+                "4": 1643673600000,
+                "5": 1646092800000,
+                "6": 1648771200000,
+                "7": 1651363200000,
+                "8": 1654041600000,
+                "9": 1656633600000,
+                "10": 1659312000000
+            }
+        }
+    },
+    "seasonMetaData": {
+        "US": {
+            "classic": {
+                "name": "classic",
+                "ratingId": 58,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "wild": {
+                "name": "wild",
+                "ratingId": 30,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "mercenaries": {
+                "name": "mercenaries",
+                "ratingId": 56,
+                "seasons": [
+                    10,
+                    9,
+                    8,
+                    7,
+                    6
+                ]
+            },
+            "standard": {
+                "name": "standard",
+                "ratingId": 2,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "battlegrounds": {
+                "name": "battlegrounds",
+                "ratingId": 50,
+                "seasons": [
+                    7,
+                    6,
+                    5,
+                    4,
+                    3
+                ]
+            }
+        },
+        "EU": {
+            "classic": {
+                "name": "classic",
+                "ratingId": 58,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "wild": {
+                "name": "wild",
+                "ratingId": 30,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "standard": {
+                "name": "standard",
+                "ratingId": 2,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "mercenaries": {
+                "name": "mercenaries",
+                "ratingId": 56,
+                "seasons": [
+                    10,
+                    9,
+                    8,
+                    7,
+                    6
+                ]
+            },
+            "battlegrounds": {
+                "name": "battlegrounds",
+                "ratingId": 50,
+                "seasons": [
+                    7,
+                    6,
+                    5,
+                    4,
+                    3
+                ]
+            }
+        },
+        "AP": {
+            "standard": {
+                "name": "standard",
+                "ratingId": 2,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "mercenaries": {
+                "name": "mercenaries",
+                "ratingId": 56,
+                "seasons": [
+                    10,
+                    9,
+                    8,
+                    7,
+                    6
+                ]
+            },
+            "classic": {
+                "name": "classic",
+                "ratingId": 58,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "wild": {
+                "name": "wild",
+                "ratingId": 30,
+                "seasons": [
+                    106,
+                    105,
+                    104,
+                    103,
+                    102
+                ]
+            },
+            "battlegrounds": {
+                "name": "battlegrounds",
+                "ratingId": 50,
+                "seasons": [
+                    7,
+                    6,
+                    5,
+                    4,
+                    3
+                ]
+            }
+        }
+    },
+    "regions": {
+        "US": 1,
+        "EU": 2,
+        "AP": 3
+    },
+    "region": "US"
+}
