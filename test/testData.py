@@ -3,7 +3,6 @@ import sys
 
 sys.path.append("../src")
 sys.path.append("../lambda-loader/src")
-import time
 import unittest
 from test import setup_production_environment
 
@@ -87,15 +86,6 @@ class testDataPutItems(unittest.TestCase):
             self.assertEqual(key, item["PlayerName"])
             self.assertEqual(player["rank"], item["Rank"])
             self.assertEqual(player["rating"], item["Ratings"][-1])
-
-    def testPutTime(self):
-        time = self.database.parse_time(self.tpl[1]["US"])
-        self.database.put_time("US", time)
-        ## time zones aren't being handled correctly in this environment
-        if self.database.get_time("US") == 1608066223:
-            self.assertEqual(1608066223, self.database.get_time("US"))
-        else:
-            self.assertEqual(1608095023, self.database.get_time("US"))
 
     def testClearPutItems(self):
         self.database.put_items("US", self.players)

@@ -18,6 +18,7 @@ typing-extensions = "*"
 python-dotenv = "*"
 fuzzywuzzy = "*"
 python-levenshtein = "*"
+grequests = "*"
 
 [dev-packages]
 
