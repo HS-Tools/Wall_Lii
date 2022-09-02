@@ -2,8 +2,7 @@ import os
 from datetime import datetime
 
 import aiocron
-import discord
-from discord.ext import commands
+import interactions
 from dotenv import load_dotenv
 from pytz import timezone, utc
 
@@ -14,8 +13,6 @@ from parseRegion import isRegion
 
 load_dotenv()
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
-
 channelIds = {
     "wall_lii": 811468284394209300,
     "wall-lii-requests": 846867129834930207,
@@ -24,12 +21,16 @@ channelIds = {
 
 liiDiscordId = 204806965585510400
 
+bot = interactions.Client(
+    token=os.environ["DISCORD_TOKEN"], 
+    default_scope=liiDiscordId
+)
+
 emotes = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
 
 
 def getEmbedObject(text, player, command):
-    embed = discord.Embed(title=f"{player}'s {command}", description=text)
-
+    embed = interactions.Embed(title=f"{player}'s {command}", description=text)
     return embed
 
 
@@ -41,73 +42,119 @@ def removeTwitchEmotes(s):
 
 async def call(ctx, func, name, *args):
     response = removeTwitchEmotes(func(*args))
-    if len(args) >= 2:
-        if not isRegion(args[1]):
-            response = "Invalid region provided.\n" + response
-
-    message = ctx.message
-    try:
-        await message.delete()
-    except:
-        pass
     await ctx.send(embed=getEmbedObject(response, args[0], name))
 
 
-@bot.command()
-async def buddy(ctx, *args):
-    if len(args) < 1:
-        return
-
-    buddyName = args[0].lower()
-    try:
-        await ctx.message.delete()
-    except:
-        pass
-
-    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
+@bot.command(
+    name="buddy",
+    description="Get the buddy of a Hero",
+    options = [
+        interactions.Option(
+            name="hero",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ],
+)
+async def buddy(ctx, hero):
+    results = parse_buddy(hero, buddyDict, easter_egg_buddies_dict)
 
     if results and results[0] is not None:
-        embed = discord.Embed(
+        embed = interactions.Embed(
             title=f"{results[0]}'s buddy",
             description=results[1],
         )
         await ctx.send(embed=embed)
 
 
-@bot.command()
-async def goldenbuddy(ctx, *args):
-    if len(args) < 1:
-        return
-
-    buddyName = args[0].lower()
-    try:
-        await ctx.message.delete()
-    except:
-        pass
-
-    results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
+@bot.command(
+    name="goldenbuddy",
+    description="Get the golden buddy of a Hero",
+    options = [
+        interactions.Option(
+            name="hero",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ],)
+async def goldenbuddy(ctx, hero):
+    results = parse_buddy(hero, buddyDict, easter_egg_buddies_dict)
 
     if results and results[0] is not None:
-        embed = discord.Embed(
+        embed = interactions.Embed(
             title=f"{results[0]}'s golden buddy",
             description=results[2],
         )
         await ctx.send(embed=embed)
 
-
-@bot.command()
+@bot.command(
+    options=[
+        interactions.Option(
+            name="player",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+        interactions.Option(
+            name="rank",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+        interactions.Option(
+            name="region",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+    ]
+)
 async def bgrank(ctx, *args):
     args = leaderboardBot.parseArgs("lii", *args)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
+    # todo consider adding button to call bgdaily
 
 
-@bot.command()
+@bot.command(
+    options=[
+        interactions.Option(
+            name="player",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+        interactions.Option(
+            name="rank",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+        interactions.Option(
+            name="region",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+    ]
+)
 async def bgdaily(ctx, *args):
     args = leaderboardBot.parseArgs("lii", *args)
     await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
 
 
-@bot.command()
+@bot.command(
+    options=[
+        interactions.Option(
+            name="player",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+        interactions.Option(
+            name="rank",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+        interactions.Option(
+            name="region",
+            type=interactions.OptionType.STRING,
+            required=False,
+        ),
+    ]
+)
 async def yesterday(ctx, *args):
     args = leaderboardBot.parseArgs("lii", *args)
     args.append(True)  ## send the yesterday value to the function
@@ -124,105 +171,109 @@ async def goodbot(ctx):
     await ctx.send(":robot: Just doing my job :robot:")
 
 
-@bot.command()
-async def addalias(ctx, *args):
+@bot.command(
+    options=[
+        interactions.Option(
+            name="alias",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+        interactions.Option(
+            name="playerName",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ])
+async def addalias(ctx, alias, name):
     if (
         ctx.message.channel.id == channelIds["wall-lii-requests"]
         or ctx.message.channel.id == channelIds["test"]
     ):
-        message = ctx.message
-        await message.delete()
+        alias = alias.lower()
+        name = name.lower()
 
-        args = removeSquareBrackets(args)
-
-        if len(args) < 2:
-            await ctx.send("The command must have two words. !addalias [alias] [name]")
+        leaderboardBot.addAlias(alias, name)
+        leaderboardBot.updateAlias()
+        if (
+            alias in leaderboardBot.alias.keys()
+            and leaderboardBot.alias[alias] == name
+        ):
+            await ctx.send(f"{alias} is now an alias for {name}")
         else:
-            alias = args[0].lower()
-            name = args[1].lower()
-
-            leaderboardBot.addAlias(alias, name)
-            leaderboardBot.updateAlias()
-            if (
-                alias in leaderboardBot.alias.keys()
-                and leaderboardBot.alias[alias] == name
-            ):
-                await ctx.send(f"{alias} is now an alias for {name}")
-            else:
-                await ctx.send(f"failed to set alias {alias} to name {name}")
+            await ctx.send(f"failed to set alias {alias} to name {name}")
 
 
-@bot.command()
+@bot.command(
+    options=[
+        interactions.Option(
+            name="alias",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ]
+)
 async def deletealias(ctx, *args):
     if (
         ctx.message.channel.id == channelIds["wall-lii-requests"]
         or ctx.message.channel.id == channelIds["test"]
     ):
-        message = ctx.message
-        await message.delete()
-
-        args = removeSquareBrackets(args)
 
         if ctx.message.author.id == liiDiscordId:
-            if len(args) < 1:
-                await ctx.send("The command must have one word. !deletealias [alias]")
-            else:
-                alias = args[0].lower()
-
-                leaderboardBot.deleteAlias(alias)
-                leaderboardBot.updateAlias()
-
-                await ctx.send(f"{alias} alias was deleted")
+            alias = args[0].lower()
+            leaderboardBot.deleteAlias(alias)
+            leaderboardBot.updateAlias()
+            await ctx.send(f"{alias} alias was deleted")
         else:
             await ctx.send("Only Lii can delete aliases")
 
 
-@bot.command()
+@bot.command(
+    options=[
+        interactions.Option(
+            name="twitchChannel",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+        interactions.Option(
+            name="playerName",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ]
+)
 async def addchannel(ctx, *args):
     if (
         ctx.message.channel.id == channelIds["wall-lii-requests"]
         or ctx.message.channel.id == channelIds["test"]
     ):
-        message = ctx.message
-        await message.delete()
+        channelName = args[0].lower()
+        playerName = args[1].lower() if len(args) > 1 else args[0].lower()
 
-        args = removeSquareBrackets(args)
+        leaderboardBot.addChannel(channelName, playerName)
 
-        if len(args) < 1:
-            await ctx.send(
-                "The command must have two words. !addchannel [channelName] [playerName]"
-            )
-        else:
-            channelName = args[0].lower()
-            playerName = args[1].lower() if len(args) > 1 else args[0].lower()
-
-            leaderboardBot.addChannel(channelName, playerName)
-
-            await ctx.send(
-                f"{channelName} will have wall_lii added to it with the default name of {playerName}"
-            )
+        await ctx.send(
+            f"{channelName} will have wall_lii added to it with the default name of {playerName}"
+        )
 
 
-@bot.command()
+@bot.command(
+    options=[
+        interactions.Option(
+            name="twitchChannel",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ]
+)
 async def deletechannel(ctx, *args):
     if (
         ctx.message.channel.id == channelIds["wall-lii-requests"]
         or ctx.message.channel.id == channelIds["test"]
     ):
-        message = ctx.message
-        await message.delete()
-
-        args = removeSquareBrackets(args)
-
         if ctx.message.author.id == liiDiscordId:
-            if len(args) < 1:
-                await ctx.send("The command must have one word. !deletechannel [alias]")
-            else:
-                channel = args[0].lower()
-
-                leaderboardBot.deleteChannel(channel)
-
-                await ctx.send(f"{channel} channel was removed from the list")
+            channel = args[0].lower()
+            leaderboardBot.deleteChannel(channel)
+            await ctx.send(f"{channel} channel was removed from the list")
         else:
             await ctx.send("Only Lii can remove wall_lii from channels")
 
@@ -276,7 +327,7 @@ async def sendDailyRecap():
         + top16Text
     )
 
-    embed = discord.Embed(
+    embed = interactions.Embed(
         title=f"Daily Liiderboards for {get_pst_time()}", description=text
     )
 
@@ -363,7 +414,7 @@ async def test(ctx):
         + top16Text
     )
 
-    embed = discord.Embed(
+    embed = interactions.Embed(
         title=f"Daily Liiderboards for {get_pst_time()}", description=text
     )
 
@@ -383,7 +434,7 @@ def get_pst_time():
 def generateTop16Embed():
     top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
 
-    embed = discord.Embed(
+    embed = interactions.Embed(
         title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
     )
 
@@ -412,4 +463,4 @@ if __name__ == "__main__":
     leaderboardBot = LeaderBoardBot()
     buddyDict = get_buddy_dict()
 
-    bot.run(os.environ["DISCORD_TOKEN"])
+    bot.start()
