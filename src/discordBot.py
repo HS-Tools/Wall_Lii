@@ -21,10 +21,7 @@ channelIds = {
 
 liiDiscordId = 204806965585510400
 
-bot = interactions.Client(
-    token=os.environ["DISCORD_TOKEN"], 
-    default_scope=liiDiscordId
-)
+bot = interactions.Client(token=os.environ["DISCORD_TOKEN"], default_scope=liiDiscordId)
 
 emotes = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
 
@@ -48,7 +45,7 @@ async def call(ctx, func, name, *args):
 @bot.command(
     name="buddy",
     description="Get the buddy of a Hero",
-    options = [
+    options=[
         interactions.Option(
             name="hero",
             type=interactions.OptionType.STRING,
@@ -70,13 +67,14 @@ async def buddy(ctx, hero):
 @bot.command(
     name="goldenbuddy",
     description="Get the golden buddy of a Hero",
-    options = [
+    options=[
         interactions.Option(
             name="hero",
             type=interactions.OptionType.STRING,
             required=True,
         ),
-    ],)
+    ],
+)
 async def goldenbuddy(ctx, hero):
     results = parse_buddy(hero, buddyDict, easter_egg_buddies_dict)
 
@@ -86,6 +84,7 @@ async def goldenbuddy(ctx, hero):
             description=results[2],
         )
         await ctx.send(embed=embed)
+
 
 @bot.command(
     options=[
@@ -183,7 +182,8 @@ async def goodbot(ctx):
             type=interactions.OptionType.STRING,
             required=True,
         ),
-    ])
+    ]
+)
 async def addalias(ctx, alias, name):
     if (
         ctx.message.channel.id == channelIds["wall-lii-requests"]
@@ -194,10 +194,7 @@ async def addalias(ctx, alias, name):
 
         leaderboardBot.addAlias(alias, name)
         leaderboardBot.updateAlias()
-        if (
-            alias in leaderboardBot.alias.keys()
-            and leaderboardBot.alias[alias] == name
-        ):
+        if alias in leaderboardBot.alias.keys() and leaderboardBot.alias[alias] == name:
             await ctx.send(f"{alias} is now an alias for {name}")
         else:
             await ctx.send(f"failed to set alias {alias} to name {name}")
