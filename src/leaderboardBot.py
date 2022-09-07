@@ -328,7 +328,8 @@ class LeaderBoardBot:
         deltas = []
 
         for rating in ratings[1:]:
-            deltas.append("{0:+d}".format(int(rating - lastRating)))
+            if abs(rating - lastRating) < 600:
+                deltas.append("{0:+d}".format(int(rating - lastRating)))
 
             lastRating = rating
 
