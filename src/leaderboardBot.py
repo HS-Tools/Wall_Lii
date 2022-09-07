@@ -139,7 +139,7 @@ class LeaderBoardBot:
     def formatRankText(self, yesterday, player_data):
         highestRank = 9999
         for item in player_data:
-            if item["Rank"] < highestRank:
+            if item["Rank"] < highestRank and item["Rank"] >= 1:
                 tag = item["PlayerName"]
                 highestRank = item["Rank"]
                 rank = item["Rank"]
@@ -150,10 +150,10 @@ class LeaderBoardBot:
 
                 rating = item["Ratings"][-1]
 
-                if item["Rank"] < 0:
-                    text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier {"today" if not yesterday else "Yesterday"} liiCat'
-                else:
-                    text = f'{tag} {"is" if not yesterday else "was"} rank {rank} in {region} with {rating} mmr liiHappyCat'
+                # if item["Rank"] < 0:
+                #     text = f'{tag} dropped from the {region} leaderboards but was {rating} mmr earlier {"today" if not yesterday else "Yesterday"} liiCat'
+                # else:
+                text = f'{tag} {"is" if not yesterday else "was"} rank {rank} in {region} with {rating} mmr liiHappyCat'
         return text
 
     def getRankText(self, tag, region=None, yesterday=False):
