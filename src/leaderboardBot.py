@@ -1,6 +1,7 @@
 import os
 import threading
 from datetime import datetime
+from operator import indexOf
 from re import I
 
 import boto3
@@ -178,9 +179,15 @@ class LeaderBoardBot:
                 emote = "liiHappyCat" if ratings[-1] > ratings[0] else "liiCat"
 
                 text = f"{tag} started {'today' if not yesterday else 'yesterday'} at {ratings[0]} in {region} and {'is now' if not yesterday else 'ended at' } \
-                {ratings[-1]} with {len(ratings)-1} games played. {emote} Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
+                {ratings[-1]} with {self.getGamesPlayedFromDeltas(self.getDeltas(ratings))} games played. {emote} Their record {'is' if not yesterday else 'was'}: {self.getDeltas(ratings)}"
 
         return text
+
+    def getGamesPlayedFromDeltas(self, deltas):
+        if not deltas:
+            return 0
+        else:
+            return deltas.count(",") + 1
 
     def getDailyStatsText(self, tag, region=None, yesterday=False):
         tag, region, player_data, msg = self.findPlayer(tag, region, yesterday)
@@ -276,7 +283,7 @@ class LeaderBoardBot:
 
         for item in items:
             ratings = item["Ratings"]
-            gameCount = len(ratings) - 1
+            gameCount = self.getGamesPlayedFromDeltas(self.getDeltas(ratings))
 
             obj = {
                 "Tag": item["PlayerName"],

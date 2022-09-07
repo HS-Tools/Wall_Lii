@@ -281,16 +281,14 @@ async def sendDailyRecap():
     )
 
     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
-    recap = await dedicated_channel.send(embed=embed)
-    await recap.pin()
+    await dedicated_channel.send(embed=embed)
 
 
 @aiocron.crontab("59 6 * * *")
 async def send_top16_daily_recap():
     embed = generateTop16Embed()
     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
-    recap = await dedicated_channel.send(embed=embed)
-    await recap.pin()
+    await dedicated_channel.send(embed=embed)
 
 
 @bot.command()
@@ -368,8 +366,7 @@ async def test(ctx):
     )
 
     dedicated_channel = bot.get_channel(channelIds["test"])
-    recap = await dedicated_channel.send(embed=embed)
-    await recap.pin()
+    await dedicated_channel.send(embed=embed)
 
 
 def get_pst_time():
