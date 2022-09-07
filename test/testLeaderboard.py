@@ -84,10 +84,6 @@ class testLeaderboardGet(unittest.TestCase):
         self.assertIn(" 22019 ", string)
         self.assertIn(" 2 ", string)
 
-    def testGetRankNumEgg(self):
-        string = self.bot.getRankText("420", "NA")
-        self.assertEqual("don't do drugs kids", string)
-
     def testGetRankText(self):
         string = self.bot.getRankText("saphirexx", "US")
         self.assertIn("saphirexx ", string)
