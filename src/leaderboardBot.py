@@ -283,7 +283,7 @@ class LeaderBoardBot:
 
         for item in items:
             ratings = item["Ratings"]
-            gameCount = len(ratings) - 1
+            gameCount = self.getGamesPlayedFromDeltas(self.getDeltas(ratings))
 
             obj = {
                 "Tag": item["PlayerName"],
