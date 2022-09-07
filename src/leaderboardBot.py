@@ -16,7 +16,6 @@ from parseRegion import REGIONS, isRegion, parseRegion, printRegion
 eggs = {  # Easter eggs
     "salami": "salami is rank 69 in Antarctica with 16969 mmr CORM",
     "gomez": "gomez is a cat, cats do not play BG",
-    "420": "don't do drugs kids",
     "16969": "salami is rank 69 in Antarctica with 16969 mmr CORM",
 }
 
