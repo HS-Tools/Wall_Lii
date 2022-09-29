@@ -13,7 +13,7 @@ def parseSnapshot(text, verbose=True, region="Unknown"):
     updatedTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
     if verbose:
-        print(f"{region} fetched at {updatedTime}")
+        print(f"{region} fetched at {updatedTime} for season {season}")
 
     for account in accounts:
         if verbose:
@@ -62,6 +62,5 @@ def getLeaderboardSnapshot(
 if __name__ == "__main__":  ## run the function if this program is called
     ratingsDict, lastUpdated, season = getLeaderboardSnapshot()
     for region in ["US", "EU", "AP"]:
-        print(f"{region} fetched at {lastUpdated[region]}")
         for account in ratingsDict[region].keys():
             print("\t", ratingsDict[region][account])
