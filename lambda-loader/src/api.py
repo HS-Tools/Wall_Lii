@@ -28,7 +28,7 @@ def parseSnapshot(text, verbose=True, region="Unknown"):
 def getLeaderboardSnapshot(
     regions=["US", "EU", "AP"],
     gameMode="BG",
-    season=None,
+    season=8,
     verbose=True,
     total_count=500,
 ):
@@ -44,7 +44,7 @@ def getLeaderboardSnapshot(
         ## not supplying season always gets latest
         apiUrl = f"https://playhearthstone.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
         if season != None:  ## used for test code to pull a known season results
-            apiUrl = f"{apiUrl}&seasonId={season}"
+            apiUrl = f"{apiUrl}&seasonId={season-1}"
 
         pageUrls = []
         for page in range((total_count // PLAYERS_PER_PAGE) + 1):
