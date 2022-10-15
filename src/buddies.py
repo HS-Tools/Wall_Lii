@@ -58,4 +58,9 @@ easter_egg_buddies_dict = {
         "Smogger is a Tier 3 3/3. Ability: Give a friendly elemental stats equal to your Tavern Tier",
         "Golden Smogger is a Tier 3 6/6. Ability: Give a friendly elemental stats equal your Tavern Tier twice",
     ),
+    "catman": (
+        "Catman",
+        "Cat is a Tier 4 4/4. Ability: Gain +4/+4 at the start and end of turn",
+        "Golden Cat is a Tier 4 8/8. Ability: Gain +8/+8 at the start and end of turn",
+    ),
 }
