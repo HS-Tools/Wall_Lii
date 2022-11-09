@@ -238,12 +238,4 @@ if __name__ == "__main__":
     async def updateAlias():
         leaderboardBot.getNewAlias()
 
-    @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-    async def check_for_new_buddies():
-        global buddyDict
-        temp_dict = get_buddy_dict()
-
-        if temp_dict and len(temp_dict.keys()) > 0:
-            buddyDict = temp_dict
-
     twitchBot.run()
