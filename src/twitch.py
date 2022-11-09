@@ -96,6 +96,27 @@ async def getGoldenBuddy(ctx):
         await ctx.send(results[2])
 
 
+@twitchBot.command(name="gold")
+async def getGoldenBuddy(ctx):
+    if len(ctx.message.content.split(" ")) < 2:
+        return
+
+    goldAmount = int(ctx.message.content.split(" ")[1])
+
+    if goldAmount <= 6:
+        turn = 4
+    elif goldAmount <= 13:
+        turn = 5
+    elif goldAmount <= 21:
+        turn = 6
+    elif goldAmount <= 30:
+        turn = 7
+    else:
+        turn = ((goldAmount - 30) // 10) + 8
+
+    await ctx.send(f"Turn {turn} or Turn {turn - 1} if {'filler'} extra gold is spent.")
+
+
 @twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
