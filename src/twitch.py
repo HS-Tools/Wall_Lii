@@ -96,6 +96,41 @@ async def getGoldenBuddy(ctx):
         await ctx.send(results[2])
 
 
+@twitchBot.command(name="gold")
+async def getGold(ctx):
+    incorrectUseText = "Use this command with the number of gold your quest requires: !gold 55"
+    if len(ctx.message.content.split(" ")) < 2:
+        await ctx.send(incorrectUseText)
+        return
+
+    try:
+        goldAmount = int(ctx.message.content.split(" ")[1])
+    except:
+        await ctx.send(incorrectUseText)
+        return
+
+    if goldAmount <= 6:
+        turn = 4
+    elif goldAmount <= 13:
+        turn = 5
+        extraGold = goldAmount - 6
+    elif goldAmount <= 21:
+        turn = 6
+        extraGold = goldAmount - 13
+    elif goldAmount <= 30:
+        turn = 7
+        extraGold = goldAmount - 21
+    else:
+        turn = ((goldAmount - 30) // 10) + 8
+        extraGold = ((goldAmount - 30) % 10)
+        if extraGold == 0: extraGold = 10
+
+    earlierTurnText = ""
+    if turn > 4:
+        earlierTurnText = f" or Turn {turn - 1} if {extraGold} extra gold is spent."
+    await ctx.send(f"Turn {turn}{earlierTurnText}")
+
+
 @twitchBot.event
 async def event_message(ctx):
     # make sure the bot ignores itself and the streamer
@@ -148,14 +183,14 @@ async def goodBot(ctx):
 @twitchBot.command(name="wall_lii")
 async def wall_lii(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]."
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !gold."
     )
 
 
 @twitchBot.command(name="help")
 async def help(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name]."
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !gold."
     )
 
 
@@ -202,13 +237,5 @@ if __name__ == "__main__":
     @aiocron.crontab("* * * * *")  ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
-
-    @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-    async def check_for_new_buddies():
-        global buddyDict
-        temp_dict = get_buddy_dict()
-
-        if temp_dict and len(temp_dict.keys()) > 0:
-            buddyDict = temp_dict
 
     twitchBot.run()
