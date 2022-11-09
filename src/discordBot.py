@@ -302,16 +302,6 @@ async def top16(ctx):
         pass
     await ctx.send(embed=embed)
 
-
-@aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-async def check_for_new_buddies():
-    global buddyDict
-    temp_dict = get_buddy_dict()
-
-    if temp_dict and len(temp_dict.keys()) > 0:
-        buddyDict = temp_dict
-
-
 @bot.command()
 async def test(ctx):
 
