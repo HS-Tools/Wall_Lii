@@ -73,6 +73,13 @@ async def getBuddy(ctx):
     await ctx.send("Shush")
 
 
+@twitchBot.command(name="curves")
+async def getCurves(ctx):
+    await ctx.send(
+        "Main Site: https://www.bgcurvesheet.com Guide: https://www.bgcurvesheet.com/curves"
+    )
+
+
 @twitchBot.command(name="Frog")
 async def getFrog(ctx):
     await ctx.send("liiPers liiPers liiPers")
@@ -98,7 +105,9 @@ async def getGoldenBuddy(ctx):
 
 @twitchBot.command(name="gold")
 async def getGold(ctx):
-    incorrectUseText = "Use this command with the number of gold your quest requires: !gold 55"
+    incorrectUseText = (
+        "Use this command with the number of gold your quest requires: !gold 55"
+    )
     if len(ctx.message.content.split(" ")) < 2:
         await ctx.send(incorrectUseText)
         return
@@ -122,8 +131,9 @@ async def getGold(ctx):
         extraGold = goldAmount - 21
     else:
         turn = ((goldAmount - 30) // 10) + 8
-        extraGold = ((goldAmount - 30) % 10)
-        if extraGold == 0: extraGold = 10
+        extraGold = (goldAmount - 30) % 10
+        if extraGold == 0:
+            extraGold = 10
 
     earlierTurnText = ""
     if turn > 4:
