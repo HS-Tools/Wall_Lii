@@ -63,4 +63,9 @@ easter_egg_buddies_dict = {
         "Cat is a Tier 4 4/4. Ability: Gain +4/+4 at the start and end of turn",
         "Golden Cat is a Tier 4 8/8. Ability: Gain +8/+8 at the start and end of turn",
     ),
+    "haita": (
+        "Haita",
+        "LiiHS is a Tier 6 8/8. Ability: Makes the fluffiest chocolate chip pancakes",
+        "Golden LiiHS is a Tier 6, 16, 16. Ability: Makes better tea than Teamaster Theotar",
+    ),
 }
