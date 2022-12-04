@@ -130,7 +130,10 @@ async def getGold(ctx):
         turn = 7
         extraGold = goldAmount - 21
     else:
-        turn = ((goldAmount - 30) // 10) + 8
+        if goldAmount % 10 == 0:
+            turn = ((goldAmount - 30) // 10) + 7
+        else:
+            turn = ((goldAmount - 30) // 10) + 8
         extraGold = (goldAmount - 30) % 10
         if extraGold == 0:
             extraGold = 10
