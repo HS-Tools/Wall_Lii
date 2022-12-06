@@ -1,7 +1,8 @@
 import json
+from concurrent.futures import as_completed
 from datetime import datetime
 
-import grequests
+from requests_futures.sessions import FuturesSession
 
 
 def parseSnapshot(text, verbose=True, region="Unknown"):
@@ -50,11 +51,15 @@ def getLeaderboardSnapshot(
         for page in range((total_count // PLAYERS_PER_PAGE) + 1):
             pageUrls.append(f"{apiUrl}&page={page}")
 
-        rs = (grequests.get(url) for url in pageUrls)
-        for r in grequests.map(rs):
-            rDict, updatedDict[region], season = parseSnapshot(r.text, verbose, region)
-            for key in rDict:
-                ratingsDict[region][key] = rDict[key]
+        with FuturesSession() as session:
+            futures = [session.get(url) for url in pageUrls]
+            for future in as_completed(futures):
+                r = future.result()
+                rDict, updatedDict[region], season = parseSnapshot(
+                    r.text, verbose, region
+                )
+                for key in rDict:
+                    ratingsDict[region][key] = rDict[key]
 
     return ratingsDict, updatedDict, season
 
