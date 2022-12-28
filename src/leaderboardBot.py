@@ -336,11 +336,26 @@ class LeaderBoardBot:
         deltas = []
 
         for rating in ratings[1:]:
-            deltas.append("{0:+d}".format(int(rating - lastRating)))
+            delta = int(rating - lastRating)
+            deltas.append("{0:+d}".format(delta))
 
             lastRating = rating
 
+        deltas = self.removeRepeatDeltas(deltas)
+
         return ", ".join(deltas)
+
+    def removeRepeatDeltas(self, deltas):
+        for i in reversed(range(len(deltas) - 1)):
+            if (
+                i < len(deltas) - 2
+                and deltas[i] == deltas[i + 2]
+                and int(deltas[i + 1]) == -1 * int(deltas[i])
+            ):
+                del deltas[i + 2]
+                del deltas[i + 1]
+
+        return deltas
 
     def clearDailyTable(self):
         today_scan = self.table.scan()
