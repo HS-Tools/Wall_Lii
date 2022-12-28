@@ -341,10 +341,12 @@ class LeaderBoardBot:
 
             lastRating = rating
 
-        deltas = self.removeRepeatDeltas(deltas)
+        self.removeRepeatDeltas(deltas)
+        self.removePlusOneMinusOne(deltas)
 
         return ", ".join(deltas)
 
+    # The leaderboard API will randomly give stale data resulting in +x, -x, +x, -x, +x occasionally after a +x game
     def removeRepeatDeltas(self, deltas):
         for i in reversed(range(len(deltas) - 1)):
             if (
@@ -356,6 +358,13 @@ class LeaderBoardBot:
                 del deltas[i + 1]
 
         return deltas
+
+    # The leaderboard API will randomly round up and down on MMR sometimes so this removes +1, -1, +1, -1 from the daily text
+    def removePlusOneMinusOne(self, deltas):
+        for i in reversed(range(len(deltas) - 1)):
+            if i < len(deltas) - 1 and int(deltas[i]) == -1 * int(deltas[i + 1]):
+                del deltas[i + 1]
+                del deltas[i]
 
     def clearDailyTable(self):
         today_scan = self.table.scan()
