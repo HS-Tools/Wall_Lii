@@ -151,8 +151,8 @@ async def event_message(msg):
     if msg.author and msg.author.name.lower() == "wall_lii":
         return
 
-    if msg.channel.name.lower() == "liihs" and msg.content.lower() == "mods assemble":
-        await msg.channel.send("MODS Assemble")
+    # if msg.channel.name.lower() == "liihs" and msg.content.lower() == "mods assemble":
+    #     await msg.channel.send("MODS Assemble")
 
 
 @twitchBot.command(name="bgrank")
