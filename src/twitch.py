@@ -148,7 +148,7 @@ async def getGold(ctx):
 async def event_message(msg):
 
     # make sure the bot ignores itself and the streamer
-    if msg.author and msg.author.name.lower() == os.environ["BOT_NICK"].lower():
+    if msg.author and msg.author.name.lower() == "wall_lii":
         return
 
     if msg.channel.name.lower() == "liihs" and msg.content.lower() == "mods assemble":
