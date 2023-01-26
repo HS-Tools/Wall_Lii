@@ -144,12 +144,15 @@ async def getGold(ctx):
     await ctx.send(f"Turn {turn}{earlierTurnText}")
 
 
-@twitchBot.event
-async def event_message(ctx):
+@twitchBot.event()
+async def event_message(msg):
+
     # make sure the bot ignores itself and the streamer
-    if ctx.message.author.name.lower() == os.environ["BOT_NICK"].lower():
+    if msg.author and msg.author.name.lower() == os.environ["BOT_NICK"].lower():
         return
-    await twitchBot.handle_commands(ctx)
+
+    if msg.channel.name.lower() == "liihs" and msg.content.lower() == "mods assemble":
+        await msg.channel.send("MODS Assemble")
 
 
 @twitchBot.command(name="bgrank")
