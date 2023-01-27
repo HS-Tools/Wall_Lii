@@ -148,11 +148,15 @@ async def getGold(ctx):
 async def event_message(msg):
 
     # make sure the bot ignores itself and the streamer
-    if msg.author and msg.author.name.lower() == "wall_lii":
+    if msg.echo:
         return
 
-    # if msg.channel.name.lower() == "liihs" and msg.content.lower() == "mods assemble":
-    #     await msg.channel.send("MODS Assemble")
+    if (
+        msg.channel.name.lower() == "liihs"
+        and msg.author.is_mod
+        and msg.content.lower().find("mods assemble") != -1
+    ):
+        await msg.channel.send("MODS Assemble")
 
 
 @twitchBot.command(name="bgrank")
