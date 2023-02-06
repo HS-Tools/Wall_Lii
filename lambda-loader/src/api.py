@@ -5,7 +5,7 @@ from datetime import datetime
 from requests_futures.sessions import FuturesSession
 
 
-def parseSnapshot(text, verbose=True, region="Unknown"):
+def parseSnapshot(text, verbose=False, region="Unknown"):
     output = {}
 
     JSON = json.loads(text)
