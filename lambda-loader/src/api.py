@@ -30,7 +30,7 @@ def getLeaderboardSnapshot(
     regions=["US", "EU", "AP"],
     gameMode="BG",
     season=8,
-    verbose=True,
+    verbose=False,
     total_count=500,
 ):
     PLAYERS_PER_PAGE = 25
