@@ -100,22 +100,26 @@ async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
 
 
-# @bot.command()
-# async def bgdaily(ctx, *args):
-#     args = leaderboardBot.parseArgs("lii", *args)
-#     await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
+@bot.slash_command(guild_ids=[729524538559430670])
+@option("player_name", description="Enter the player's name or rank")
+@option("region", description="Enter the player's region", default="")
+async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str):
+    args = leaderboardBot.parseArgs("lii", player_name, region)
+    await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
 
 
-# @bot.command()
-# async def yesterday(ctx, *args):
-#     args = leaderboardBot.parseArgs("lii", *args)
-#     args.append(True)  ## send the yesterday value to the function
-#     await call(ctx, leaderboardBot.getDailyStatsText, "yesterday", *args)
+@bot.slash_command(guild_ids=[729524538559430670])
+@option("player_name", description="Enter the player's name or rank")
+@option("region", description="Enter the player's region", default="")
+async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: str):
+    args = leaderboardBot.parseArgs("lii", player_name, region)
+    args.append(True)
+    await call(ctx, leaderboardBot.getDailyStatsText, "yesterday", *args)
 
 
-# @bot.command()
-# async def bgdailii(ctx):
-#     await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
+@bot.slash_command(guild_ids=[729524538559430670])
+async def bgdailii(ctx: discord.ApplicationContext):
+    await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
 
 
 # @bot.command()
