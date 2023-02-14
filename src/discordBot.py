@@ -79,25 +79,17 @@ async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
         await ctx.send("Buddy not found")
 
 
-# @bot.command()
-# async def goldenbuddy(ctx, *args):
-#     if len(args) < 1:
-#         return
+@bot.slash_command(guild_ids=[729524538559430670])
+@option("golden_buddy_name", description="Enter the golden buddy name")
+async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
+    results = parse_buddy(golden_buddy_name, buddyDict, easter_egg_buddies_dict)
 
-#     buddyName = args[0].lower()
-#     try:
-#         await ctx.message.delete()
-#     except:
-#         pass
-
-#     results = parse_buddy(buddyName, buddyDict, easter_egg_buddies_dict)
-
-#     if results and results[0] is not None:
-#         embed = discord.Embed(
-#             title=f"{results[0]}'s golden buddy",
-#             description=results[2],
-#         )
-#         await ctx.send(embed=embed)
+    if results and results[0] is not None:
+        embed = discord.Embed(
+            title=f"{results[0]}'s golden buddy",
+            description=results[2],
+        )
+        await ctx.send(embed=embed)
 
 
 # @bot.command()
