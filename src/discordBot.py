@@ -187,28 +187,18 @@ async def addchannel(ctx, channel_name: str, player_name: str):
     )
 
 
-# @bot.command()
-# async def deletechannel(ctx, *args):
-#     if (
-#         ctx.message.channel.id == channelIds["wall-lii-requests"]
-#         or ctx.message.channel.id == channelIds["test"]
-#     ):
-#         message = ctx.message
-#         await message.delete()
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Remove wall_lii from a twitch channel"
+)
+@option(
+    "channel_name", description="Enter the channel you'd like to delete wall_lii from"
+)
+async def deletechannel(ctx, channel_name: str):
+    channel = channel_name.lower()
 
-#         args = removeSquareBrackets(args)
+    leaderboardBot.deleteChannel(channel)
 
-#         if ctx.message.author.id == liiDiscordId:
-#             if len(args) < 1:
-#                 await ctx.send("The command must have one word. !deletechannel [alias]")
-#             else:
-#                 channel = args[0].lower()
-
-#                 leaderboardBot.deleteChannel(channel)
-
-#                 await ctx.send(f"{channel} channel was removed from the list")
-#         else:
-#             await ctx.send("Only Lii can remove wall_lii from channels")
+    await ctx.send(f"{channel} will have wall_lii removed")
 
 
 # # PI is on UTC time it seems
@@ -275,16 +265,13 @@ async def addchannel(ctx, channel_name: str, player_name: str):
 #     await dedicated_channel.send(embed=embed)
 
 
-# @bot.command()
-# async def top16(ctx):
-#     embed = generateTop16Embed()
-
-#     message = ctx.message
-#     try:
-#         await message.delete()
-#     except:
-#         pass
-#     await ctx.send(embed=embed)
+@bot.slash_command(
+    guild_ids=[729524538559430670],
+    description="Get the top 16 players from all regions",
+)
+async def top16(ctx):
+    embed = generateTop16Embed()
+    await ctx.send(embed=embed)
 
 
 # @bot.command()
@@ -344,40 +331,29 @@ async def addchannel(ctx, channel_name: str, player_name: str):
 #     await dedicated_channel.send(embed=embed)
 
 
-# def get_pst_time():
-#     date_format = "%m-%d"
-#     date = datetime.now(tz=utc)
-#     date = date.astimezone(timezone("US/Pacific"))
-#     ptDateTime = date.strftime(date_format)
-#     return ptDateTime
+def get_pst_time():
+    date_format = "%m-%d"
+    date = datetime.now(tz=utc)
+    date = date.astimezone(timezone("US/Pacific"))
+    ptDateTime = date.strftime(date_format)
+    return ptDateTime
 
 
-# def generateTop16Embed():
-#     top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
+def generateTop16Embed():
+    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
 
-#     embed = discord.Embed(
-#         title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
-#     )
+    embed = discord.Embed(
+        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
+    )
 
-#     for region in top16_players_in_each_region.keys():
-#         valueString = ""
-#         for rank, rating, player in top16_players_in_each_region[region]:
-#             valueString += f"{rank}. **{player}** with **{rating}** MMR.\n"
+    for region in top16_players_in_each_region.keys():
+        valueString = ""
+        for rank, rating, player in top16_players_in_each_region[region]:
+            valueString += f"{rank}. **{player}** with **{rating}** MMR.\n"
 
-#         embed.add_field(name=region, value=valueString, inline=True)
+        embed.add_field(name=region, value=valueString, inline=True)
 
-#     return embed
-
-
-# def removeSquareBrackets(args):
-#     newArgs = []
-
-#     for arg in args:
-#         newArg = arg.lstrip("[")
-#         newArg = newArg.rstrip("]")
-#         newArgs.append(newArg)
-
-#     return newArgs
+    return embed
 
 
 if __name__ == "__main__":
