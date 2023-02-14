@@ -42,7 +42,7 @@ class LeaderBoardBot:
     def parseArgs(self, default, *args):
         args = list(args)
         for i, arg in enumerate(args):
-            if "/" == arg[0] or "!" == arg[0]:
+            if len(arg) > 0 and ("/" == arg[0] or "!" == arg[0]):
                 return ["Please don't try to hack me", None]
         if len(args) == 0:
             return [default, None]

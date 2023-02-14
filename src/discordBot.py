@@ -92,10 +92,12 @@ async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
         await ctx.send(embed=embed)
 
 
-# @bot.command()
-# async def bgrank(ctx, *args):
-#     args = leaderboardBot.parseArgs("lii", *args)
-#     await call(ctx, leaderboardBot.getRankText, "rank", *args)
+@bot.slash_command(guild_ids=[729524538559430670])
+@option("player_name", description="Enter the player's name or rank")
+@option("region", description="Enter the player's region", default="")
+async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
+    args = leaderboardBot.parseArgs("lii", player_name, region)
+    await call(ctx, leaderboardBot.getRankText, "rank", *args)
 
 
 # @bot.command()
