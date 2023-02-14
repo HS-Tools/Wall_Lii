@@ -64,7 +64,7 @@ async def call(ctx, func, name, *args):
     await ctx.send(embed=getEmbedObject(response, args[0], name))
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(guild_ids=[729524538559430670], description="Get a hero's buddy")
 @option("buddy_name", description="Enter the buddy name")
 async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
     results = parse_buddy(buddy_name, buddyDict, easter_egg_buddies_dict)
@@ -79,7 +79,9 @@ async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
         await ctx.send("Buddy not found")
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Get a hero's golden buddy"
+)
 @option("golden_buddy_name", description="Enter the golden buddy name")
 async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
     results = parse_buddy(golden_buddy_name, buddyDict, easter_egg_buddies_dict)
@@ -92,7 +94,7 @@ async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
         await ctx.send(embed=embed)
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(guild_ids=[729524538559430670], description="Get a player's rank")
 @option("player_name", description="Enter the player's name or rank")
 @option("region", description="Enter the player's region", default="")
 async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
@@ -100,7 +102,9 @@ async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Get a player's record from today"
+)
 @option("player_name", description="Enter the player's name or rank")
 @option("region", description="Enter the player's region", default="")
 async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str):
@@ -108,7 +112,9 @@ async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str
     await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Get a player's record from yesterday"
+)
 @option("player_name", description="Enter the player's name or rank")
 @option("region", description="Enter the player's region", default="")
 async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: str):
@@ -117,7 +123,9 @@ async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: s
     await call(ctx, leaderboardBot.getDailyStatsText, "yesterday", *args)
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Get Liisus's record from today"
+)
 async def bgdailii(ctx: discord.ApplicationContext):
     await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
 
