@@ -156,55 +156,35 @@ async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str
         await ctx.send(f"failed to set alias {alias} to name {name}")
 
 
-# @bot.command()
-# async def deletealias(ctx, *args):
-#     if (
-#         ctx.message.channel.id == channelIds["wall-lii-requests"]
-#         or ctx.message.channel.id == channelIds["test"]
-#     ):
-#         message = ctx.message
-#         await message.delete()
+@bot.slash_command(guild_ids=[729524538559430670], description="Remove an alias")
+@option("alias", description="Enter the alias you'd like to use")
+async def deletealias(ctx: discord.ApplicationContext, alias: str):
+    alias = alias.lower()
 
-#         args = removeSquareBrackets(args)
+    leaderboardBot.deleteAlias(alias)
+    leaderboardBot.updateAlias()
 
-#         if ctx.message.author.id == liiDiscordId:
-#             if len(args) < 1:
-#                 await ctx.send("The command must have one word. !deletealias [alias]")
-#             else:
-#                 alias = args[0].lower()
-
-#                 leaderboardBot.deleteAlias(alias)
-#                 leaderboardBot.updateAlias()
-
-#                 await ctx.send(f"{alias} alias was deleted")
-#         else:
-#             await ctx.send("Only Lii can delete aliases")
+    await ctx.send(f"{alias} alias was deleted")
 
 
-# @bot.command()
-# async def addchannel(ctx, *args):
-#     if (
-#         ctx.message.channel.id == channelIds["wall-lii-requests"]
-#         or ctx.message.channel.id == channelIds["test"]
-#     ):
-#         message = ctx.message
-#         await message.delete()
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Map alias to player_name"
+)
+@option("channel_name", description="Enter the channel you'd like to add wall_lii to")
+@option(
+    "player_name",
+    description="Enter the player name of the streamer if it's different to the twitch name",
+    default="",
+)
+async def addchannel(ctx, channel_name: str, player_name: str):
+    channel_name = channel_name.lower()
+    player_name = player_name.lower() if player_name != "" else channel_name
 
-#         args = removeSquareBrackets(args)
+    leaderboardBot.addChannel(channel_name, player_name)
 
-#         if len(args) < 1:
-#             await ctx.send(
-#                 "The command must have two words. !addchannel [channelName] [playerName]"
-#             )
-#         else:
-#             channelName = args[0].lower()
-#             playerName = args[1].lower() if len(args) > 1 else args[0].lower()
-
-#             leaderboardBot.addChannel(channelName, playerName)
-
-#             await ctx.send(
-#                 f"{channelName} will have wall_lii added to it with the default name of {playerName}"
-#             )
+    await ctx.send(
+        f"{channel_name} will have wall_lii added to it with the default name of {player_name}"
+    )
 
 
 # @bot.command()
