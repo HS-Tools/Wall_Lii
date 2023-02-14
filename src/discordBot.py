@@ -201,68 +201,67 @@ async def deletechannel(ctx, channel_name: str):
     await ctx.send(f"{channel} will have wall_lii removed")
 
 
-# # PI is on UTC time it seems
-# @aiocron.crontab("59 6 * * *")
-# async def sendDailyRecap():
-#     climbers = leaderboardBot.getMostMMRChanged(5, True)
-#     losers = leaderboardBot.getMostMMRChanged(5, False)
-#     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
-#     highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
-#     leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
-#     top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
+@aiocron.crontab("59 6 * * *")
+async def sendDailyRecap():
+    climbers = leaderboardBot.getMostMMRChanged(5, True)
+    losers = leaderboardBot.getMostMMRChanged(5, False)
+    hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+    highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
+    leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
+    top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
 
-#     climbersText = "**The top 5 climbers were:** \n"
-#     losersText = "**The top 5 unluckiest were:** \n"
-#     hardcore_gamersText = "**The top 5 grinders were:** \n"
-#     highestText = "**The top 5 highest rated active players were:** \n"
-#     threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
-#     top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
+    climbersText = "**The top 5 climbers were:** \n"
+    losersText = "**The top 5 unluckiest were:** \n"
+    hardcore_gamersText = "**The top 5 grinders were:** \n"
+    highestText = "**The top 5 highest rated active players were:** \n"
+    threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
+    top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
 
-#     for index, climber in enumerate(climbers):
-#         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+    for index, climber in enumerate(climbers):
+        climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
 
-#     for index, loser in enumerate(losers):
-#         losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
+    for index, loser in enumerate(losers):
+        losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
 
-#     for index, hardcore_gamer in enumerate(hardcore_gamers):
-#         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
+    for index, hardcore_gamer in enumerate(hardcore_gamers):
+        hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
 
-#     for index, highest in enumerate(highest_active):
-#         highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
+    for index, highest in enumerate(highest_active):
+        highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
 
-#     for region, rating in leaderboard_threshold.items():
-#         threshholdText += f"{rating} in the {region} region \n"
+    for region, rating in leaderboard_threshold.items():
+        threshholdText += f"{rating} in the {region} region \n"
 
-#     for region, rating in top16_threshold.items():
-#         top16Text += f"{rating} in the {region} region \n"
+    for region, rating in top16_threshold.items():
+        top16Text += f"{rating} in the {region} region \n"
 
-#     text = (
-#         climbersText
-#         + "\n"
-#         + losersText
-#         + "\n"
-#         + hardcore_gamersText
-#         + "\n"
-#         + highestText
-#         + "\n"
-#         + threshholdText
-#         + "\n"
-#         + top16Text
-#     )
+    text = (
+        climbersText
+        + "\n"
+        + losersText
+        + "\n"
+        + hardcore_gamersText
+        + "\n"
+        + highestText
+        + "\n"
+        + threshholdText
+        + "\n"
+        + top16Text
+    )
 
-#     embed = discord.Embed(
-#         title=f"Daily Liiderboards for {get_pst_time()}", description=text
-#     )
+    embed = discord.Embed(
+        title=f"Daily Liiderboards for {get_pst_time()}", description=text
+    )
 
-#     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
-#     await dedicated_channel.send(embed=embed)
+    dedicated_channel_id = channelIds["wall_lii"]
+    await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
 
 
-# @aiocron.crontab("59 6 * * *")
-# async def send_top16_daily_recap():
-#     embed = generateTop16Embed()
-#     dedicated_channel = bot.get_channel(channelIds["wall_lii"])
-#     await dedicated_channel.send(embed=embed)
+@aiocron.crontab("59 6 * * *")
+async def send_top16_daily_recap():
+    embed = generateTop16Embed()
+    dedicated_channel_id = channelIds["wall_lii"]
+    await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
 
 
 @bot.slash_command(
@@ -274,61 +273,64 @@ async def top16(ctx):
     await ctx.send(embed=embed)
 
 
-# @bot.command()
-# async def test(ctx):
+@bot.slash_command(
+    guild_ids=[729524538559430670],
+    description="Secret test command for lii",
+)
+async def test(ctx):
 
-#     climbers = leaderboardBot.getMostMMRChanged(5, True)
-#     losers = leaderboardBot.getMostMMRChanged(5, False)
-#     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
-#     highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
-#     leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
-#     top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
+    climbers = leaderboardBot.getMostMMRChanged(5, True)
+    losers = leaderboardBot.getMostMMRChanged(5, False)
+    hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+    highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
+    leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
+    top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
 
-#     climbersText = "**The top 5 climbers were:** \n"
-#     losersText = "**The top 5 unluckiest were:** \n"
-#     hardcore_gamersText = "**The top 5 grinders were:** \n"
-#     highestText = "**The top 5 highest rated active players were:** \n"
-#     threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
-#     top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
+    climbersText = "**The top 5 climbers were:** \n"
+    losersText = "**The top 5 unluckiest were:** \n"
+    hardcore_gamersText = "**The top 5 grinders were:** \n"
+    highestText = "**The top 5 highest rated active players were:** \n"
+    threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
+    top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
 
-#     for index, climber in enumerate(climbers):
-#         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+    for index, climber in enumerate(climbers):
+        climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
 
-#     for index, loser in enumerate(losers):
-#         losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
+    for index, loser in enumerate(losers):
+        losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
 
-#     for index, hardcore_gamer in enumerate(hardcore_gamers):
-#         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
+    for index, hardcore_gamer in enumerate(hardcore_gamers):
+        hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
 
-#     for index, highest in enumerate(highest_active):
-#         highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
+    for index, highest in enumerate(highest_active):
+        highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
 
-#     for region, rating in leaderboard_threshold.items():
-#         threshholdText += f"{rating} in the {region} region \n"
+    for region, rating in leaderboard_threshold.items():
+        threshholdText += f"{rating} in the {region} region \n"
 
-#     for region, rating in top16_threshold.items():
-#         top16Text += f"{rating} in the {region} region \n"
+    for region, rating in top16_threshold.items():
+        top16Text += f"{rating} in the {region} region \n"
 
-#     text = (
-#         climbersText
-#         + "\n"
-#         + losersText
-#         + "\n"
-#         + hardcore_gamersText
-#         + "\n"
-#         + highestText
-#         + "\n"
-#         + threshholdText
-#         + "\n"
-#         + top16Text
-#     )
+    text = (
+        climbersText
+        + "\n"
+        + losersText
+        + "\n"
+        + hardcore_gamersText
+        + "\n"
+        + highestText
+        + "\n"
+        + threshholdText
+        + "\n"
+        + top16Text
+    )
 
-#     embed = discord.Embed(
-#         title=f"Daily Liiderboards for {get_pst_time()}", description=text
-#     )
+    embed = discord.Embed(
+        title=f"Daily Liiderboards for {get_pst_time()}", description=text
+    )
 
-#     dedicated_channel = bot.get_channel(channelIds["test"])
-#     await dedicated_channel.send(embed=embed)
+    dedicated_channel_id = channelIds["test"]
+    await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
 
 
 def get_pst_time():
