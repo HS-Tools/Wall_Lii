@@ -130,37 +130,30 @@ async def bgdailii(ctx: discord.ApplicationContext):
     await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
 
 
-# @bot.command()
-# async def goodbot(ctx):
-#     await ctx.send(":robot: Just doing my job :robot:")
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Tell wall_lii he's a good boy"
+)
+async def goodbot(ctx: discord.ApplicationContext):
+    await ctx.send(":robot: Just doing my job :robot:")
 
 
-# @bot.command()
-# async def addalias(ctx, *args):
-#     if (
-#         ctx.message.channel.id == channelIds["wall-lii-requests"]
-#         or ctx.message.channel.id == channelIds["test"]
-#     ):
-#         message = ctx.message
-#         await message.delete()
+@bot.slash_command(
+    guild_ids=[729524538559430670], description="Map alias to player_name"
+)
+@option("alias", description="Enter the alias you'd like to use")
+@option(
+    "player_name", description="Enter the player name you'd like the alias to map to"
+)
+async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str):
+    alias = alias.lower()
+    name = player_name.lower()
 
-#         args = removeSquareBrackets(args)
-
-#         if len(args) < 2:
-#             await ctx.send("The command must have two words. !addalias [alias] [name]")
-#         else:
-#             alias = args[0].lower()
-#             name = args[1].lower()
-
-#             leaderboardBot.addAlias(alias, name)
-#             leaderboardBot.updateAlias()
-#             if (
-#                 alias in leaderboardBot.alias.keys()
-#                 and leaderboardBot.alias[alias] == name
-#             ):
-#                 await ctx.send(f"{alias} is now an alias for {name}")
-#             else:
-#                 await ctx.send(f"failed to set alias {alias} to name {name}")
+    leaderboardBot.addAlias(alias, name)
+    leaderboardBot.updateAlias()
+    if alias in leaderboardBot.alias.keys() and leaderboardBot.alias[alias] == name:
+        await ctx.send(f"{alias} is now an alias for {name}")
+    else:
+        await ctx.send(f"failed to set alias {alias} to name {name}")
 
 
 # @bot.command()
