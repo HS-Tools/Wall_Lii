@@ -60,7 +60,7 @@ async def call(ctx, func, name, *args):
         await message.delete()
     except:
         pass
-    await ctx.send(embed=getEmbedObject(response, args[0], name))
+    await ctx.respond(embed=getEmbedObject(response, args[0], name))
 
 
 @bot.slash_command(guild_ids=[729524538559430670], description="Get a hero's buddy")
@@ -73,9 +73,9 @@ async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
             title=f"{results[0]}'s buddy",
             description=results[1],
         )
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
     else:
-        await ctx.send("Buddy not found")
+        await ctx.respond("Buddy not found")
 
 
 @bot.slash_command(
@@ -90,7 +90,7 @@ async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
             title=f"{results[0]}'s golden buddy",
             description=results[2],
         )
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
 
 
 @bot.slash_command(guild_ids=[729524538559430670], description="Get a player's rank")
@@ -133,7 +133,7 @@ async def bgdailii(ctx: discord.ApplicationContext):
     guild_ids=[729524538559430670], description="Tell wall_lii he's a good boy"
 )
 async def goodbot(ctx: discord.ApplicationContext):
-    await ctx.send(":robot: Just doing my job :robot:")
+    await ctx.respond(":robot: Just doing my job :robot:")
 
 
 @bot.slash_command(
@@ -150,9 +150,9 @@ async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str
     leaderboardBot.addAlias(alias, name)
     leaderboardBot.updateAlias()
     if alias in leaderboardBot.alias.keys() and leaderboardBot.alias[alias] == name:
-        await ctx.send(f"{alias} is now an alias for {name}")
+        await ctx.respond(f"{alias} is now an alias for {name}")
     else:
-        await ctx.send(f"failed to set alias {alias} to name {name}")
+        await ctx.respond(f"failed to set alias {alias} to name {name}")
 
 
 @bot.slash_command(guild_ids=[729524538559430670], description="Remove an alias")
@@ -163,7 +163,7 @@ async def deletealias(ctx: discord.ApplicationContext, alias: str):
     leaderboardBot.deleteAlias(alias)
     leaderboardBot.updateAlias()
 
-    await ctx.send(f"{alias} alias was deleted")
+    await ctx.respond(f"{alias} alias was deleted")
 
 
 @bot.slash_command(
@@ -181,7 +181,7 @@ async def addchannel(ctx, channel_name: str, player_name: str):
 
     leaderboardBot.addChannel(channel_name, player_name)
 
-    await ctx.send(
+    await ctx.respond(
         f"{channel_name} will have wall_lii added to it with the default name of {player_name}"
     )
 
@@ -197,7 +197,7 @@ async def deletechannel(ctx, channel_name: str):
 
     leaderboardBot.deleteChannel(channel)
 
-    await ctx.send(f"{channel} will have wall_lii removed")
+    await ctx.respond(f"{channel} will have wall_lii removed")
 
 
 @aiocron.crontab("59 6 * * *")
@@ -269,7 +269,7 @@ async def send_top16_daily_recap():
 )
 async def top16(ctx):
     embed = generateTop16Embed()
-    await ctx.send(embed=embed)
+    await ctx.respond(embed=embed)
 
 
 @bot.slash_command(
