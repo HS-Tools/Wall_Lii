@@ -3,7 +3,6 @@ from datetime import datetime
 
 import aiocron
 import discord
-from discord import option
 from dotenv import load_dotenv
 from pytz import timezone, utc
 
@@ -64,7 +63,7 @@ async def call(ctx, func, name, *args):
 
 
 @bot.slash_command(guild_ids=[729524538559430670], description="Get a hero's buddy")
-@option("buddy_name", description="Enter the buddy name")
+@discord.option("buddy_name", description="Enter the buddy name")
 async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
     results = parse_buddy(buddy_name, buddyDict, easter_egg_buddies_dict)
 
@@ -81,7 +80,7 @@ async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
 @bot.slash_command(
     guild_ids=[729524538559430670], description="Get a hero's golden buddy"
 )
-@option("golden_buddy_name", description="Enter the golden buddy name")
+@discord.option("golden_buddy_name", description="Enter the golden buddy name")
 async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
     results = parse_buddy(golden_buddy_name, buddyDict, easter_egg_buddies_dict)
 
@@ -94,8 +93,8 @@ async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
 
 
 @bot.slash_command(guild_ids=[729524538559430670], description="Get a player's rank")
-@option("player_name", description="Enter the player's name or rank")
-@option("region", description="Enter the player's region", default="")
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default="")
 async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
     args = leaderboardBot.parseArgs("lii", player_name, region)
     await call(ctx, leaderboardBot.getRankText, "rank", *args)
@@ -104,8 +103,8 @@ async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str)
 @bot.slash_command(
     guild_ids=[729524538559430670], description="Get a player's record from today"
 )
-@option("player_name", description="Enter the player's name or rank")
-@option("region", description="Enter the player's region", default="")
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default="")
 async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str):
     args = leaderboardBot.parseArgs("lii", player_name, region)
     await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
@@ -114,8 +113,8 @@ async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str
 @bot.slash_command(
     guild_ids=[729524538559430670], description="Get a player's record from yesterday"
 )
-@option("player_name", description="Enter the player's name or rank")
-@option("region", description="Enter the player's region", default="")
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default="")
 async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: str):
     args = leaderboardBot.parseArgs("lii", player_name, region)
     args.append(True)
@@ -139,8 +138,8 @@ async def goodbot(ctx: discord.ApplicationContext):
 @bot.slash_command(
     guild_ids=[729524538559430670], description="Map alias to player_name"
 )
-@option("alias", description="Enter the alias you'd like to use")
-@option(
+@discord.option("alias", description="Enter the alias you'd like to use")
+@discord.option(
     "player_name", description="Enter the player name you'd like the alias to map to"
 )
 async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str):
@@ -156,7 +155,7 @@ async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str
 
 
 @bot.slash_command(guild_ids=[729524538559430670], description="Remove an alias")
-@option("alias", description="Enter the alias you'd like to use")
+@discord.option("alias", description="Enter the alias you'd like to use")
 async def deletealias(ctx: discord.ApplicationContext, alias: str):
     alias = alias.lower()
 
@@ -169,8 +168,10 @@ async def deletealias(ctx: discord.ApplicationContext, alias: str):
 @bot.slash_command(
     guild_ids=[729524538559430670], description="Map alias to player_name"
 )
-@option("channel_name", description="Enter the channel you'd like to add wall_lii to")
-@option(
+@discord.option(
+    "channel_name", description="Enter the channel you'd like to add wall_lii to"
+)
+@discord.option(
     "player_name",
     description="Enter the player name of the streamer if it's different to the twitch name",
     default="",
@@ -189,7 +190,7 @@ async def addchannel(ctx, channel_name: str, player_name: str):
 @bot.slash_command(
     guild_ids=[729524538559430670], description="Remove wall_lii from a twitch channel"
 )
-@option(
+@discord.option(
     "channel_name", description="Enter the channel you'd like to delete wall_lii from"
 )
 async def deletechannel(ctx, channel_name: str):
