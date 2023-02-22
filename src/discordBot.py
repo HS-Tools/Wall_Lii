@@ -201,7 +201,7 @@ async def deletechannel(ctx, channel_name: str):
     await ctx.respond(f"{channel} will have wall_lii removed")
 
 
-@aiocron.crontab("59 6 * * *")
+@aiocron.crontab("59 7 * * *")
 async def sendDailyRecap():
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
@@ -257,11 +257,11 @@ async def sendDailyRecap():
     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
 
 
-@aiocron.crontab("59 6 * * *")
-async def send_top16_daily_recap():
-    embed = generateTop16Embed()
-    dedicated_channel_id = channelIds["wall_lii"]
-    await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
+# @aiocron.crontab("59 7 * * *")
+# async def send_top16_daily_recap():
+#     embed = generateTop16Embed()
+#     dedicated_channel_id = channelIds["wall_lii"]
+#     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
 
 
 @bot.slash_command(
