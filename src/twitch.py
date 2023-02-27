@@ -182,6 +182,11 @@ async def tomorrow(ctx):
     await ctx.send(f"{name} will be rank 1 for sure liiYep")
 
 
+@twitchBot.command(name="bgpatch")
+async def bgpatch(ctx):
+    await ctx.send(leaderboardBot.getPatchLink())
+
+
 @twitchBot.command(name="yesterday")
 async def getYesterdayStats(ctx):
     args = parseArgs(ctx)
