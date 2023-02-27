@@ -234,6 +234,7 @@ if __name__ == "__main__":
                     greeting_channels.append(channel)
                     initialChannels = leaderboardBot.getChannels()
 
+            # Rate limit on joining channels is 20 per 10 seconds. It'd be nice to join earlier than 20 per minute
             if len(new_channels) >= 19:
                 break
 
