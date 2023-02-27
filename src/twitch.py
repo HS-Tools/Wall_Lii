@@ -226,7 +226,11 @@ if __name__ == "__main__":
 
         channels = leaderboardBot.getChannels()
 
-        joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
+        try:
+            joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
+        except KeyError:
+            print("KeyError from connected_channels")
+            return
 
         new_channels = []
         greeting_channels = []
