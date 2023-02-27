@@ -245,7 +245,6 @@ if __name__ == "__main__":
             return
 
         new_channels = []
-        greeting_channels = []
 
         for channel in channels:
             if channel not in joined_channels:
