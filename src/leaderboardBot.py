@@ -37,6 +37,9 @@ class LeaderBoardBot:
         self.yesterday_table = self.resource.Table("yesterday-rating-record-table")
         self.alias_table = self.resource.Table("player-alias-table")
         self.channel_table = self.resource.Table("channel-table")
+        self.patch_link = boto3.client("ssm").get_parameter(
+            Name="hearthstone_battlegrounds_patch_link"
+        )
         self.updateAlias()
 
     def parseArgs(self, default, *args):
@@ -453,3 +456,6 @@ class LeaderBoardBot:
     def addChannels(self):
         for key in default_channels:
             self.addChannel(key, default_channels[key], False)
+
+    def getPatchLink(self):
+        return self.patch_link["Parameter"]["Value"]
