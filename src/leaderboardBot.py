@@ -458,13 +458,19 @@ class LeaderBoardBot:
             self.addChannel(key, default_channels[key], False)
 
     def fetchPatchLink(self):
-        self.patch_link = self.ssm_client.get_parameter(
-            Name="hearthstone_battlegrounds_patch_link"
-        )["Parameter"]["Value"]
+        try:
+            self.patch_link = self.ssm_client.get_parameter(
+                Name="hearthstone_battlegrounds_patch_link"
+            )["Parameter"]["Value"]
+        except Exception:
+            print("Something went wrong with fetching the patch links")
 
     def editPatchLink(self, patch_link):
-        self.ssm_client.put_parameter(
-            Name="hearthstone_battlegrounds_patch_link",
-            Value=patch_link,
-            Overwrite=True,
-        )
+        try:
+            self.ssm_client.put_parameter(
+                Name="hearthstone_battlegrounds_patch_link",
+                Value=patch_link,
+                Overwrite=True,
+            )
+        except Exception:
+            print("Something went wrong with editing the patch links")
