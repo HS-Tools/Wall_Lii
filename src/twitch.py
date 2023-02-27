@@ -221,9 +221,10 @@ async def help(ctx):
 
 @twitchBot.event()
 async def event_join(channel, user):
+    global greetingChannels
     if channel.name in greetingChannels:
         await channel.send(
-            f"Hello @{channel.name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
+            f"Hello @{channel.name}. I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
         )
         greetingChannels.remove(channel.name)
 
@@ -250,8 +251,8 @@ if __name__ == "__main__":
             if channel not in joined_channels:
                 new_channels.append(channel)
 
-                if channel not in initialChannels:
-                    greetingChannels.append(channel)
+            if channel not in initialChannels:
+                greetingChannels.append(channel)
 
             # Rate limit on joining channels is 20 per 10 seconds. It'd be nice to join earlier than 20 per minute
             if len(new_channels) >= 19:
