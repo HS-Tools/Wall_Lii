@@ -3,12 +3,15 @@ import os
 import aiocron
 from dotenv import load_dotenv
 from twitchio.ext import commands
-from twitchio.ext.commands import CommandNotFound
 
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict, parse_buddy
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
+
+# Override twitchio error functions to stop spam in logs
+
+commands.Bot.event_command_error = None
 
 load_dotenv()
 
@@ -25,10 +28,6 @@ twitchBot = commands.Bot(
     prefix=os.environ["BOT_PREFIX"],
     initial_channels=["liihs"],
 )
-
-# @twitchBot.event()
-# async def event_command_error(error, data):
-#     if type(data) == CommandNotFound:
 
 
 def parseArgs(ctx):
@@ -235,7 +234,7 @@ if __name__ == "__main__":
                     greeting_channels.append(channel)
                     initialChannels = leaderboardBot.getChannels()
 
-            if len(new_channels) >= 50:
+            if len(new_channels) >= 19:
                 break
 
         if len(new_channels) > 0:
