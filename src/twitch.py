@@ -18,6 +18,7 @@ load_dotenv()
 leaderboardBot = LeaderBoardBot()
 
 initialChannels = leaderboardBot.getChannels()
+greetingChannels = []
 buddyDict = get_buddy_dict()
 
 twitchBot = commands.Bot(
@@ -218,11 +219,22 @@ async def help(ctx):
     )
 
 
+@twitchBot.event()
+async def event_join(channel, user):
+    global greetingChannels
+    if channel.name in greetingChannels:
+        await channel.send(
+            f"Hello @{channel.name}. I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
+        )
+        greetingChannels.remove(channel.name)
+
+
 if __name__ == "__main__":
 
     @aiocron.crontab("* * * * *")  ## Every minute check for new channels
     async def updateChannels():
         global initialChannels
+        global greetingChannels
 
         channels = leaderboardBot.getChannels()
 
@@ -233,15 +245,13 @@ if __name__ == "__main__":
             return
 
         new_channels = []
-        greeting_channels = []
 
         for channel in channels:
             if channel not in joined_channels:
                 new_channels.append(channel)
 
-                if channel not in initialChannels:
-                    greeting_channels.append(channel)
-                    initialChannels = leaderboardBot.getChannels()
+            if channel not in initialChannels:
+                greetingChannels.append(channel)
 
             # Rate limit on joining channels is 20 per 10 seconds. It'd be nice to join earlier than 20 per minute
             if len(new_channels) >= 19:
@@ -256,12 +266,6 @@ if __name__ == "__main__":
 
         # Update initialChannels in case there's a change to the configuration of a channel's name
         initialChannels = leaderboardBot.getChannels()
-
-        for channel_name in greeting_channels:
-            channel = twitchBot.get_channel(channel_name)
-            await channel.send(
-                f"Hello @{channel_name} and @chat, I'm a bot that allows you to see leaderboard data for Hearthstone Battlegrounds. Type !help to see all my commands!"
-            )
 
     @aiocron.crontab("* * * * *")  ## Every minute check for new alias
     async def updateAlias():
