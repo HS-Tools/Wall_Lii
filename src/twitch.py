@@ -184,7 +184,7 @@ async def tomorrow(ctx):
 
 @twitchBot.command(name="bgpatch")
 async def bgpatch(ctx):
-    await ctx.send(leaderboardBot.getPatchLink())
+    await ctx.send(leaderboardBot.patch_link)
 
 
 @twitchBot.command(name="yesterday")
@@ -262,5 +262,9 @@ if __name__ == "__main__":
     @aiocron.crontab("* * * * *")  ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
+
+    @aiocron.crontab("* * * * *")  ## Every minute check for new !bgpatch
+    async def updateBGPatch():
+        leaderboardBot.fetchPatchLink()
 
     twitchBot.run()
