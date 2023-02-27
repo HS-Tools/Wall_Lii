@@ -207,14 +207,14 @@ async def goodBot(ctx):
 @twitchBot.command(name="wall_lii")
 async def wall_lii(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !gold."
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !bgpatch."
     )
 
 
 @twitchBot.command(name="help")
 async def help(ctx):
     await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !gold."
+        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !bgpatch."
     )
 
 
