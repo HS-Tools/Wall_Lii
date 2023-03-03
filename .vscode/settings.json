@@ -1,0 +1,6 @@
+{
+  "yaml.schemas": {
+    "file:///c%3A/Users/jimli/.vscode/extensions/atlassian.atlascode-3.0.2/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml",
+    "https://json.schemastore.org/github-workflow.json": "file:///c%3A/Users/jimli/Documents/HS-BG-Leaderboards-Bot/.github/workflows/deploy.yml"
+  }
+}
