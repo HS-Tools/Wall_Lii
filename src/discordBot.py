@@ -1,3 +1,4 @@
+import asyncio
 import os
 from datetime import datetime
 
@@ -67,6 +68,9 @@ async def call(ctx, func, name, *args):
 async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
     results = parse_buddy(buddy_name, buddyDict, easter_egg_buddies_dict)
 
+    await ctx.defer()
+    asyncio.sleep(0.1)
+
     if results and results[0] is not None:
         embed = discord.Embed(
             title=f"{results[0]}'s buddy",
@@ -83,6 +87,9 @@ async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
 @discord.option("golden_buddy_name", description="Enter the golden buddy name")
 async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
     results = parse_buddy(golden_buddy_name, buddyDict, easter_egg_buddies_dict)
+
+    await ctx.defer()
+    asyncio.sleep(0.1)
 
     if results and results[0] is not None:
         embed = discord.Embed(
@@ -262,6 +269,14 @@ async def sendDailyRecap():
 #     embed = generateTop16Embed()
 #     dedicated_channel_id = channelIds["wall_lii"]
 #     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
+
+
+@aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
+async def check_for_new_buddies():
+    global buddyDict
+    temp_dict = get_buddy_dict()
+    if temp_dict and len(temp_dict.keys()) > 0:
+        buddyDict = temp_dict
 
 
 @bot.slash_command(
