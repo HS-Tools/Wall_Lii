@@ -21,6 +21,8 @@ initialChannels = leaderboardBot.getChannels()
 greetingChannels = []
 buddyDict = get_buddy_dict()
 
+helpString = "HeyGuys I'm a bot that checks the BG leaderboard. My commands are !bgrank [name], !bgdaily [name], !yesterday [name], !buddy [hero], !goldenbuddy [hero], !bgpatch and !calendar"
+
 twitchBot = commands.Bot(
     token=os.environ["TMI_TOKEN"],
     irc_token=os.environ["TMI_TOKEN"],
@@ -207,16 +209,17 @@ async def goodBot(ctx):
 
 @twitchBot.command(name="wall_lii")
 async def wall_lii(ctx):
-    await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !bgpatch."
-    )
+    await ctx.send(helpString)
 
 
 @twitchBot.command(name="help")
 async def help(ctx):
-    await ctx.send(
-        "HeyGuys I'm a bot that checks the BG leaderboard to get data about player ranks and daily MMR fluctuations. I reset daily at Midnight CA time. Try using !bgrank [name] and !bgdaily [name] and !yesterday [name] and !bgpatch."
-    )
+    await ctx.send(helpString)
+
+
+@twitchBot.command(name="calendar")
+async def calendar(ctx):
+    await ctx.send("HSBGClub.com/Calendar")
 
 
 @twitchBot.event()
