@@ -219,7 +219,9 @@ async def help(ctx):
 
 @twitchBot.command(name="calendar")
 async def calendar(ctx):
-    await ctx.send("HSBGClub.com/Calendar")
+    await ctx.send(
+        "Check out all the community tournaments for this month at HSBGClub.com/Calendar"
+    )
 
 
 @twitchBot.event()
