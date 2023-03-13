@@ -54,6 +54,10 @@ async def call(ctx, func, name, *args):
 
 @twitchBot.command(name="buddy")
 async def getBuddy(ctx):
+
+    if ctx.channel.name == "dogdog":
+        return
+
     if len(ctx.message.content.split(" ")) < 2:
         return
 
@@ -94,6 +98,9 @@ async def getfrog(ctx):
 
 @twitchBot.command(name="goldenbuddy")
 async def getGoldenBuddy(ctx):
+    if ctx.channel.name == "dogdog":
+        return
+
     if len(ctx.message.content.split(" ")) < 2:
         return
 
