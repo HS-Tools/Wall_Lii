@@ -20,8 +20,8 @@ easter_egg_buddies_dict = {
     ),
     "seouljaboy": (
         "SeouljaBoy",
-        "SeoulYaBoy is a Tier 7 1/1. Ability: Bops you every time you hit on Lii.",
-        "Golden SeoulYaBoy is a Tier 7 2/2. Ability: Convinces Lii to start his dating show.",
+        "Have Lii betrayed you with an outdated command because he went out and dated but it's Haita so he won't BOP for now Susge",
+        "Have Lii betrayed you with an outdated command because he went out and dated but it's Haita so he won't BOP for now Susge",
     ),
     "sunbaconrelaxer": (
         "SunBaconRelaxer",
