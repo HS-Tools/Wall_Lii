@@ -69,6 +69,33 @@ async def getBuddy(ctx):
         await ctx.send(results[1])
 
 
+@twitchBot.command(name="buddygold")
+async def getBuddyGold(ctx):
+    tiers = {
+        1: [11, 13],
+        2: [13, 15],
+        3: [15, 17],
+        4: [17, 19],
+        5: [19, 21],
+        6: [21, 23],
+    }
+    if len(ctx.message.content.split(" ")) < 2:
+        await ctx.send("Add a tier between 1 and 6 like !buddygold 3")
+    else:
+        buddyTier = ctx.message.content.split(" ")[1]
+
+        if str.isdigit(buddyTier) and int(buddyTier) <= 6 and int(buddyTier) >= 1:
+            buddyTier = int(buddyTier)
+            await ctx.send(
+                f"A tier {buddyTier} buddy has an initial cost of {tiers[buddyTier][0]} \
+                    and a reset cost of {tiers[buddyTier][1]}"
+            )
+        else:
+            await ctx.send(
+                "Invalid tier, try a number between 1 and 6 like !buddygold 3"
+            )
+
+
 @twitchBot.command(name="Shush")
 async def getBuddy(ctx):
     await ctx.send("Shush")
