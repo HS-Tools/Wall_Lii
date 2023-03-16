@@ -21,7 +21,7 @@ initialChannels = leaderboardBot.getChannels()
 greetingChannels = []
 buddyDict = get_buddy_dict()
 
-helpString = "HeyGuys I'm a bot that checks the BG leaderboard. My commands are !bgrank [name], !bgdaily [name], !yesterday [name], !buddy [hero], !goldenbuddy [hero], !bgpatch and !calendar"
+helpString = "HeyGuys I'm a bot that checks the BG leaderboard. My commands are !bgrank [name], !bgdaily [name], !yesterday [name], !buddy [hero], !goldenbuddy [hero], !buddygold [tier] !bgpatch and !calendar"
 
 twitchBot = commands.Bot(
     token=os.environ["TMI_TOKEN"],
