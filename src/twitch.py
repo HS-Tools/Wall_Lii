@@ -109,7 +109,7 @@ async def getBuddy(ctx):
 @twitchBot.command(name="curves")
 async def getCurves(ctx):
     await ctx.send(
-        "Main Site: https://www.bgcurvesheet.com Guide: https://www.bgcurvesheet.com/curves"
+        "Check out www.BGcurvesheet.com for information about heros and curves"
     )
 
 
