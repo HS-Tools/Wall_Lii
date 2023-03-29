@@ -68,8 +68,9 @@ easter_egg_buddies_dict = {
         "LiiHS is a Tier 6 8/8. Ability: Makes the fluffiest chocolate chip pancakes",
         "Golden LiiHS is a Tier 6, 16, 16. Ability: Makes better tea than Teamaster Theotar",
     ),
-    "krypticdiamond": {
+    "krypticdiamond": (
         "KrypticDiamond",
         "Boulderfist Ogre is a 6 mana minion with 6 attack and 7 defence",
-    },
+    ),
+    "ixxdeee": ("Ixxdeee", "Hapabear is his buddy!"),
 }
