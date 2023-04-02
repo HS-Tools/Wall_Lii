@@ -20,8 +20,8 @@ easter_egg_buddies_dict = {
     ),
     "seouljaboy": (
         "SeouljaBoy",
-        "Have Lii betrayed you with an outdated command because he went out and dated but it's Haita so he won't BOP for now Susge",
-        "Have Lii betrayed you with an outdated command because he went out and dated but it's Haita so he won't BOP for now Susge",
+        "Have Lii betray you with an outdated command because he went out and dated but it's Haita so he won't BOP for now Susge",
+        "Have Lii betray you with an outdated command because he went out and dated but it's Haita so he won't BOP for now Susge",
     ),
     "sunbaconrelaxer": (
         "SunBaconRelaxer",
