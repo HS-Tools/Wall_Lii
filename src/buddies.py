@@ -73,4 +73,14 @@ easter_egg_buddies_dict = {
         "Boulderfist Ogre is a 6 mana minion with 6 attack and 7 defence",
     ),
     "ixxdeee": ("Ixxdeee", "Hapabear is his buddy!"),
+    "tylerlee": (
+        "TylerLee",
+        "Alex is a Tier 1 2/3. Ability: Whenever you buy a minion, greet them and make them feel welcome to the team.",
+        "Golden Alex is a Tier 1 4/6. Ability: All of your minions listen to you, and attack the perfect targets.",
+    ),
+    "tylerlee3": (
+        "TylerLee3",
+        "Alex is a Tier 1 2/3. Ability: Whenever you buy a minion, greet them and make them feel welcome to the team.",
+        "Golden Alex is a Tier 1 4/6. Ability: All of your minions listen to you, and attack the perfect targets.",
+    ),
 }
