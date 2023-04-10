@@ -70,14 +70,14 @@ def get_buddy_dict():
     # Variable of the final dictionary
     buddies = {}
 
-    # Filter the heroes in data_json, save their ID's and names in `heroes`
+    # Loop through the heroes in data_json, and find their ID's and names
     for hero in filter(lambda card: "battlegroundsBuddyDbfId" in card, data_json):
         id_words = hero["id"].split("_")
         # verify that the card is not a skin
         if len(id_words) >= 2 and id_words[-2] == "HERO" and id_words[-1].isnumeric():
             _heroes[hero["id"]] = hero["name"]
 
-    # Filter the buddies in data_json
+    # Loop through the buddies in data_json and find their heroes
     for buddy in filter(lambda card: "isBattlegroundsBuddy" in card, data_json):
         # examples of `buddy["id"]`: "TB_BaconShop_HERO_93_Buddy", "TB_BaconShop_HERO_93_Buddy_G"
         hero_id, _buddy_is_golden = buddy["id"].split("_Buddy")
