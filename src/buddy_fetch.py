@@ -49,6 +49,7 @@ def get_shortened_name(full_hero_name):
         "Infinite",
         "Dinotamer",
         "Sir",
+        "Sire",
         "The",
     ]
 
@@ -70,11 +71,14 @@ def get_buddy_dict():
     buddies = {}
 
     # Filter the heroes in data_json, save their ID's and names in `heroes`
-    for hero in filter(lambda card: "battlegroundsHero" in card.keys(), data_json):
-        _heroes[hero["id"]] = hero["name"]
+    for hero in filter(lambda card: "battlegroundsBuddyDbfId" in card, data_json):
+        id_words = hero["id"].split("_")
+        # verify that the card is not a skin
+        if len(id_words) >= 2 and id_words[-2] == "HERO" and id_words[-1].isnumeric():
+            _heroes[hero["id"]] = hero["name"]
 
     # Filter the buddies in data_json
-    for buddy in filter(lambda card: "isBattlegroundsBuddy" in card.keys(), data_json):
+    for buddy in filter(lambda card: "isBattlegroundsBuddy" in card, data_json):
         # examples of `buddy["id"]`: "TB_BaconShop_HERO_93_Buddy", "TB_BaconShop_HERO_93_Buddy_G"
         hero_id, _buddy_is_golden = buddy["id"].split("_Buddy")
         buddy_is_golden = bool(_buddy_is_golden)
