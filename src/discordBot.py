@@ -23,6 +23,8 @@ channelIds = {
 }
 
 liiDiscordId = 204806965585510400
+frontpage_channel_id = 1096490528947851304
+frontpage_message_id = 1096514937813217370
 
 emotes = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
 
@@ -279,12 +281,19 @@ async def check_for_new_buddies():
         buddyDict = temp_dict
 
 
+@aiocron.crontab("* * * * *")
+async def update_front_page():
+    frontpage_channel = bot.get_channel(frontpage_channel_id)
+    frontpage_message = await frontpage_channel.fetch_message(frontpage_message_id)
+    await frontpage_message.edit(embed=generateTopXEmbed(25))
+
+
 @bot.slash_command(
     guild_ids=[729524538559430670],
     description="Get the top 16 players from all regions",
 )
 async def top16(ctx):
-    embed = generateTop16Embed()
+    embed = generateTopXEmbed(16)
     await ctx.respond(embed=embed)
 
 
@@ -361,23 +370,23 @@ async def test(ctx):
 
 
 def get_pst_time():
-    date_format = "%m-%d"
+    date_format = "%m-%d %H:%M %Z"
     date = datetime.now(tz=utc)
     date = date.astimezone(timezone("US/Pacific"))
     ptDateTime = date.strftime(date_format)
     return ptDateTime
 
 
-def generateTop16Embed():
-    top16_players_in_each_region = leaderboardBot.get_leaderboard_range(1, 16)
+def generateTopXEmbed(num):
+    topX_players_in_each_region = leaderboardBot.get_leaderboard_range(1, num)
 
     embed = discord.Embed(
-        title=f"Daily Top 16 Leaderboards @ {get_pst_time()}",
+        title=f"Top {num} Leaderboard for {get_pst_time()}",
     )
 
-    for region in top16_players_in_each_region.keys():
+    for region in topX_players_in_each_region.keys():
         valueString = ""
-        for rank, rating, player in top16_players_in_each_region[region]:
+        for rank, rating, player in topX_players_in_each_region[region]:
             valueString += f"{rank}. **{player}** with **{rating}** MMR.\n"
 
         embed.add_field(name=region, value=valueString, inline=True)
