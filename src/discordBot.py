@@ -391,7 +391,7 @@ def generateTopXEmbed(num):
                 deltaString = f"(+{delta})" if delta > 0 else f"({delta})"
             else:
                 deltaString = ""
-            valueString += f"{rank}. **{player}**: **{rating}** {deltaString} \n"
+            valueString += f"{rank}. **{player}**: **{rating}** {deltaString}\n"
 
         embed.add_field(name=region, value=valueString, inline=True)
 
