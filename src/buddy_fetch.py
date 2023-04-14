@@ -50,6 +50,7 @@ def get_shortened_name(full_hero_name):
         "Infinite",
         "Dinotamer",
         "Sir",
+        "Sire",
         "The",
     ]
 
@@ -65,37 +66,37 @@ def get_shortened_name(full_hero_name):
 
 
 def get_buddy_dict():
-    # dictionary to hold hero names and their ID's
-    battlegrounds_heroes = {}
+    # dictionary to hold hero ID's and their names
+    _heroes = {}
     # Variable of the final dictionary
-    battlegrounds_heroes_buddies = {}
+    buddies = {}
 
-    # Read through all the data and find the hero names and their ID's
-    for i in range(len(data_json)):
-        if "battlegroundsHero" in data_json[i].keys():
-            battlegrounds_heroes[data_json[i]["name"]] = data_json[i]["id"]
+    # Loop through the heroes in data_json, and find their ID's and names
+    for hero in filter(lambda card: "battlegroundsBuddyDbfId" in card, data_json):
+        id_words = hero["id"].split("_")
+        # verify that the card is not a skin
+        if len(id_words) >= 2 and id_words[-2] == "HERO" and id_words[-1].isnumeric():
+            _heroes[hero["id"]] = hero["name"]
 
-    # Loop through all the heroes in the dictionary and find their buddies
-    for key in battlegrounds_heroes:
-        for j in range(len(data_json)):
-            if "isBattlegroundsBuddy" in data_json[j].keys():
-                if data_json[j]["id"] == battlegrounds_heroes[key] + "_Buddy":
-                    data = data_json[j]
-                    buddy_string = f"{data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
-                    battlegrounds_heroes_buddies[get_shortened_name(key)] = (
-                        key,
-                        buddy_string,
-                    )
-                elif data_json[j]["id"] == battlegrounds_heroes[key] + "_Buddy_G":
-                    data = data_json[j]
-                    golden_buddy_string = f"Golden {data['name']} is a Tier {data['techLevel']} {data['attack']}/{data['health']}. Ability: {filterText(data['text'])}"
-                    battlegrounds_heroes_buddies[
-                        get_shortened_name(key)
-                    ] = battlegrounds_heroes_buddies[get_shortened_name(key)] + (
-                        golden_buddy_string,
-                    )
+    # Loop through the buddies in data_json and find their heroes
+    for buddy in filter(lambda card: "isBattlegroundsBuddy" in card, data_json):
+        # examples of `buddy["id"]`: "TB_BaconShop_HERO_93_Buddy", "TB_BaconShop_HERO_93_Buddy_G"
+        hero_id, _buddy_is_golden = buddy["id"].split("_Buddy")
+        buddy_is_golden = bool(_buddy_is_golden)
 
-    return battlegrounds_heroes_buddies
+        if hero_id in _heroes:
+            b = buddy
+            buddy_string = f"{b['name']} is a Tier {b['techLevel']} {b['attack']}/{b['health']}. Ability: {filterText(b['text'])}"
+            if not buddy_is_golden:
+                buddies[get_shortened_name(_heroes[hero_id])] = (
+                    _heroes[hero_id],
+                    buddy_string,
+                )
+            else:
+                golden_buddy_string = "Golden " + buddy_string
+                buddies[get_shortened_name(_heroes[hero_id])] += (golden_buddy_string,)
+
+    return buddies
 
 
 def parse_buddy(name, buddies={}, eggs={}):
