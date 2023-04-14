@@ -18,6 +18,7 @@ difficult_shortened_names = {
     "Yogg-Saron, Hope's End": "yogg",
     "Forest Warden Omu": "omu",
     "Mr. Bigglesworth": "cat",
+    "Heistbaron Togwaggle": "togwaggle",
 }
 
 
