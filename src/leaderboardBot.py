@@ -241,7 +241,8 @@ class LeaderBoardBot:
             rank = item["Rank"]
             rating = item["Ratings"][-1]
             player_name = item["PlayerName"]
-            dict[region].append((rank, rating, player_name))
+            delta = item["Ratings"][-1] - item["Ratings"][0]
+            dict[region].append((rank, rating, player_name, delta))
 
         # Sort each region list by player's rank.
         for key in dict.keys():

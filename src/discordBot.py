@@ -386,8 +386,12 @@ def generateTopXEmbed(num):
 
     for region in topX_players_in_each_region.keys():
         valueString = ""
-        for rank, rating, player in topX_players_in_each_region[region]:
-            valueString += f"{rank}. **{player}**: **{rating}**\n"
+        for rank, rating, player, delta in topX_players_in_each_region[region]:
+            if delta != 0:
+                deltaString = f"(+{delta})" if delta > 0 else f"({delta})"
+            else:
+                deltaString = ""
+            valueString += f"{rank}. **{player}**: **{rating}** {deltaString} \n"
 
         embed.add_field(name=region, value=valueString, inline=True)
 
