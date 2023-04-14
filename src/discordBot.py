@@ -384,7 +384,7 @@ def generateTopXEmbed(num):
         title=f"Top {num} Leaderboard for {get_pst_time()}",
     )
 
-    for region in topX_players_in_each_region.keys():
+    for region in sorted(topX_players_in_each_region.keys(), reverse=True):
         valueString = ""
         for rank, rating, player, delta in topX_players_in_each_region[region]:
             if delta != 0:
