@@ -55,11 +55,13 @@ def getLeaderboardSnapshot(
             futures = [session.get(url) for url in pageUrls]
             for future in as_completed(futures):
                 r = future.result()
-                rDict, updatedDict[region], season = parseSnapshot(
-                    r.text, verbose, region
-                )
-                for key in rDict:
-                    ratingsDict[region][key] = rDict[key]
+                print(r)
+                if r:
+                    rDict, updatedDict[region], season = parseSnapshot(
+                        r.text, verbose, region
+                    )
+                    for key in rDict:
+                        ratingsDict[region][key] = rDict[key]
 
     return ratingsDict, updatedDict, season
 
