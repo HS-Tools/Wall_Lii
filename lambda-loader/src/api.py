@@ -55,8 +55,7 @@ def getLeaderboardSnapshot(
             futures = [session.get(url) for url in pageUrls]
             for future in as_completed(futures):
                 r = future.result()
-                print(r.text)
-                if r.text:
+                if r != None and r.text != None:
                     rDict, updatedDict[region], season = parseSnapshot(
                         r.text, verbose, region
                     )
