@@ -43,7 +43,7 @@ def getLeaderboardSnapshot(
 
     for region in regions:
         ## not supplying season always gets latest
-        apiUrl = f"https://hearthstone.blizzard.com/en-us/community/leaderboards?region={region}&leaderboardId={gameMode}"
+        apiUrl = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
         if season != None:  ## used for test code to pull a known season results
             apiUrl = f"{apiUrl}&seasonId={season}"
 
@@ -55,12 +55,11 @@ def getLeaderboardSnapshot(
             futures = [session.get(url) for url in pageUrls]
             for future in as_completed(futures):
                 r = future.result()
-                if r != None and r.text != None:
-                    rDict, updatedDict[region], season = parseSnapshot(
-                        r.text, verbose, region
-                    )
-                    for key in rDict:
-                        ratingsDict[region][key] = rDict[key]
+                rDict, updatedDict[region], season = parseSnapshot(
+                    r.text, verbose, region
+                )
+                for key in rDict:
+                    ratingsDict[region][key] = rDict[key]
 
     return ratingsDict, updatedDict, season
 
