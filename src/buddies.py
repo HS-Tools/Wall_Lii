@@ -83,4 +83,9 @@ easter_egg_buddies_dict = {
         "Alex is a Tier 1 2/3. Ability: Whenever you buy a minion, greet them and make them feel welcome to the team.",
         "Golden Alex is a Tier 1 4/6. Ability: All of your minions listen to you, and attack the perfect targets.",
     ),
+    "thealeksandra": (
+        "TheAleksandra",
+        "TylerLee3 is a Tier 6 6/9. Ability: Whenever you buy a card, play a Huggie on all friendly minions and progress this. (Huggies give +1/+1 and make your hero feel warm and cuddly)",
+        "Golden TylerLee3 is a Tier 6 12/18. Ability: Whenever you buy a card, play a Golden Huggie on all friendly minions and progress this. (Golden Huggies give +3/+3 and and make your hero feel appreciated and loved)",
+    ),
 }
