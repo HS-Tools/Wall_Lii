@@ -22,9 +22,7 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
 
         if account != None and account["accountid"] != None:
             name = account["accountid"].encode("utf-8").lower().decode("utf-8")
-
-            if not (name == "beterbabbit" and account["rating"] < 12000):
-                output[name] = {"rank": account["rank"], "rating": account["rating"]}
+            output[name] = {"rank": account["rank"], "rating": account["rating"]}
 
     return output, updatedTime, season
 
@@ -34,7 +32,7 @@ def getLeaderboardSnapshot(
     gameMode="BG",
     season=9,
     verbose=False,
-    total_count=500,
+    total_count=2000,
 ):
     PLAYERS_PER_PAGE = 25
     ratingsDict = {region: {} for region in regions}
@@ -45,13 +43,15 @@ def getLeaderboardSnapshot(
         gameMode = "battlegrounds"
 
     for region in regions:
+        username_set = {''}
+
         ## not supplying season always gets latest
         apiUrl = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
         if season != None:  ## used for test code to pull a known season results
             apiUrl = f"{apiUrl}&seasonId={season}"
 
         pageUrls = []
-        for page in range((total_count // PLAYERS_PER_PAGE) + 1):
+        for page in range(1, (total_count // PLAYERS_PER_PAGE) + 1):
             pageUrls.append(f"{apiUrl}&page={page}")
 
         with FuturesSession() as session:
@@ -62,13 +62,17 @@ def getLeaderboardSnapshot(
                     r.text, verbose, region
                 )
                 for key in rDict:
-                    ratingsDict[region][key] = rDict[key]
+                    if key not in username_set:
+                        username_set.add(key)
+                        ratingsDict[region][key] = rDict[key]
+                    else:
+                        print(f"{key} is a duplicate")
 
     return ratingsDict, updatedDict, season
 
 
 if __name__ == "__main__":  ## run the function if this program is called
     ratingsDict, lastUpdated, season = getLeaderboardSnapshot()
-    for region in ["US", "EU", "AP"]:
-        for account in ratingsDict[region].keys():
-            print("\t", ratingsDict[region][account])
+    # for region in ["US", "EU", "AP"]:
+    #     for account in ratingsDict[region].keys():
+    #         print("\t", ratingsDict[region][account])
