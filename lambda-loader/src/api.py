@@ -65,9 +65,7 @@ def getLeaderboardSnapshot(
                     if key not in username_set:
                         username_set.add(key)
                         ratingsDict[region][key] = rDict[key]
-                    else:
-                        print(f"{key} is a duplicate")
-
+                        
     return ratingsDict, updatedDict, season
 
 
