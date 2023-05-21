@@ -43,7 +43,7 @@ def getLeaderboardSnapshot(
         gameMode = "battlegrounds"
 
     for region in regions:
-        username_set = {''}
+        username_set = {""}
 
         ## not supplying season always gets latest
         apiUrl = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
@@ -65,7 +65,7 @@ def getLeaderboardSnapshot(
                     if key not in username_set:
                         username_set.add(key)
                         ratingsDict[region][key] = rDict[key]
-                        
+
     return ratingsDict, updatedDict, season
 
 
