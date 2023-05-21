@@ -19,9 +19,12 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
     for account in accounts:
         if verbose:
             print(f"\t{account}")
+
         if account != None and account["accountid"] != None:
             name = account["accountid"].encode("utf-8").lower().decode("utf-8")
-            output[name] = {"rank": account["rank"], "rating": account["rating"]}
+
+            if not (name == "beterbabbit" and account["rating"] < 12000):
+                output[name] = {"rank": account["rank"], "rating": account["rating"]}
 
     return output, updatedTime, season
 
