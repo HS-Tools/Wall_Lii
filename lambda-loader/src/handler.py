@@ -14,16 +14,14 @@ def add_leaderboards_to_db(database, *args):
     timeSnapshot = tup[1]
     timeDB = {}
 
-    print(snapshot)
+    for region in snapshot:
+        timeDB[region] = database.get_time(region)
+        timeSnapshot[region] = database.parse_time(timeSnapshot[region])
+        if timeSnapshot[region] >= timeDB[region]:  ## allow equal time for easy testing
+            database.put_time(region, timeSnapshot[region])
+            database.put_items(region, snapshot[region])
 
-    # for region in snapshot:
-    #     timeDB[region] = database.get_time(region)
-    #     timeSnapshot[region] = database.parse_time(timeSnapshot[region])
-    #     if timeSnapshot[region] >= timeDB[region]:  ## allow equal time for easy testing
-    #         database.put_time(region, timeSnapshot[region])
-    #         database.put_items(region, snapshot[region])
-
-    # return snapshot, timeSnapshot, timeDB
+    return snapshot, timeSnapshot, timeDB
 
 
 def handlePredictions(
@@ -108,6 +106,3 @@ def handler(event, context):
                     prediction_channels[name]["twitch_id"],
                     prediction_channels[name]["ad_time"],
                 )
-
-
-add_leaderboards_to_db(None)
