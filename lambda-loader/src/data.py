@@ -212,7 +212,6 @@ class RankingDatabaseClient:
                 )
             )
 
-        print(f"writing {len(items)}")
         with self.table.batch_writer() as batch:
             for item in items:
                 batch.put_item(Item=item)
