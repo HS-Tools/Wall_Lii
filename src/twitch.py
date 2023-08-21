@@ -154,31 +154,27 @@ async def getGold(ctx):
         await ctx.send(incorrectUseText)
         return
 
-    if goldAmount <= 6:
-        turn = 4
-    elif goldAmount <= 13:
-        turn = 5
-        extraGold = goldAmount - 6
-    elif goldAmount <= 21:
-        turn = 6
-        extraGold = goldAmount - 13
-    elif goldAmount <= 30:
-        turn = 7
-        extraGold = goldAmount - 21
+    # Will calculate turn quest will be completed based on startingTurn and goldAmount of quest.
+    startingTurn = 1
+    maxGold = 10
+    currentGold = startingTurn + 2
+    turn = startingTurn
+    
+    # Failsafe.
+    if currentGold > maxGold:
+        currentGold = maxGold  
+        
+    while goldAmount > currentGold:
+        goldAmount -= currentGold
+        turn += 1
+        if currentGold < maxGold:
+            currentGold += 1
+            
+    if turn > startingTurn:
+        ctx.send(f"Turn {turn}, or Turn {turn - 1} if {goldAmount} extra gold is spent.")
     else:
-        if goldAmount % 10 == 0:
-            turn = ((goldAmount - 30) // 10) + 7
-        else:
-            turn = ((goldAmount - 30) // 10) + 8
-        extraGold = (goldAmount - 30) % 10
-        if extraGold == 0:
-            extraGold = 10
-
-    earlierTurnText = ""
-    if turn > 4:
-        earlierTurnText = f" or Turn {turn - 1} if {extraGold} extra gold is spent."
-    await ctx.send(f"Turn {turn}{earlierTurnText}")
-
+        ctx.send(f"Turn {turn}.")
+        
 
 @twitchBot.event()
 async def event_message(msg):
