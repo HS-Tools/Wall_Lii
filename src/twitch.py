@@ -161,22 +161,24 @@ async def getGold(ctx):
     maxGold = 10
     currentGold = startingTurn + 2
     turn = startingTurn
-    
+
     # Failsafe.
     if currentGold > maxGold:
-        currentGold = maxGold  
-        
+        currentGold = maxGold
+
     while goldAmount > currentGold:
         goldAmount -= currentGold
         turn += 1
         if currentGold < maxGold:
             currentGold += 1
-            
+
     if turn > startingTurn:
-        ctx.send(f"Turn {turn}, or Turn {turn - 1} if {goldAmount} extra gold is spent.")
+        ctx.send(
+            f"Turn {turn}, or Turn {turn - 1} if {goldAmount} extra gold is spent."
+        )
     else:
         ctx.send(f"Turn {turn}.")
-        
+
 
 @twitchBot.event()
 async def event_message(msg):
