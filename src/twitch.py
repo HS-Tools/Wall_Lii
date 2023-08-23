@@ -1,4 +1,6 @@
+import logging
 import os
+import traceback
 
 import aiocron
 from dotenv import load_dotenv
@@ -29,7 +31,7 @@ twitchBot = commands.Bot(
     client_id=os.environ["CLIENT_ID"],
     nick=os.environ["BOT_NICK"],
     prefix=os.environ["BOT_PREFIX"],
-    initial_channels=["liihs"],
+    initial_channels=["liihs", "jeefhs"],
 )
 
 
