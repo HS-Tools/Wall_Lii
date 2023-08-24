@@ -173,11 +173,11 @@ async def getGold(ctx):
             currentGold += 1
 
     if turn > startingTurn:
-        ctx.send(
+        await ctx.send(
             f"Turn {turn}, or Turn {turn - 1} if {goldAmount} extra gold is spent."
         )
     else:
-        ctx.send(f"Turn {turn}.")
+        await ctx.send(f"Turn {turn}.")
 
 
 @twitchBot.event()
