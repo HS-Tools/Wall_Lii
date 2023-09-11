@@ -21,7 +21,7 @@ Resources:
             - Effect: Allow
               Action: "*"
               Resource: !GetAtt CompositeKeyTable.Arn
-        - AWSLambdaRemoveLogs
+        - AWSLambdaRemoveDefaultLogs
         - Version: "2012-10-17"
           Statement:
             - Effect: Deny
