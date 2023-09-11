@@ -21,6 +21,16 @@ Resources:
             - Effect: Allow
               Action: "*"
               Resource: !GetAtt CompositeKeyTable.Arn
+        - RemoveLogs
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Deny
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - arn:aws:logs:*:*:*
       Environment:
         Variables:
           TABLE_NAME: !Ref CompositeKeyTable

@@ -33,9 +33,6 @@ def handlePredictions(
     twitch_id,
     ad_time,
 ):
-    print("previous_rating: " + str(previous_rating))
-    print("new_rating: " + str(new_rating))
-
     # Apparently the previous_rating resets to 1 when the table resets
     if not previous_rating or previous_rating <= 1:
         pass

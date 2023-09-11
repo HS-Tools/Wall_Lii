@@ -29,7 +29,6 @@ class RankingDatabaseClient:
     def create_table(self, table_name=None):
         if table_name is None:
             table_name = self.table_name
-        # print("creating table")
         self.table = self.resource.create_table(
             TableName=table_name,
             KeySchema=[
