@@ -35,7 +35,6 @@ class Predictions:
         r = requests.post(url=PREDICTIONS_URL, json=body, headers=self.headers)
 
         obj = r.json()
-        print(obj)
 
         if r.status_code == 200:
             return {
@@ -57,8 +56,6 @@ class Predictions:
         }
         r = requests.patch(url=PREDICTIONS_URL, json=body, headers=self.headers)
 
-        print(r.text)
-
     def check_if_live(self):
         url = f"{STREAMS_URL}?user_login={self.channel_name}"
         r = requests.get(url=url, headers=self.headers)
@@ -76,8 +73,6 @@ class Predictions:
         last_prediction = r.json()["data"][0]
         status = last_prediction["status"]
 
-        print(last_prediction)
-
         if status == "ACTIVE" or status == "LOCKED":
             return last_prediction
         else:
@@ -88,8 +83,6 @@ class Predictions:
         data = {"broadcaster_id": self.broadcaster_id, "length": self.ad_time}
 
         r = requests.post(url=AD_URL, headers=self.headers, json=data)
-
-        print(r.text)
 
     def run(self, isGain):
         current_prediction = self.get_current_prediction()
@@ -102,10 +95,8 @@ class Predictions:
 
             if isGain:
                 self.end_prediction(prediction_id, "RESOLVED", gain_id)
-                print("Ended prediction with gain")
             else:
                 self.end_prediction(prediction_id, "RESOLVED", lose_id)
-                print("Ended prediction with loss")
         else:
             print("No current prediction")
 
