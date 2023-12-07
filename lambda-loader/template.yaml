@@ -34,11 +34,10 @@ Resources:
         Variables:
           TABLE_NAME: !Ref CompositeKeyTable
       Events:
-        ScheduledEvent:
-          Name: ThreeMinuteInvoke
+        ThreeMinuteInvoke:
           Type: Schedule
           Properties:
-            Schedule: rate(3 minute)
+            Schedule: rate(3 minutes)
   YesterdayMigrationFunction:
     Type: AWS::Serverless::Function
     Properties:
