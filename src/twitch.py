@@ -31,7 +31,25 @@ twitchBot = commands.Bot(
     client_id=os.environ["CLIENT_ID"],
     nick=os.environ["BOT_NICK"],
     prefix=os.environ["BOT_PREFIX"],
-    initial_channels=["liihs", "jeefhs"],
+    initial_channels=[
+        "liihs",
+        "jeefhs",
+        "rdulive",
+        "dogdog",
+        "xqn_thesad",
+        "matsuri_hs",
+        "zorgo_hs",
+        "sunbaconrelaxer",
+        "shadybunny",
+        "hapabear",
+        "sjow",
+        "bofur_hs",
+        "ixxdeee",
+        "wobbleweezy",
+        "awedragon",
+        "benice92",
+        "sevel07",
+    ],
 )
 
 
