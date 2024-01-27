@@ -288,41 +288,41 @@ async def event_join(channel, user):
 
 if __name__ == "__main__":
 
-    @aiocron.crontab("* * * * *")  ## Every minute check for new channels
-    async def updateChannels():
-        global initialChannels
-        global greetingChannels
+    # @aiocron.crontab("* * * * *")  ## Every minute check for new channels
+    # async def updateChannels():
+    #     global initialChannels
+    #     global greetingChannels
 
-        channels = leaderboardBot.getChannels()
+    #     channels = leaderboardBot.getChannels()
 
-        try:
-            joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
-        except KeyError:
-            print("KeyError from connected_channels")
-            return
+    #     try:
+    #         joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
+    #     except KeyError:
+    #         print("KeyError from connected_channels")
+    #         return
 
-        new_channels = []
+    #     new_channels = []
 
-        for channel in channels:
-            if channel not in joined_channels:
-                new_channels.append(channel)
+    #     for channel in channels:
+    #         if channel not in joined_channels:
+    #             new_channels.append(channel)
 
-            if channel not in initialChannels:
-                greetingChannels.append(channel)
+    #         if channel not in initialChannels:
+    #             greetingChannels.append(channel)
 
-            # Rate limit on joining channels is 20 per 10 seconds. It'd be nice to join earlier than 20 per minute
-            if len(new_channels) >= 19:
-                break
+    #         # Rate limit on joining channels is 20 per 10 seconds. It'd be nice to join earlier than 20 per minute
+    #         if len(new_channels) >= 19:
+    #             break
 
-        if len(new_channels) > 0:
-            print("Joined these channels: " + str(new_channels))
-        try:
-            await twitchBot.join_channels(new_channels)
-        except Exception as err:
-            print(f"Joining error: ${err}")
+    #     if len(new_channels) > 0:
+    #         print("Joined these channels: " + str(new_channels))
+    #     try:
+    #         await twitchBot.join_channels(new_channels)
+    #     except Exception as err:
+    #         print(f"Joining error: ${err}")
 
-        # Update initialChannels in case there's a change to the configuration of a channel's name
-        initialChannels = leaderboardBot.getChannels()
+    #     # Update initialChannels in case there's a change to the configuration of a channel's name
+    #     initialChannels = leaderboardBot.getChannels()
 
     @aiocron.crontab("* * * * *")  ## Every minute check for new alias
     async def updateAlias():
@@ -332,11 +332,11 @@ if __name__ == "__main__":
     async def updateBGPatch():
         leaderboardBot.fetchPatchLink()
 
-    @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-    async def check_for_new_buddies():
-        global buddyDict
-        temp_dict = get_buddy_dict()
-        if temp_dict and len(temp_dict.keys()) > 0:
-            buddyDict = temp_dict
+    # @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
+    # async def check_for_new_buddies():
+    #     global buddyDict
+    #     temp_dict = get_buddy_dict()
+    #     if temp_dict and len(temp_dict.keys()) > 0:
+    #         buddyDict = temp_dict
 
     twitchBot.run()
