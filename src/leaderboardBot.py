@@ -47,7 +47,8 @@ class LeaderBoardBot:
         for i, arg in enumerate(args):
             if len(arg) > 0 and ("/" == arg[0] or "!" == arg[0]):
                 return ["Please don't try to hack me", None]
-        if len(args) == 0:
+        # Check for that special character which sometimes shows up during repeated 0 arg calls
+        if len(args) == 0 or args[0] == "\U000e0000":
             return [default, None]
         elif len(args) == 1:
             if isRegion(args[0]):
