@@ -49,6 +49,9 @@ twitchBot = commands.Bot(
         "awedragon",
         "benice92",
         "sevel07",
+        "zavadahs",
+        "pockyplays",
+        "terry_tsang_gaming",
     ],
 )
 
