@@ -54,6 +54,7 @@ twitchBot = commands.Bot(
         "terry_tsang_gaming",
         "dreads",
         "sunglitters",
+        "fasteddiehs",
     ],
 )
 
