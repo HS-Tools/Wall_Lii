@@ -174,26 +174,24 @@ async def deletealias(ctx: discord.ApplicationContext, alias: str):
     await ctx.respond(f"{alias} alias was deleted")
 
 
-# @bot.slash_command(
-#     guild_ids=[729524538559430670], description="Map alias to player_name"
-# )
-# @discord.option(
-#     "channel_name", description="Enter the channel you'd like to add wall_lii to"
-# )
-# @discord.option(
-#     "player_name",
-#     description="Enter the player name of the streamer if it's different to the twitch name",
-#     default="",
-# )
-# async def addchannel(ctx, channel_name: str, player_name: str):
-#     channel_name = channel_name.lower()
-#     player_name = player_name.lower() if player_name != "" else channel_name
+@bot.slash_command(guild_ids=[729524538559430670], description="Add Channel")
+@discord.option(
+    "channel_name", description="Enter the channel you'd like to add wall_lii to"
+)
+@discord.option(
+    "player_name",
+    description="Enter the player name of the streamer if it's different to the twitch name",
+    default="",
+)
+async def addchannel(ctx, channel_name: str, player_name: str):
+    channel_name = channel_name.lower()
+    player_name = player_name.lower() if player_name != "" else channel_name
 
-#     leaderboardBot.addChannel(channel_name, player_name)
+    leaderboardBot.addChannel(channel_name, player_name)
 
-#     await ctx.respond(
-#         f"{channel_name} will have wall_lii added to it with the default name of {player_name}"
-#     )
+    await ctx.respond(
+        f"{channel_name} will have wall_lii added to it with the default name of {player_name}"
+    )
 
 
 # @bot.slash_command(
