@@ -81,8 +81,8 @@ Resources:
       # 25 provisioned Read Capacity Units (RCU)
       BillingMode: PROVISIONED
       ProvisionedThroughput: # We should adjust based on usage.
-        ReadCapacityUnits: 15
-        WriteCapacityUnits: 21
+        ReadCapacityUnits: 23
+        WriteCapacityUnits: 23
       KeySchema: # Composite Key
         - AttributeName: "PlayerName"
           KeyType: "HASH" # Partition Key
@@ -100,10 +100,10 @@ Resources:
           AttributeType: "S"
         - AttributeName: "Region"
           AttributeType: "S"
-      BillingMode: PROVISIONED
-      ProvisionedThroughput: # We should adjust based on usage.
-        ReadCapacityUnits: 8
-        WriteCapacityUnits: 2
+      BillingMode: PAY_PER_REQUEST
+      # ProvisionedThroughput: # We should adjust based on usage.
+      #   ReadCapacityUnits: 8
+      #   WriteCapacityUnits: 2
       KeySchema: # Composite Key
         - AttributeName: "PlayerName"
           KeyType: "HASH" # Partition Key
