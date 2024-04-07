@@ -208,7 +208,7 @@ async def addchannel(ctx, channel_name: str, player_name: str):
 #     await ctx.respond(f"{channel} will have wall_lii removed")
 
 
-@aiocron.crontab("59 7 * * *")
+@aiocron.crontab("59 6 * * *")
 async def sendDailyRecap():
     climbers = leaderboardBot.getMostMMRChanged(5, True)
     losers = leaderboardBot.getMostMMRChanged(5, False)
