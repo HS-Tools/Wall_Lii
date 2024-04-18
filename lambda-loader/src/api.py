@@ -30,7 +30,7 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
 def getLeaderboardSnapshot(
     regions=["US", "EU", "AP"],
     gameMode="BG",
-    season=11,
+    season=12,
     verbose=False,
     total_count=1000,
 ):
