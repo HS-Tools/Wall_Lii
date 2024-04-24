@@ -88,4 +88,8 @@ easter_egg_buddies_dict = {
         "TylerLee3 is a Tier 6 6/9. Ability: Whenever you buy a card, play a Huggie on all friendly minions and progress this. (Huggies give +1/+1 and make your hero feel warm and cuddly)",
         "Golden TylerLee3 is a Tier 6 12/18. Ability: Whenever you buy a card, play a Golden Huggie on all friendly minions and progress this. (Golden Huggies give +3/+3 and and make your hero feel appreciated and loved)",
     ),
+    "s4b0t4g3fire": (
+        "s4b0t4g3fire",
+        "S4B0T4G3FIRE is a 12-mana 0/1 from the past. While in your hand, this tells a joke at the end of your turn and costs (1) less for each Laugh it gets...because Laughter is all the value anyone needs.",
+    ),
 }
