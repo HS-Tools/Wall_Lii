@@ -58,6 +58,9 @@ twitchBot = commands.Bot(
         "fritterus",
         "bixentehs",
         "beterbabbit",
+        "asmodaitv",
+        "jkirek_",
+        "harain",
     ],
 )
 
