@@ -61,6 +61,9 @@ twitchBot = commands.Bot(
         "asmodaitv",
         "jkirek_",
         "harain",
+        "missbowers",
+        "educated_collins",
+        "gospodarlive",
     ],
 )
 
