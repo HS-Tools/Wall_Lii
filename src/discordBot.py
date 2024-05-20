@@ -22,7 +22,9 @@ channelIds = {
     "test": 730782280674443327,
 }
 
-liiDiscordId = 204806965585510400
+liiDiscordId = 729524538559430670
+compHSDiscordId = 939711967134887998
+compHSDiscordChannelId = 1242140313242566708
 frontpage_channel_id = 1096490528947851304
 frontpage_message_id = 1096514937813217370
 
@@ -34,7 +36,7 @@ async def on_ready():
     print(f"We have logged in as {bot.user}")
 
 
-@bot.slash_command(guild_ids=[729524538559430670])
+@bot.slash_command(guild_ids=[liiDiscordId, compHSDiscordId])
 async def hello(ctx):
     await ctx.respond("Hello!")
 
@@ -65,7 +67,9 @@ async def call(ctx, func, name, *args):
     await ctx.respond(embed=getEmbedObject(response, args[0], name))
 
 
-@bot.slash_command(guild_ids=[729524538559430670], description="Get a hero's buddy")
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a hero's buddy"
+)
 @discord.option("buddy_name", description="Enter the buddy name")
 async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
     results = parse_buddy(buddy_name, buddyDict, easter_egg_buddies_dict)
@@ -84,7 +88,7 @@ async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670], description="Get a hero's golden buddy"
+    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a hero's golden buddy"
 )
 @discord.option("golden_buddy_name", description="Enter the golden buddy name")
 async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
@@ -101,7 +105,9 @@ async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
         await ctx.respond(embed=embed)
 
 
-@bot.slash_command(guild_ids=[729524538559430670], description="Get a player's rank")
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a player's rank"
+)
 @discord.option("player_name", description="Enter the player's name or rank")
 @discord.option("region", description="Enter the player's region", default="")
 async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
@@ -110,7 +116,8 @@ async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str)
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670], description="Get a player's record from today"
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's record from today",
 )
 @discord.option("player_name", description="Enter the player's name or rank")
 @discord.option("region", description="Enter the player's region", default="")
@@ -120,7 +127,8 @@ async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670], description="Get a player's record from yesterday"
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's record from yesterday",
 )
 @discord.option("player_name", description="Enter the player's name or rank")
 @discord.option("region", description="Enter the player's region", default="")
@@ -131,21 +139,23 @@ async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: s
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670], description="Get Liisus's record from today"
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get Liisus's record from today",
 )
 async def bgdailii(ctx: discord.ApplicationContext):
     await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670], description="Tell wall_lii he's a good boy"
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Tell wall_lii he's a good boy",
 )
 async def goodbot(ctx: discord.ApplicationContext):
     await ctx.respond(":robot: Just doing my job :robot:")
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670], description="Map alias to player_name"
+    guild_ids=[liiDiscordId, compHSDiscordId], description="Map alias to player_name"
 )
 @discord.option("alias", description="Enter the alias you'd like to use")
 @discord.option(
@@ -163,7 +173,9 @@ async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str
         await ctx.respond(f"failed to set alias {alias} to name {name}")
 
 
-@bot.slash_command(guild_ids=[729524538559430670], description="Remove an alias")
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId], description="Remove an alias"
+)
 @discord.option("alias", description="Enter the alias you'd like to use")
 async def deletealias(ctx: discord.ApplicationContext, alias: str):
     alias = alias.lower()
@@ -174,7 +186,7 @@ async def deletealias(ctx: discord.ApplicationContext, alias: str):
     await ctx.respond(f"{alias} alias was deleted")
 
 
-@bot.slash_command(guild_ids=[729524538559430670], description="Add Channel")
+@bot.slash_command(guild_ids=[liiDiscordId, compHSDiscordId], description="Add Channel")
 @discord.option(
     "channel_name", description="Enter the channel you'd like to add wall_lii to"
 )
@@ -195,7 +207,7 @@ async def addchannel(ctx, channel_name: str, player_name: str):
 
 
 # @bot.slash_command(
-#     guild_ids=[729524538559430670], description="Remove wall_lii from a twitch channel"
+#     guild_ids=[liiDiscordId, compHSDiscordId], description="Remove wall_lii from a twitch channel"
 # )
 # @discord.option(
 #     "channel_name", description="Enter the channel you'd like to delete wall_lii from"
@@ -262,6 +274,7 @@ async def sendDailyRecap():
 
     dedicated_channel_id = channelIds["wall_lii"]
     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
+    await bot.get_channel(int(compHSDiscordChannelId)).send(embed=embed)
 
 
 # @aiocron.crontab("59 7 * * *")
@@ -287,7 +300,7 @@ async def update_front_page():
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670],
+    guild_ids=[liiDiscordId, compHSDiscordId],
     description="Get the top 16 players from all regions",
 )
 async def top16(ctx):
@@ -296,7 +309,7 @@ async def top16(ctx):
 
 
 @bot.slash_command(
-    guild_ids=[729524538559430670],
+    guild_ids=[liiDiscordId, compHSDiscordId],
     description="Edit !bgpatch command on twitch for wall_lii",
 )
 @discord.option(
@@ -307,64 +320,64 @@ async def edit_bg_patch(ctx, patch_link: str):
     await ctx.respond(f"!bgpatch is now {patch_link}")
 
 
-@bot.slash_command(
-    guild_ids=[729524538559430670],
-    description="Secret test command for lii",
-)
-async def test(ctx):
+# @bot.slash_command(
+#     guild_ids=[liiDiscordId, compHSDiscordId],
+#     description="Secret test command for lii",
+# )
+# async def test(ctx):
 
-    climbers = leaderboardBot.getMostMMRChanged(5, True)
-    losers = leaderboardBot.getMostMMRChanged(5, False)
-    hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
-    highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
-    leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
-    top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
+#     climbers = leaderboardBot.getMostMMRChanged(5, True)
+#     losers = leaderboardBot.getMostMMRChanged(5, False)
+#     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
+#     highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
+#     leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
+#     top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
 
-    climbersText = "**The top 5 climbers were:** \n"
-    losersText = "**The top 5 unluckiest were:** \n"
-    hardcore_gamersText = "**The top 5 grinders were:** \n"
-    highestText = "**The top 5 highest rated active players were:** \n"
-    threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
-    top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
+#     climbersText = "**The top 5 climbers were:** \n"
+#     losersText = "**The top 5 unluckiest were:** \n"
+#     hardcore_gamersText = "**The top 5 grinders were:** \n"
+#     highestText = "**The top 5 highest rated active players were:** \n"
+#     threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
+#     top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
 
-    for index, climber in enumerate(climbers):
-        climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
+#     for index, climber in enumerate(climbers):
+#         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
 
-    for index, loser in enumerate(losers):
-        losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
+#     for index, loser in enumerate(losers):
+#         losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
 
-    for index, hardcore_gamer in enumerate(hardcore_gamers):
-        hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
+#     for index, hardcore_gamer in enumerate(hardcore_gamers):
+#         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
 
-    for index, highest in enumerate(highest_active):
-        highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
+#     for index, highest in enumerate(highest_active):
+#         highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
 
-    for region, rating in leaderboard_threshold.items():
-        threshholdText += f"{rating} in the {region} region \n"
+#     for region, rating in leaderboard_threshold.items():
+#         threshholdText += f"{rating} in the {region} region \n"
 
-    for region, rating in top16_threshold.items():
-        top16Text += f"{rating} in the {region} region \n"
+#     for region, rating in top16_threshold.items():
+#         top16Text += f"{rating} in the {region} region \n"
 
-    text = (
-        climbersText
-        + "\n"
-        + losersText
-        + "\n"
-        + hardcore_gamersText
-        + "\n"
-        + highestText
-        + "\n"
-        + threshholdText
-        + "\n"
-        + top16Text
-    )
+#     text = (
+#         climbersText
+#         + "\n"
+#         + losersText
+#         + "\n"
+#         + hardcore_gamersText
+#         + "\n"
+#         + highestText
+#         + "\n"
+#         + threshholdText
+#         + "\n"
+#         + top16Text
+#     )
 
-    embed = discord.Embed(
-        title=f"Daily Liiderboards for {get_pst_time()}", description=text
-    )
+#     embed = discord.Embed(
+#         title=f"Daily Liiderboards for {get_pst_time()}", description=text
+#     )
 
-    dedicated_channel_id = channelIds["test"]
-    await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
+#     dedicated_channel_id = channelIds["test"]
+#     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
 
 
 def get_pst_time():
