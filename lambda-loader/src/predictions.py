@@ -111,17 +111,14 @@ class Predictions:
 
 # load_dotenv()
 
-# client_id = os.environ['VICTOR_CLIENT_ID']
-# access_token = os.environ['VICTOR_ACCESS_TOKEN']
-# channel_id = os.environ['VICTOR_TWITCH_ID']
+# client_id = os.environ['CLIENT_ID']
+# access_token = os.environ['ACCESS_TOKEN']
+# channel_id = os.environ['TWITCH_ID']
 
-# p = Predictions('sunbaconrelaxer', channel_id, client_id, access_token)
+# p = Predictions('liihs', channel_id, client_id, access_token, 90)
 
 # p.start_ad()
 
 # p.create_prediction()
 
-# predictions = Predictions(client_id, access_token)
-# predictions.get_current_prediction()
-
-# predictions.run(True)
+# p.run(True)
