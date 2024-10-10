@@ -130,5 +130,51 @@ def parse_buddy(name, buddies={}, eggs={}):
             return (
                 None,
                 f"{name} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters",
-                f"{name} is not a valid hero,try the name of the hero with no spaces or non alphabetic characters",
+                f"{name} is not a valid hero, try the name of the hero with no spaces or non alphabetic characters",
             )
+
+
+def parse_trinket(name, trinkets={}):
+    name.replace("\U000e0000", "")
+    if name in trinkets:
+        return trinkets[name]
+    else:
+        trinketOptions = list(trinkets.keys())
+        goodScores = fuzzysearch.extractBests(
+            query=name, choices=trinketOptions, score_cutoff=65, limit=3
+        )
+        for name_scored, ratio_scored in goodScores:
+            if ratio_scored >= 85:
+                return trinkets[name_scored]
+
+        if len(goodScores) > 0:
+            ## create a fake entry for no valid trinket
+            goodScoresNames = " or ".join(
+                list(name_scored for name_scored, ratio_scored in goodScores)
+            )
+            return f"{name} is not a valid trinket, try again with {goodScoresNames}"
+        else:
+            return f"{name} is not a valid trinket or close to one"
+
+
+def get_trinkets_dict():
+    trinkets = {}
+    for trinket in filter(
+        lambda card: "type" in card and card["type"] == "BATTLEGROUND_TRINKET",
+        data_json,
+    ):
+        if (
+            trinket
+            and "name" in trinket
+            and "spellSchool" in trinket
+            and "cost" in trinket
+            and "text" in trinket
+        ):
+            trinkets[
+                trinket["name"]
+            ] = f"{trinket['name']} is a {trinket['spellSchool']} that costs {trinket['cost']}: {filterText(trinket['text'])}"
+
+    return trinkets
+
+
+get_trinkets_dict()

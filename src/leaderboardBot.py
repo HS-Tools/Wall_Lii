@@ -5,7 +5,6 @@ from re import I
 
 import aiocron
 import boto3
-import dotenv
 import requests
 from boto3.dynamodb.conditions import Attr, Key
 from dotenv import load_dotenv
