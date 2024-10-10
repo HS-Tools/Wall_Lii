@@ -1,9 +1,9 @@
 import os
-import threading
 from datetime import datetime
 from operator import indexOf
 from re import I
 
+import aiocron
 import boto3
 import dotenv
 import requests
@@ -37,10 +37,9 @@ class LeaderBoardBot:
         self.yesterday_table = self.resource.Table("yesterday-rating-record-table")
         self.alias_table = self.resource.Table("player-alias-table")
         self.channel_table = self.resource.Table("channel-table")
-        self.ssm_client = boto3.client("ssm")
-        self.patch_link = ""
-        self.fetchPatchLink()
+        self.patch_link = "Waiting to fetch latest post from https://hearthstone.blizzard.com/en-us/news"
         self.updateAlias()
+        aiocron.crontab("* * * * *", func=self.fetchPatchLink)
 
     def parseArgs(self, default, *args):
         args = list(args)
@@ -459,10 +458,28 @@ class LeaderBoardBot:
         for key in default_channels:
             self.addChannel(key, default_channels[key], False)
 
-    def fetchPatchLink(self):
-        try:
-            self.patch_link = self.ssm_client.get_parameter(
-                Name="hearthstone_battlegrounds_patch_link"
-            )["Parameter"]["Value"]
-        except Exception:
-            print("Something went wrong with fetching the patch links")
+    async def fetchPatchLink(self):
+        # URL of the API
+        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+
+        # Send a request to fetch the JSON data from the API
+        response = requests.get(api_url)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            data = response.json()
+
+            # Loop through each article in the data
+            for article in data:
+                content = article.get("content", "")  # Extract the content field
+                # Check if 'battlegrounds' is mentioned in the content
+                if "battlegrounds" in content.lower():
+                    # Extract and print the article's 'defaultUrl'
+                    article_url = article.get("defaultUrl")
+                    self.patch_link = f"{article_url}"
+                    break
+            else:
+                print("No article containing 'battlegrounds' found.")
+        else:
+            print(f"Failed to retrieve data. Status code: {response.status_code}")

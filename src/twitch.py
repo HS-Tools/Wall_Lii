@@ -67,6 +67,7 @@ twitchBot = commands.Bot(
         "neflida",
         "babofat",
         "tume111",
+        "doudzo",
     ],
 )
 
@@ -345,10 +346,6 @@ if __name__ == "__main__":
     @aiocron.crontab("* * * * *")  ## Every minute check for new alias
     async def updateAlias():
         leaderboardBot.getNewAlias()
-
-    @aiocron.crontab("* * * * *")  ## Every minute check for new !bgpatch
-    async def updateBGPatch():
-        leaderboardBot.fetchPatchLink()
 
     @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
     async def check_for_new_buddies():
