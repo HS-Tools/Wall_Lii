@@ -466,13 +466,3 @@ class LeaderBoardBot:
             )["Parameter"]["Value"]
         except Exception:
             print("Something went wrong with fetching the patch links")
-
-    def editPatchLink(self, patch_link):
-        try:
-            self.ssm_client.put_parameter(
-                Name="hearthstone_battlegrounds_patch_link",
-                Value=patch_link,
-                Overwrite=True,
-            )
-        except Exception:
-            print("Something went wrong with editing the patch links")
