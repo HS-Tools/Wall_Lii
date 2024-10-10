@@ -53,13 +53,13 @@ def handler(event, context):
     load_dotenv()
 
     prediction_channels = {  ## idealy this would be stored in the channel table
-        #"lii": {
+        # "lii": {
         #    "channel_name": "liihs",
         #   "client_id": os.environ["CLIENT_ID"],
         #    "access_token": os.environ["ACCESS_TOKEN"],
         #    "twitch_id": os.environ["LII_TWITCH_ID"],
         #    "ad_time": 120,
-        #},
+        # },
         # "akaza": {
         #     "channel_name": "sunbaconrelaxer",
         #     "client_id": os.environ["VICTOR_CLIENT_ID"],
