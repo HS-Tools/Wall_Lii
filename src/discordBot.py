@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from pytz import timezone, utc
 
 from buddies import easter_egg_buddies_dict
-from buddy_fetch import get_buddy_dict, parse_buddy
+from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 
@@ -65,6 +65,25 @@ async def call(ctx, func, name, *args):
     except:
         pass
     await ctx.respond(embed=getEmbedObject(response, args[0], name))
+
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a trinket's description"
+)
+@discord.option("trinket_name", description="Enter the trinket name")
+async def trinket(ctx: discord.ApplicationContext, trinket_name: str):
+    results = parse_trinket(trinket_name, trinketDict)
+
+    await ctx.defer()
+    asyncio.sleep(0.1)
+
+    if results is not None:
+        embed = discord.Embed(
+            description=results,
+        )
+        await ctx.respond(embed=embed)
+    else:
+        await ctx.respond("Trinket not found")
 
 
 @bot.slash_command(
@@ -292,6 +311,14 @@ async def check_for_new_buddies():
         buddyDict = temp_dict
 
 
+@aiocron.crontab("10 * * * *")  ## Every hour check for new trinkets
+async def check_for_new_trinkets():
+    global trinketDict
+    temp_dict = get_trinkets_dict()
+    if temp_dict and len(temp_dict.keys()) > 0:
+        trinketDict = temp_dict
+
+
 @aiocron.crontab("* * * * *")
 async def update_front_page():
     frontpage_channel = bot.get_channel(frontpage_channel_id)
@@ -400,4 +427,5 @@ def generateTopXEmbed(num):
 if __name__ == "__main__":
     leaderboardBot = LeaderBoardBot()
     buddyDict = get_buddy_dict()
+    trinketDict = get_trinkets_dict()
     bot.run(os.environ["DISCORD_TOKEN"])
