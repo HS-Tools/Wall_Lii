@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from twitchio.ext import commands
 
 from buddies import easter_egg_buddies_dict
-from buddy_fetch import get_buddy_dict, parse_buddy
+from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
 from leaderboardBot import LeaderBoardBot
 from parseRegion import isRegion
 
@@ -20,6 +20,7 @@ leaderboardBot = LeaderBoardBot()
 initialChannels = leaderboardBot.getChannels()
 greetingChannels = []
 buddyDict = get_buddy_dict()
+trinketDict = get_trinkets_dict()
 
 helpString = "HeyGuys I'm a bot that checks the BG leaderboard. My commands are !bgrank [name], !bgdaily [name], !yesterday [name], !buddy [hero], !goldenbuddy [hero], !buddygold [tier] !bgpatch and !calendar"
 
@@ -104,6 +105,18 @@ async def getBuddy(ctx):
 
     if results:
         await ctx.send(results[1])
+
+
+@twitchBot.command(name="trinket")
+async def getTrinket(ctx):
+    if len(ctx.message.content.split(" ")) < 2:
+        return
+
+    trinketName = " ".join(ctx.message.content.split(" ")[1:]).lower()
+    results = parse_trinket(trinketName, trinketDict)
+
+    if results:
+        await ctx.send(results)
 
 
 @twitchBot.command(name="buddygold")
@@ -351,5 +364,12 @@ if __name__ == "__main__":
         temp_dict = get_buddy_dict()
         if temp_dict and len(temp_dict.keys()) > 0:
             buddyDict = temp_dict
+
+    @aiocron.crontab("10 * * * *")  ## Every hour check for new trinkets
+    async def check_for_new_trinkets():
+        global trinketDict
+        temp_dict = get_trinkets_dict()
+        if temp_dict and len(temp_dict.keys()) > 0:
+            trinketDict = temp_dict
 
     twitchBot.run()

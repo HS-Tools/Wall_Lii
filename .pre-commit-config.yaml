@@ -15,20 +15,20 @@ repos:
     hooks:
       - id: python-check-blanket-noqa
 
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
-
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.5.1
     hooks:
       - id: python-check-blanket-noqa
 
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.9.2
+  - repo: https://github.com/psf/black
+    rev: 22.10.0 # Use the latest version of Black
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0 # Use the latest version of isort
     hooks:
       - id: isort
+        args: ["--profile", "black"]
 
   # Flake8 has 894 (and counting) violations as of 5a84590ddd01c60877b8ac461b6514d23338da84.
   # Addressing these and using flake8 moving forward is an aspirational goal.
