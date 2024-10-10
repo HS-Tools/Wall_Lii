@@ -1,6 +1,4 @@
-import logging
 import os
-import traceback
 
 import aiocron
 from dotenv import load_dotenv
