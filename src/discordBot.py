@@ -308,18 +308,6 @@ async def top16(ctx):
     await ctx.respond(embed=embed)
 
 
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Edit !bgpatch command on twitch for wall_lii",
-)
-@discord.option(
-    "patch_link", description="Enter the channel you'd like to delete wall_lii from"
-)
-async def edit_bg_patch(ctx, patch_link: str):
-    leaderboardBot.editPatchLink(patch_link)
-    await ctx.respond(f"!bgpatch is now {patch_link}")
-
-
 # @bot.slash_command(
 #     guild_ids=[liiDiscordId, compHSDiscordId],
 #     description="Secret test command for lii",
