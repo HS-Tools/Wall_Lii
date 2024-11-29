@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from concurrent.futures import as_completed
 from datetime import datetime
 
@@ -22,55 +23,73 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
 
         if account != None and account["accountid"] != None:
             name = account["accountid"].encode("utf-8").lower().decode("utf-8")
-            output[name] = {"rank": account["rank"], "rating": account["rating"]}
+            output[name] = {
+                "rank": account["rank"],
+                "rating": account["rating"],
+                "lastUpdated": updatedTime,
+            }
 
-    return output, updatedTime, season
+    return output
 
 
 def getLeaderboardSnapshot(
     regions=["US", "EU", "AP"],
-    gameMode="BG",
+    gameModes=["battlegrounds", "battlegroundsduo"],
     season=13,
     verbose=False,
-    total_count=1000,
+    total_count=25,
 ):
     PLAYERS_PER_PAGE = 25
-    ratingsDict = {region: {} for region in regions}
-    updatedDict = {region: None for region in regions}  # replace None with current time
-
-    # game mode key changed from BG to battlegrounds
-    if gameMode == "BG":
-        gameMode = "battlegrounds"
+    ratingsDict = {region: {mode: {} for mode in gameModes} for region in regions}
+    # updatedDict = {region: {mode: None for mode in gameModes} for region in regions}  # replace None with current time
+    name_count = {
+        region: defaultdict(int) for region in regions
+    }  # Track name counts per region
 
     for region in regions:
-        username_set = {""}
+        for gameMode in gameModes:
+            apiUrl = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
+            if season is not None:  # Used for test code to pull known season results
+                apiUrl = f"{apiUrl}&seasonId={season}"
 
-        ## not supplying season always gets latest
-        apiUrl = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
-        if season != None:  ## used for test code to pull a known season results
-            apiUrl = f"{apiUrl}&seasonId={season}"
+            # Generate page URLs for each mode
+            pageUrls = [
+                f"{apiUrl}&page={page}"
+                for page in range(1, (total_count // PLAYERS_PER_PAGE) + 1)
+            ]
 
-        pageUrls = []
-        for page in range(1, (total_count // PLAYERS_PER_PAGE) + 1):
-            pageUrls.append(f"{apiUrl}&page={page}")
+            with FuturesSession() as session:
+                futures = [session.get(url) for url in pageUrls]
+                for future in as_completed(futures):
+                    r = future.result()
 
-        with FuturesSession() as session:
-            futures = [session.get(url) for url in pageUrls]
-            for future in as_completed(futures):
-                r = future.result()
-                rDict, updatedDict[region], season = parseSnapshot(
-                    r.text, verbose, region
-                )
-                for key in rDict:
-                    if key not in username_set:
-                        username_set.add(key)
-                        ratingsDict[region][key] = rDict[key]
+                    # Parse snapshot and validate response
+                    if r.status_code == 200 and r.text:
+                        rDict = parseSnapshot(r.text, verbose, region)
 
-    return ratingsDict, updatedDict, season
+                        # Process leaderboard data for the current mode
+                        for key, player_data in rDict.items():
+                            # Apply identifier suffixing
+                            base_name = key
+                            if base_name in name_count[region]:
+                                name_count[region][base_name] += 1
+                                key = f"{base_name}{name_count[region][base_name]}"
+                            else:
+                                name_count[region][base_name] = 1
+
+                            # Add game mode to player data
+                            player_data["gameMode"] = gameMode
+
+                            # Store player data if not already added
+                            if key not in ratingsDict[region][gameMode]:
+                                ratingsDict[region][gameMode][key] = player_data
+
+    return ratingsDict
 
 
 if __name__ == "__main__":  ## run the function if this program is called
-    ratingsDict, lastUpdated, season = getLeaderboardSnapshot()
-    # for region in ["US", "EU", "AP"]:
-    #     for account in ratingsDict[region].keys():
-    #         print("\t", ratingsDict[region][account])
+    ratingsDict = getLeaderboardSnapshot()
+    for region in ["US", "EU", "AP"]:
+        for account in ratingsDict[region].keys():
+            print("\t", ratingsDict[region][account])
+            # print("\t", lastUpdated[region][account])
