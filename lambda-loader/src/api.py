@@ -26,7 +26,7 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
             output[name] = {
                 "rank": account["rank"],
                 "rating": account["rating"],
-                "lastUpdated": updatedTime,
+                # "lastUpdated": updatedTime,
             }
 
     return output
@@ -89,7 +89,8 @@ def getLeaderboardSnapshot(
 
 if __name__ == "__main__":  ## run the function if this program is called
     ratingsDict = getLeaderboardSnapshot()
-    for region in ["US", "EU", "AP"]:
-        for account in ratingsDict[region].keys():
-            print("\t", ratingsDict[region][account])
-            # print("\t", lastUpdated[region][account])
+    print(ratingsDict)
+    # for region in ["US", "EU", "AP"]:
+    #     for account in ratingsDict[region].keys():
+    #         print("\t", ratingsDict[region][account])
+    #         # print("\t", lastUpdated[region][account])
