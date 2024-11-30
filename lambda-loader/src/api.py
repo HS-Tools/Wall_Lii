@@ -1,8 +1,11 @@
 import json
+import time
 from collections import defaultdict
 from concurrent.futures import as_completed
 from datetime import datetime
+from typing import Dict, Optional
 
+import requests
 from requests_futures.sessions import FuturesSession
 
 
@@ -33,58 +36,43 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
 
 
 def getLeaderboardSnapshot(
-    regions=["US", "EU", "AP"],
-    gameModes=["battlegrounds", "battlegroundsduo"],
-    season=13,
-    verbose=False,
-    total_count=25,
-):
-    PLAYERS_PER_PAGE = 25
-    ratingsDict = {region: {mode: {} for mode in gameModes} for region in regions}
-    # updatedDict = {region: {mode: None for mode in gameModes} for region in regions}  # replace None with current time
-    name_count = {
-        region: defaultdict(int) for region in regions
-    }  # Track name counts per region
+    region: str = None, game_type: str = "battlegrounds"
+) -> Dict:
+    """
+    Get leaderboard data with rate limiting.
+    If region is None, fetches all regions.
+    """
+    base_url = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
+    regions = ["US", "EU", "AP"] if region is None else [region]
 
-    for region in regions:
-        for gameMode in gameModes:
-            apiUrl = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData?region={region}&leaderboardId={gameMode}"
-            if season is not None:  # Used for test code to pull known season results
-                apiUrl = f"{apiUrl}&seasonId={season}"
+    all_data = {}
+    for r in regions:
+        try:
+            url = f"{base_url}?region={r}&leaderboardId={game_type}"
+            response = requests.get(url)
 
-            # Generate page URLs for each mode
-            pageUrls = [
-                f"{apiUrl}&page={page}"
-                for page in range(1, (total_count // PLAYERS_PER_PAGE) + 1)
-            ]
+            if response.status_code == 429:  # Too Many Requests
+                retry_after = int(response.headers.get("Retry-After", 60))
+                print(f"Rate limited. Waiting {retry_after} seconds...")
+                time.sleep(retry_after)
+                response = requests.get(url)  # Retry once
 
-            with FuturesSession() as session:
-                futures = [session.get(url) for url in pageUrls]
-                for future in as_completed(futures):
-                    r = future.result()
+            response.raise_for_status()
+            data = parseSnapshot(response.text, region=r)  # Parse the response
 
-                    # Parse snapshot and validate response
-                    if r.status_code == 200 and r.text:
-                        rDict = parseSnapshot(r.text, verbose, region)
+            # Add to our results
+            all_data[r] = {game_type: data}
 
-                        # Process leaderboard data for the current mode
-                        for key, player_data in rDict.items():
-                            # Apply identifier suffixing
-                            base_name = key
-                            if base_name in name_count[region]:
-                                name_count[region][base_name] += 1
-                                key = f"{base_name}{name_count[region][base_name]}"
-                            else:
-                                name_count[region][base_name] = 1
+            # Voluntary rate limiting - sleep between regions
+            if len(regions) > 1:
+                print(f"Sleeping 2 seconds between regions...")
+                time.sleep(2)
 
-                            # Add game mode to player data
-                            player_data["gameMode"] = gameMode
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching {r} leaderboard: {e}")
+            continue
 
-                            # Store player data if not already added
-                            if key not in ratingsDict[region][gameMode]:
-                                ratingsDict[region][gameMode][key] = player_data
-
-    return ratingsDict
+    return all_data
 
 
 if __name__ == "__main__":  ## run the function if this program is called
