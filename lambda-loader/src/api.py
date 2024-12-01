@@ -8,6 +8,10 @@ from typing import Dict, Optional
 import requests
 from requests_futures.sessions import FuturesSession
 
+from logger import setup_logger
+
+logger = setup_logger("api")
+
 
 def parseSnapshot(text, verbose=False, region="Unknown"):
     output = {}
@@ -31,7 +35,11 @@ def getLeaderboardSnapshot(
     """Get leaderboard data with rate limiting and pagination."""
     base_url = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
     regions = ["US", "EU", "AP"] if region is None else [region]
-    max_players = 100  # Fetch top 100 players
+    max_players = 1000  # Fetch top 100 players
+
+    logger.info(
+        "Fetching leaderboard data", extra={"region": region, "game_type": game_type}
+    )
 
     all_data = {}
     for r in regions:

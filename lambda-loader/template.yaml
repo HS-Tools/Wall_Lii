@@ -41,7 +41,7 @@ Resources:
           AttributeType: "S"
         - AttributeName: "timestamp"
           AttributeType: "S"
-        - AttributeName: "region_key"
+        - AttributeName: "server_key"
           AttributeType: "S"
         - AttributeName: "rank"
           AttributeType: "N"
@@ -53,7 +53,7 @@ Resources:
       GlobalSecondaryIndexes:
         - IndexName: RankIndex
           KeySchema:
-            - AttributeName: "region_key"
+            - AttributeName: "server_key"
               KeyType: "HASH"
             - AttributeName: "rank"
               KeyType: "RANGE"
