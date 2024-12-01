@@ -3,9 +3,7 @@ from datetime import datetime, timedelta
 
 import boto3
 
-
-def view_table_contents(table_name="HearthstoneLeaderboard"):
-    # Create a DynamoDB client for local instance
+try:
     dynamodb = boto3.resource(
         "dynamodb",
         endpoint_url="http://localhost:8000",
@@ -13,7 +11,14 @@ def view_table_contents(table_name="HearthstoneLeaderboard"):
         aws_access_key_id="dummy",
         aws_secret_access_key="dummy",
     )
+    print("Debug - Successfully established DynamoDB connection")
+except Exception as e:
+    print(f"Error establishing DynamoDB connection: {e}")
+    raise  # Re-raise the exception to prevent the module from loading with a bad connection
 
+
+def view_table_contents(table_name="HearthstoneLeaderboard"):
+    # Use the global dynamodb connection
     table = dynamodb.Table(table_name)
 
     # Scan the table
@@ -29,128 +34,180 @@ def view_table_contents(table_name="HearthstoneLeaderboard"):
 
 
 def get_player_stats(
-    player_name, region, game_type="battlegrounds", table_name="HearthstoneLeaderboard"
+    player_name,
+    region=None,
+    game_type="battlegrounds",
+    table_name="HearthstoneLeaderboard",
 ):
-    """
-    Get current stats for a player.
-    """
-    dynamodb = boto3.resource(
-        "dynamodb",
-        endpoint_url="http://localhost:8000",
-        region_name="us-west-2",
-        aws_access_key_id="dummy",
-        aws_secret_access_key="dummy",
+    """Get current stats for a player. If region is None, returns highest MMR across all regions."""
+    print(
+        f"Debug - get_player_stats input: player={player_name}, region={region}, game_type={game_type}"
     )
 
+    # Use the global dynamodb connection
     table = dynamodb.Table(table_name)
 
-    # Query using the PlayerNameIndex
-    response = table.query(
-        IndexName="PlayerNameIndex",
-        KeyConditionExpression="player_name = :name",
-        ExpressionAttributeValues={":name": player_name},
-        ScanIndexForward=False,  # Get most recent first
-        Limit=1,
-    )
+    # If region is specified, query just that region
+    if region:
+        player_key = f"{player_name.lower()}#{region}#{game_type}"
+        print(f"Debug - Querying with player_key: {player_key}")
+        response = table.query(
+            KeyConditionExpression="player_key = :pk",
+            ExpressionAttributeValues={":pk": player_key},
+            ScanIndexForward=False,  # Get most recent first
+            Limit=1,
+        )
+        print(f"Debug - Query response: {response}")
 
-    if not response["Items"]:
-        return f"No data found for player {player_name}"
+        if not response["Items"]:
+            return f"No data found for player {player_name} in {region}"
 
-    item = response["Items"][0]
+        item = response["Items"][0]
+        return {
+            "name": item["player_name"],
+            "rank": item["rank"],
+            "rating": item["MMR"],
+            "region": item["region"],
+            "timestamp": item["timestamp"],
+        }
+
+    # If no region specified, check all regions
+    all_items = []
+    for region in ["US", "EU", "AP"]:
+        player_key = f"{player_name.lower()}#{region}#{game_type}"
+        response = table.query(
+            KeyConditionExpression="player_key = :pk",
+            ExpressionAttributeValues={":pk": player_key},
+            ScanIndexForward=False,  # Get most recent first
+            Limit=1,
+        )
+        if response["Items"]:
+            all_items.append(response["Items"][0])  # Already sorted by timestamp
+
+    if not all_items:
+        return f"No data found for player {player_name} in any region"
+
+    # Find entry with highest MMR among most recent entries
+    highest_mmr_item = max(all_items, key=lambda x: x["MMR"])
     return {
-        "name": item["player_name"],
-        "rank": item["rank"],
-        "rating": item["MMR"],
-        "region": item["region"],
-        "timestamp": item["lastUpdated"],
+        "name": highest_mmr_item["player_name"],
+        "rank": highest_mmr_item["rank"],
+        "rating": highest_mmr_item["MMR"],
+        "region": highest_mmr_item["region"],
+        "timestamp": highest_mmr_item["timestamp"],
     }
 
 
 def get_player_by_rank(
     rank, region, game_type="battlegrounds", table_name="HearthstoneLeaderboard"
 ):
-    """
-    Get player at a specific rank.
-    """
-    dynamodb = boto3.resource(
-        "dynamodb",
-        endpoint_url="http://localhost:8000",
-        region_name="us-west-2",
-        aws_access_key_id="dummy",
-        aws_secret_access_key="dummy",
-    )
+    """Get player at a specific rank."""
+    print(f"Debug - Looking up rank {rank} in {region} {game_type}")
 
-    table = dynamodb.Table(table_name)
-    rank_padded = str(rank).zfill(3)
+    try:
+        table = dynamodb.Table(table_name)
+        region_key = f"{region}#{game_type}"
 
-    # Query the latest entry for this rank
-    response = table.query(
-        KeyConditionExpression="partition_key = :pk AND begins_with(sort_key, :rank)",
-        ExpressionAttributeValues={
-            ":pk": f"{region}#{game_type}",
-            ":rank": rank_padded,
-        },
-        ScanIndexForward=False,  # Get most recent first
-        Limit=1,
-    )
+        # Convert rank to Decimal if it's not already
+        if isinstance(rank, str):
+            rank = int(rank)
 
-    if not response["Items"]:
-        return f"No player found at rank {rank} for {region}"
+        response = table.query(
+            IndexName="RankIndex",
+            KeyConditionExpression="region_key = :rk AND #r = :r",
+            ExpressionAttributeNames={
+                "#r": "rank"  # Use expression attribute name for reserved keyword
+            },
+            ExpressionAttributeValues={":rk": region_key, ":r": rank},
+            ScanIndexForward=False,  # Get most recent first
+            Limit=1,
+        )
 
-    item = response["Items"][0]
-    return {
-        "name": item["player_name"],
-        "rank": item["rank"],
-        "rating": item["MMR"],
-        "region": item["region"],
-        "timestamp": item["lastUpdated"],
-    }
+        if not response.get("Items"):
+            print(f"Debug - No items found for rank {rank} in {region}")
+            return f"No player found at rank {rank} for {region}"
+
+        item = response["Items"][0]
+        result = {
+            "name": item["player_name"],
+            "rank": item["rank"],
+            "rating": item["MMR"],
+            "region": item["region"],
+            "timestamp": item["timestamp"],
+        }
+        return result
+
+    except Exception as e:
+        print(f"Debug - Error in get_player_by_rank: {str(e)}")
+        return f"Error looking up rank {rank}: {str(e)}"
 
 
 def get_player_mmr_changes(
-    player_name,
-    region,
+    player_name_or_rank,
+    region=None,
     date=None,
     game_type="battlegrounds",
     table_name="HearthstoneLeaderboard",
 ):
-    """
-    Get MMR changes for a player on a specific date.
-    """
-    dynamodb = boto3.resource(
-        "dynamodb",
-        endpoint_url="http://localhost:8000",
-        region_name="us-west-2",
-        aws_access_key_id="dummy",
-        aws_secret_access_key="dummy",
-    )
+    """Get MMR changes for a player in the last 24 hours."""
 
+    # First determine if this is a rank lookup
+    try:
+        rank = int(player_name_or_rank)
+        if region is None:
+            return "Region is required when looking up by rank"
+        # Get the player at this rank
+        player_result = get_player_by_rank(rank, region, game_type, table_name)
+        if isinstance(player_result, str):  # Error message
+            return player_result
+        player_name = player_result["name"]
+    except ValueError:
+        # Not a number, treat as player name
+        player_name = player_name_or_rank
+
+    print(f"Debug - Getting MMR changes for player: {player_name}")
+
+    # If no region specified, get the player's highest MMR region
+    if region is None:
+        stats = get_player_stats(player_name)
+        if isinstance(stats, str):  # Error message
+            return stats
+        region = stats["region"]
+        print(f"Debug - Using highest MMR region: {region}")
+
+    # Use the global dynamodb connection
     table = dynamodb.Table(table_name)
 
-    # If no date specified, use today
-    if date is None:
-        date = datetime.now().strftime("%Y-%m-%d")
+    # Calculate timestamps for last 24 hours
+    now = datetime.now()
+    yesterday = now - timedelta(hours=24)
 
-    start_time = f"{date}T00:00:00"
-    end_time = f"{date}T23:59:59"
+    start_time = yesterday.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    end_time = now.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    print(f"Debug - Querying between {start_time} and {end_time}")
 
-    # Query using the PlayerNameIndex
+    # Get all entries for this player/region in last 24 hours
+    player_key = f"{player_name.lower()}#{region}#{game_type}"
     response = table.query(
-        IndexName="PlayerNameIndex",
-        KeyConditionExpression="player_name = :name AND sort_key BETWEEN :start AND :end",
-        FilterExpression="#region = :region",
-        ExpressionAttributeNames={
-            "#region": "region"  # 'region' is a reserved word in DynamoDB
-        },
+        KeyConditionExpression="player_key = :pk AND #ts BETWEEN :start AND :end",
+        ExpressionAttributeNames={"#ts": "timestamp"},
         ExpressionAttributeValues={
-            ":name": player_name,
-            ":region": region,
-            ":start": f"000#{start_time}",
-            ":end": f"999#{end_time}",
+            ":pk": player_key,
+            ":start": start_time,
+            ":end": end_time,
         },
     )
 
-    if not response["Items"]:
+    print(f"Debug - Found {len(response['Items'])} total entries")
+    print(f"Debug - Raw entries: {response['Items']}")
+
+    # Filter by last 24 hours - no need for this anymore since we used BETWEEN in query
+    recent_items = response["Items"]  # Already filtered by timestamp
+
+    print(f"Debug - Found {len(recent_items)} entries in last 24 hours")
+    print(f"Debug - Recent entries: {recent_items}")
+
+    if not recent_items:
         return {
             "name": player_name,
             "region": region,
@@ -162,7 +219,8 @@ def get_player_mmr_changes(
         }
 
     # Sort by timestamp
-    games = sorted(response["Items"], key=lambda x: x["lastUpdated"])
+    games = sorted(recent_items, key=lambda x: x["timestamp"])
+    print(f"Debug - Sorted games: {games}")
 
     # Calculate MMR changes
     mmr_changes = []
@@ -170,8 +228,9 @@ def get_player_mmr_changes(
         change = games[i]["MMR"] - games[i - 1]["MMR"]
         if change != 0:  # Only count non-zero changes
             mmr_changes.append(change)
+            print(f"Debug - Found MMR change: {change}")
 
-    return {
+    result = {
         "name": player_name,
         "region": region,
         "num_games": len(mmr_changes),
@@ -180,6 +239,8 @@ def get_player_mmr_changes(
         "net_change": games[-1]["MMR"] - games[0]["MMR"],
         "mmr_changes": mmr_changes,
     }
+    print(f"Debug - Final result: {result}")
+    return result
 
 
 def format_chat_response(query_type, result):
@@ -274,47 +335,58 @@ def format_chat_response(query_type, result):
 
 
 def get_weekly_progress(
-    player_name,
-    region,
+    player_name_or_rank,
+    region=None,
     end_date=None,
     game_type="battlegrounds",
     days=7,
     table_name="HearthstoneLeaderboard",
 ):
-    """
-    Get player's MMR progress over the last week or specified period.
-    """
-    dynamodb = boto3.resource(
-        "dynamodb",
-        endpoint_url="http://localhost:8000",
-        region_name="us-west-2",
-        aws_access_key_id="dummy",
-        aws_secret_access_key="dummy",
-    )
+    """Get weekly progress for a player."""
+    # First determine if this is a rank lookup
+    try:
+        rank = int(player_name_or_rank)
+        if region is None:
+            return "Region is required when looking up by rank"
+        # Get the player at this rank
+        player_result = get_player_by_rank(rank, region, game_type, table_name)
+        if isinstance(player_result, str):  # Error message
+            return player_result
+        player_name = player_result["name"]
+    except ValueError:
+        # Not a number, treat as player name
+        player_name = player_name_or_rank
 
+    # If no region specified, get the player's highest MMR region
+    if region is None:
+        stats = get_player_stats(player_name)
+        if isinstance(stats, str):  # Error message
+            return stats
+        region = stats["region"]
+        print(f"Debug - Using highest MMR region: {region}")
+
+    # Use the global dynamodb connection
     table = dynamodb.Table(table_name)
+    player_key = f"{player_name.lower()}#{region}#{game_type}"
 
     # Calculate date range
-    if end_date is None:
-        end_date = datetime.now().date()
+    if end_date:
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
     else:
-        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=days)
 
-    start_date = end_date - timedelta(days=days - 1)
+    start_time = start_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    end_time = end_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
-    # Query using the PlayerNameIndex
+    # Query all entries in date range
     response = table.query(
-        IndexName="PlayerNameIndex",
-        KeyConditionExpression="player_name = :name AND sort_key BETWEEN :start AND :end",
-        FilterExpression="#region = :region",
-        ExpressionAttributeNames={
-            "#region": "region"  # 'region' is a reserved word in DynamoDB
-        },
+        KeyConditionExpression="player_key = :pk AND #ts BETWEEN :start AND :end",
+        ExpressionAttributeNames={"#ts": "timestamp"},
         ExpressionAttributeValues={
-            ":name": player_name,
-            ":region": region,
-            ":start": f"000#{start_date.strftime('%Y-%m-%d')}T00:00:00",
-            ":end": f"999#{end_date.strftime('%Y-%m-%d')}T23:59:59",
+            ":pk": player_key,
+            ":start": start_time,
+            ":end": end_time,
         },
     )
 
@@ -326,25 +398,26 @@ def get_weekly_progress(
             "end_mmr": None,
             "total_net_change": 0,
             "daily_progress": [],
-            "end_date": end_date.strftime("%Y-%m-%d"),
+            "end_date": end_dt.strftime("%Y-%m-%d"),
         }
 
     # Group entries by date
     daily_entries = defaultdict(list)
     for item in response["Items"]:
-        date = datetime.strptime(item["lastUpdated"], "%Y-%m-%dT%H:%M:%S.%f").date()
+        date = datetime.strptime(item["timestamp"], "%Y-%m-%dT%H:%M:%S.%f").date()
         daily_entries[date].append(item)
 
     # Calculate daily progress
     daily_progress = []
-    current_date = start_date
+    current_date = start_dt.date()  # Convert to date for comparison
     start_mmr = None
     end_mmr = None
 
-    while current_date <= end_date:
+    while current_date <= end_dt.date():  # Compare dates not datetimes
         if current_date in daily_entries:
             day_games = sorted(
-                daily_entries[current_date], key=lambda x: x["lastUpdated"]
+                daily_entries[current_date],
+                key=lambda x: x["timestamp"],  # Use timestamp
             )
             day_start_mmr = day_games[0]["MMR"]
             day_end_mmr = day_games[-1]["MMR"]
@@ -372,7 +445,7 @@ def get_weekly_progress(
         "end_mmr": end_mmr,
         "total_net_change": end_mmr - start_mmr if end_mmr and start_mmr else 0,
         "daily_progress": daily_progress,
-        "end_date": end_date.strftime("%Y-%m-%d"),
+        "end_date": end_dt.strftime("%Y-%m-%d"),
     }
 
 
@@ -445,33 +518,27 @@ def get_weekly_progress_by_rank(
 def get_most_active_player(
     region, game_type="battlegrounds", table_name="HearthstoneLeaderboard"
 ):
-    """
-    Find the player with the most games played in the last 24 hours.
-    """
-    dynamodb = boto3.resource(
-        "dynamodb",
-        endpoint_url="http://localhost:8000",
-        region_name="us-west-2",
-        aws_access_key_id="dummy",
-        aws_secret_access_key="dummy",
-    )
-
+    """Get the most active player in the last 24 hours."""
+    # Use the global dynamodb connection
     table = dynamodb.Table(table_name)
-    player_games = defaultdict(list)
+    region_key = f"{region}#{game_type}"
 
-    # Calculate timestamp for 24 hours ago
+    # Get all entries for this region/game_type in last 24 hours
     now = datetime.now()
-    yesterday = now - timedelta(days=1)
+    yesterday = now - timedelta(hours=24)
+    start_time = yesterday.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    end_time = now.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
-    print(f"\nQuerying {region} {game_type} from {yesterday} to {now}")
-
-    # Query for all entries in the last 24 hours for this region and game type
+    # Query using RankIndex to get all players
     response = table.query(
-        KeyConditionExpression="partition_key = :pk AND sort_key BETWEEN :start AND :end",
+        IndexName="RankIndex",
+        KeyConditionExpression="region_key = :rk",
+        FilterExpression="#ts BETWEEN :start AND :end",
+        ExpressionAttributeNames={"#ts": "timestamp"},
         ExpressionAttributeValues={
-            ":pk": f"{region}#{game_type}",
-            ":start": f"000#{yesterday.strftime('%Y-%m-%dT%H:%M:%S')}",
-            ":end": f"999#{now.strftime('%Y-%m-%dT%H:%M:%S')}",
+            ":rk": region_key,
+            ":start": start_time,
+            ":end": end_time,
         },
     )
 
@@ -481,6 +548,7 @@ def get_most_active_player(
     print(f"Found {len(response['Items'])} total entries")
 
     # Group entries by player
+    player_games = defaultdict(list)
     for item in response["Items"]:
         player_games[item["player_name"]].append(item)
 
@@ -489,17 +557,17 @@ def get_most_active_player(
     # Process each player's games and count actual MMR changes
     player_real_games = {}
     for player_name, games in player_games.items():
-        # Sort by lastUpdated
-        sorted_games = sorted(games, key=lambda x: x["lastUpdated"])
+        # Sort by timestamp
+        sorted_games = sorted(games, key=lambda x: x["timestamp"])
         mmr_changes = []
 
         # Look for actual MMR changes
         for i in range(1, len(sorted_games)):
             mmr_diff = sorted_games[i]["MMR"] - sorted_games[i - 1]["MMR"]
             time_diff = datetime.strptime(
-                sorted_games[i]["lastUpdated"], "%Y-%m-%dT%H:%M:%S.%f"
+                sorted_games[i]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f"
             ) - datetime.strptime(
-                sorted_games[i - 1]["lastUpdated"], "%Y-%m-%dT%H:%M:%S.%f"
+                sorted_games[i - 1]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f"
             )
 
             # Only count as a game if:
@@ -547,81 +615,60 @@ def get_most_active_player(
     }
 
 
+def debug_print_all_items(table_name="HearthstoneLeaderboard"):
+    """Print all items in the table for debugging"""
+    # Use the global dynamodb connection
+    table = dynamodb.Table(table_name)
+    response = table.scan()
+    items = response["Items"]
+
+    print("\nAll items in table:")
+    print(f"Found {len(items)} items")
+    for item in items:
+        print(f"\nplayer_key: {item['player_key']}")
+        print(f"timestamp: {item['timestamp']}")
+        print(f"player_name: {item['player_name']}")
+        print(f"region: {item['region']}")
+        print(f"rank: {item['rank']}")
+        print(f"MMR: {item['MMR']}")
+
+
+def debug_print_player_entries(player_name, table_name="HearthstoneLeaderboard"):
+    """Print all entries for a specific player"""
+    # Use the global dynamodb connection
+    table = dynamodb.Table(table_name)
+
+    # Query each region/game_type combination
+    regions = ["US", "EU", "AP"]
+    game_types = ["battlegrounds", "battlegroundsduo"]
+
+    all_items = []
+    for region in regions:
+        for game_type in game_types:
+            player_key = f"{player_name.lower()}#{region}#{game_type}"
+            response = table.query(
+                KeyConditionExpression="player_key = :pk",
+                ExpressionAttributeValues={":pk": player_key},
+            )
+            all_items.extend(response["Items"])
+
+    print(f"\nFound {len(all_items)} entries for player {player_name}:")
+    for item in all_items:
+        print("\n-------------------")
+        print(f"timestamp: {item['timestamp']}")
+        print(f"region: {item['region']}")
+        print(f"rank: {item['rank']}")
+        print(f"MMR: {item['MMR']}")
+
+
+def debug_print_table_indexes(table_name="HearthstoneLeaderboard"):
+    table = dynamodb.Table(table_name)
+    print("\nTable Indexes:")
+    for index in table.global_secondary_indexes:
+        print(f"Index Name: {index['IndexName']}")
+        print(f"Key Schema: {index['KeySchema']}")
+
+
 if __name__ == "__main__":
-    # Example usage:
-    player_name = "jeef"
-    server = "US"
-    rank = 1
-
-    print("\n=== Player Stats Examples ===")
-    # By player name
-    result = get_player_stats(player_name, server, game_type="battlegrounds")
-    print("\nRegular Battlegrounds Stats (by name):")
-    print("---------------------------")
-    if isinstance(result, dict):
-        for key, value in result.items():
-            print(f"{key}: {value}")
-    else:
-        print(result)
-
-    # By rank
-    rank_result = get_player_by_rank(rank, server, game_type="battlegrounds")
-    print("\nRegular Battlegrounds Stats (by rank):")
-    print("---------------------------")
-    if isinstance(rank_result, dict):
-        for key, value in rank_result.items():
-            print(f"{key}: {value}")
-    else:
-        print(rank_result)
-
-    print("\n=== Daily MMR Changes Examples ===")
-    # By player name
-    mmr_result = get_player_mmr_changes(player_name, server)
-    print("\nMMR Changes (by name):")
-    print(format_chat_response("mmr_changes", mmr_result))
-
-    # By rank
-    rank_mmr_result = get_player_mmr_changes_by_rank(rank, server)
-    print("\nMMR Changes (by rank):")
-    print(format_chat_response("mmr_changes", rank_mmr_result))
-
-    print("\n=== Weekly Progress Examples ===")
-    # By player name (default to last 7 days)
-    weekly_result = get_weekly_progress(player_name, server)
-    print("\nWeekly Progress (by name, default date range):")
-    print(format_chat_response("weekly_progress", weekly_result))
-
-    # By rank (default to last 7 days)
-    rank_weekly_result = get_weekly_progress_by_rank(rank, server)
-    print("\nWeekly Progress (by rank, default date range):")
-    print(format_chat_response("weekly_progress", rank_weekly_result))
-
-    # By player name (specific end date)
-    weekly_result = get_weekly_progress(player_name, server, end_date="2024-11-30")
-    print("\nWeekly Progress (by name, specific date):")
-    print(format_chat_response("weekly_progress", weekly_result))
-
-    # By rank (specific end date)
-    rank_weekly_result = get_weekly_progress_by_rank(
-        rank, server, end_date="2024-11-30"
-    )
-    print("\nWeekly Progress (by rank, specific date):")
-    print(format_chat_response("weekly_progress", rank_weekly_result))
-
-    print("\n=== Different Game Types ===")
-    # Example with Duo Queue
-    duo_result = get_player_stats(player_name, server, game_type="battlegroundsduo")
-    print("\nDuo Queue Stats:")
-    print(format_chat_response("player_stats", duo_result))
-
-    # Example with different regions
-    eu_result = get_player_by_rank(1, "EU", game_type="battlegrounds")
-    print("\nEU Region Example:")
-    print(format_chat_response("rank_lookup", eu_result))
-
-    print("\n=== Most Active Player Examples ===")
-    # Check most active players across all regions in regular BGs
-    for region in ["US", "EU", "AP"]:
-        active_result = get_most_active_player(region, "battlegrounds")
-        print(f"\nMost Active Player ({region}):")
-        print(format_chat_response("most_active", active_result))
+    debug_print_table_indexes()
+    debug_print_player_entries("shadybunny")

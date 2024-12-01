@@ -3,10 +3,11 @@ import time
 from datetime import date, datetime
 from datetime import time as dtime
 
-import api
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 from pytz import timezone
+
+import api
 
 timeToken = "api-last-updated-time-token-981q8u"  ## is is just a unique token for storing last updated time
 
