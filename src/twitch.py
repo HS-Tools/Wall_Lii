@@ -7,7 +7,7 @@ from twitchio.ext import commands
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
 from leaderboardBot import LeaderboardBot
-from parseRegion import isRegion
+from parseRegion import isServer
 
 # Override twitchio error functions to stop spam in logs
 
@@ -22,7 +22,14 @@ greetingChannels = []
 buddyDict = get_buddy_dict()
 trinketDict = get_trinkets_dict()
 
-helpString = "HeyGuys I'm a bot that checks the BG leaderboard. My commands are !bgrank [name], !bgdaily [name], !yesterday [name], !buddy [hero], !goldenbuddy [hero], !buddygold [tier] !bgpatch and !calendar"
+helpString = (
+    "HeyGuys I'm a bot that checks the BG leaderboard. Commands: "
+    "!bgrank/!duorank [name/rank] [region], "
+    "!bgdaily/!duodaily [name] [region], "
+    "!bgweekly/!duoweekly [name] [region], "
+    "!buddy [hero], !goldenbuddy [hero], !buddygold [tier], "
+    "!bgpatch and !calendar"
+)
 
 twitchBot = commands.Bot(
     token=os.environ["TMI_TOKEN"],
@@ -84,7 +91,7 @@ async def call(ctx, func, name, *args):
 
     response = func(*args)
     if len(args) >= 2:
-        if not isRegion(args[1]):
+        if not isServer(args[1]):
             response = "Invalid region provided.\n" + response
 
     await ctx.send(f"{response} TEST")
@@ -340,6 +347,28 @@ async def duorank(ctx):
         await ctx.send("Names can't start with '!' TEST")
         return
     response = leaderboardBot.get_rank(*args, game_type="battlegroundsduo")
+    await ctx.send(f"{response} TEST")
+
+
+@twitchBot.command(name="duodaily")
+async def duodaily(ctx):
+    """Get daily stats for Duo mode"""
+    args = parseArgs(ctx)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!' TEST")
+        return
+    response = leaderboardBot.get_daily_stats(*args, game_type="battlegroundsduo")
+    await ctx.send(f"{response} TEST")
+
+
+@twitchBot.command(name="duoweekly")
+async def duoweekly(ctx):
+    """Get weekly stats for Duo mode"""
+    args = parseArgs(ctx)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!' TEST")
+        return
+    response = leaderboardBot.get_weekly_stats(*args, game_type="battlegroundsduo")
     await ctx.send(f"{response} TEST")
 
 

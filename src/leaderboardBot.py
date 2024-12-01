@@ -6,7 +6,6 @@ import boto3
 import requests
 from dotenv import load_dotenv
 
-from api import getLeaderboardSnapshot
 from default_alias import alias as default_alias
 from default_channels import channels as default_channels
 from leaderboard_queries import (
@@ -16,7 +15,8 @@ from leaderboard_queries import (
     get_player_stats,
     get_weekly_progress,
 )
-from parseRegion import REGIONS, isRegion, parseRegion, printRegion
+from logger import setup_logger
+from parseRegion import isServer, parseServer
 
 eggs = {  # Easter eggs
     "salami": "salami is rank 69 in Antarctica with 16969 mmr CORM",
@@ -26,70 +26,61 @@ eggs = {  # Easter eggs
 
 help_msg = "@liiHS I had an issue, send help liiWait"
 
+logger = setup_logger("leaderboardBot")
+
 
 class LeaderboardBot:
     def __init__(self, table_name="HearthstoneLeaderboard", **kwargs):
         # Load AWS credentials from .env
         load_dotenv()
 
-        # Local DynamoDB for leaderboard data
-        self.dynamodb_local = boto3.resource(
-            "dynamodb",
-            endpoint_url="http://localhost:8000",
-            region_name="us-west-2",
-            aws_access_key_id="dummy",
-            aws_secret_access_key="dummy",
-        )
-
-        # AWS DynamoDB for other tables
-        self.dynamodb_aws = boto3.resource(
+        # AWS DynamoDB for all tables
+        self.dynamodb = boto3.resource(
             "dynamodb",
             region_name="us-east-1",
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         )
 
-        self.table = self.dynamodb_local.Table(table_name)
-        self.alias_table = self.dynamodb_aws.Table("player-alias-table")
-        self.channel_table = self.dynamodb_aws.Table("channel-table")
+        self.table = self.dynamodb.Table(table_name)
+        self.alias_table = self.dynamodb.Table("player-alias-table")
+        self.channel_table = self.dynamodb.Table("channel-table")
         self.patch_link = "Waiting to fetch latest post..."
         self.updateAlias()
         aiocron.crontab("* * * * *", func=self.fetchPatchLink)
 
     def parseArgs(self, default, *args):
-        """Parse command arguments, handling region and player name"""
+        """Parse command arguments, handling server and player name"""
         args = list(args)
-        print(f"Debug - parseArgs input: {args}")  # Debug print
+        print(f"Debug - parseArgs input: {args}")
 
         for i, arg in enumerate(args):
             if len(arg) > 0 and ("/" == arg[0] or "!" == arg[0]):
                 return ["Please don't try to hack me", None]
 
-        # Check for that special character which sometimes shows up during repeated 0 arg calls
         if len(args) == 0 or args[0] == "\U000e0000":
             return [default, None]
         elif len(args) == 1:
-            if isRegion(args[0]):
-                result = [default, parseRegion(args[0])]
-                print(f"Debug - Single arg (region): {result}")  # Debug print
+            if isServer(args[0]):
+                result = [default, parseServer(args[0])]
+                print(f"Debug - Single arg (server): {result}")
                 return result
             else:
                 result = [args[0], None]
-                print(f"Debug - Single arg (name): {result}")  # Debug print
+                print(f"Debug - Single arg (name): {result}")
                 return result
         else:
-            if isRegion(args[1]):
-                result = [args[0], parseRegion(args[1])]
-                print(f"Debug - Two args (name, region): {result}")  # Debug print
+            if isServer(args[1]):
+                result = [args[0], parseServer(args[1])]
+                print(f"Debug - Two args (name, server): {result}")
                 return result
-            elif isRegion(args[0]):
-                # swap region and argument order
-                result = [args[1], parseRegion(args[0])]
-                print(f"Debug - Two args (region, name): {result}")  # Debug print
+            elif isServer(args[0]):
+                result = [args[1], parseServer(args[0])]
+                print(f"Debug - Two args (server, name): {result}")
                 return result
             else:
                 result = [args[0], None]
-                print(f"Debug - Two args (no region): {result}")  # Debug print
+                print(f"Debug - Two args (no server): {result}")
                 return result
 
     def get_rank(self, tag, region=None, game_type="battlegrounds"):
@@ -124,7 +115,7 @@ class LeaderboardBot:
         print(f"Debug - Got result: {result}")  # Debug print
         return self.format_rank_response(result)
 
-    def get_daily_stats(self, tag, region=None):
+    def get_daily_stats(self, tag, region=None, game_type="battlegrounds"):
         """Get player's MMR changes for today"""
         if tag in self.alias:
             tag = self.alias[tag]
@@ -132,10 +123,11 @@ class LeaderboardBot:
         if tag in eggs:
             return eggs[tag]
 
-        result = get_player_mmr_changes(tag.lower(), region)
+        logger.info("Getting daily stats for %s", tag)
+        result = get_player_mmr_changes(tag.lower(), region, game_type=game_type)
         return self.format_daily_response(result)
 
-    def get_weekly_stats(self, tag, region=None):
+    def get_weekly_stats(self, tag, region=None, game_type="battlegrounds"):
         """Get player's weekly progress"""
         if tag in self.alias:
             tag = self.alias[tag]
@@ -143,7 +135,13 @@ class LeaderboardBot:
         if tag in eggs:
             return eggs[tag]
 
-        result = get_weekly_progress(tag.lower(), region)
+        result = get_weekly_progress(tag, region, game_type=game_type)
+
+        # If result is a string, it's an error message
+        if isinstance(result, str):
+            return result + " TEST"  # Add TEST suffix for testing
+
+        # Otherwise format the weekly stats as before
         return self.format_weekly_response(result)
 
     def format_rank_response(self, result):
@@ -151,22 +149,35 @@ class LeaderboardBot:
         if isinstance(result, str):  # Error message
             return result
 
-        return f"{result['name']} is rank {result['rank']} in {result['region']} with {result['rating']} mmr liiHappyCat"
+        return f"{result['name']} is rank {result['rank']} in {result['server']} with {result['rating']} mmr liiHappyCat"
 
     def format_daily_response(self, result):
         """Format daily stats for Twitch chat"""
-        print(f"Debug - Formatting daily response: {result}")  # Add debug print
-
         if isinstance(result, str):
             return result
 
         if result["num_games"] == 0:
-            return f"{result['name']} hasn't played any games today on {result['region']} liiCat"
+            # Get current stats when no games played
+            current_stats = get_player_stats(
+                result["name"], result["server"], game_type=result["game_type"]
+            )
+            if isinstance(current_stats, str):  # Error occurred getting stats
+                return f"{result['name']} hasn't played any games today on {result['server']} liiCat"
+
+            return (
+                f"{result['name']} is rank {current_stats['rank']} in {result['server']} "
+                f"with {current_stats['rating']} mmr liiHappyCat and has not played any games today liiCat"
+            )
 
         emote = "liiHappyCat" if result["net_change"] > 0 else "liiCat"
+        net_change_str = (
+            f"+{result['net_change']}"
+            if result["net_change"] > 0
+            else str(result["net_change"])
+        )
         return (
-            f"{result['name']} started today at {result['initial_mmr']} in {result['region']} "
-            f"and is now {result['final_mmr']} with {result['num_games']} games played. {emote} "
+            f"{result['name']} started today at {result['initial_mmr']} in {result['server']} "
+            f"and is now {result['final_mmr']} ({net_change_str}) with {result['num_games']} games played. {emote} "
             f"Their record is: {', '.join(str(x) for x in result['mmr_changes'])}"
         )
 

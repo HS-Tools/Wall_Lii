@@ -1,4 +1,4 @@
-REGIONS = ["US", "EU", "AP"]
+SERVERS = ["US", "EU", "AP"]
 REGION_ALIASES = {
     "NA": "US",
     "AMERICA": "US",
@@ -10,26 +10,30 @@ REGION_ALIASES = {
 REGION_PRINT = {"US": "Americas", "EU": "Europe", "AP": "Asia-Pacific"}
 
 
-def parseRegion(region):
-    if type(region) == str:
-        region = region.upper()
+def parseServer(server):
+    """Convert server string to standard format"""
+    if isinstance(server, str):
+        server = server.upper()
 
-    region = REGION_ALIASES.get(region, region)
-    if region in REGIONS:
-        return region
+    # Use the existing aliases
+    server = REGION_ALIASES.get(server, server)
+    if server in SERVERS:
+        return server
     return None
 
 
-def isRegion(region):
-    if region == None:
-        return True
+def isServer(server):
+    """Check if string is a valid server name"""
+    if server is None:
+        return False
 
-    if type(region) == str:
-        region = region.upper()
-    return (region in REGIONS) or (region in REGION_ALIASES.keys())
+    if isinstance(server, str):
+        server = server.upper()
+    return (server in SERVERS) or (server in REGION_ALIASES.keys())
 
 
-def printRegion(region):
-    if region in REGION_PRINT:
-        return REGION_PRINT[region]
-    return region
+def printServer(server):
+    """Convert server code to display name"""
+    if server in REGION_PRINT:
+        return REGION_PRINT[server]
+    return server
