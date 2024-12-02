@@ -86,6 +86,17 @@ def handler(event, context):
                             ExpressionAttributeValues={":pk": player_key},
                         )
 
+                        # Special logging for lii
+                        if player_name == "lii":
+                            if response["Items"]:
+                                last_entry = response["Items"][0]
+                                logger.info(
+                                    f"lii comparison - API: MMR={stats['rating']}, Rank={stats['rank']} | "
+                                    f"DB: MMR={last_entry['MMR']}, Rank={last_entry['rank']}, Time={last_entry['timestamp']}"
+                                )
+                            else:
+                                logger.info(f"No previous entries for lii, new data: MMR={stats['rating']}, Rank={stats['rank']}")
+
                         should_store = True
                         if response["Items"]:
                             last_entry = response["Items"][0]
@@ -147,3 +158,18 @@ def handler(event, context):
             "statusCode": 500,
             "body": json.dumps(f"Error updating leaderboard data: {str(e)}"),
         }
+
+def get_player_mmr_changes(player_name, server=None, game_type="battlegrounds"):
+    # Get current time in UTC
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Format for DynamoDB comparison
+    today_start_str = today_start.strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+    # Calculate MMR changes between consecutive entries
+    mmr_changes = []
+    for i in range(1, len(items)):
+        prev_mmr = int(items[i-1]["MMR"])
+        curr_mmr = int(items[i]["MMR"])
+        mmr_changes.append(curr_mmr - prev_mmr)

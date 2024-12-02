@@ -1,13 +1,13 @@
 {
   "version": "0",
-  "id": "53dc4d37-cffa-4f76-80c9-8b7d4a4d2eaa",
+  "id": "test-event",
   "detail-type": "Scheduled Event",
   "source": "aws.events",
-  "account": "123456789012",
-  "time": "2023-04-28T09:00:00Z",
+  "account": "729861370591",
+  "time": "2024-12-02T00:00:00Z",
   "region": "us-east-1",
   "resources": [
-    "arn:aws:events:us-east-1:123456789012:rule/HearthstoneLeaderboardFetch"
+    "arn:aws:events:us-east-1:729861370591:rule/HearthstoneLeaderboardFetch"
   ],
   "detail": {}
 }

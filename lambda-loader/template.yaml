@@ -9,7 +9,7 @@ Resources:
       FunctionName: HearthstoneLeaderboardFetch
       CodeUri: src/
       Handler: dbUpdater.handler
-      Timeout: 60 # One minute should be enough for the API calls
+      Timeout: 120  # Two minutes to ensure we get all players
       MemorySize: 256
       Runtime: python3.11
       Policies:

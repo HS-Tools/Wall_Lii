@@ -8,54 +8,26 @@ from logger import setup_logger
 logger = setup_logger("test_api")
 
 
-def test_parallel_fetch():
-    # Time both operations
-    start_time = time.time()
-
-    # Test battlegrounds
-    logger.info("Testing battlegrounds fetch")
-    bg_start = time.time()
-    bg_data = getLeaderboardSnapshot(game_type="battlegrounds")
-    bg_time = time.time() - bg_start
-
-    # Test battlegrounds duo
-    logger.info("Testing battlegrounds duo fetch")
-    duo_start = time.time()
-    duo_data = getLeaderboardSnapshot(game_type="battlegroundsduo")
-    duo_time = time.time() - duo_start
-
-    total_time = time.time() - start_time
-
-    # Calculate player counts correctly
-    bg_players = sum(len(region["battlegrounds"]) for region in bg_data.values())
-    duo_players = sum(len(region["battlegroundsduo"]) for region in duo_data.values())
-
-    # Add detailed player counts
-    bg_players_by_region = {
-        region: len(data["battlegrounds"]) for region, data in bg_data.items()
-    }
-    duo_players_by_region = {
-        region: len(data["battlegroundsduo"]) for region, data in duo_data.items()
-    }
-
-    stats = {
-        "bg_fetch_time": bg_time,
-        "duo_fetch_time": duo_time,
-        "total_time": total_time,
-        "bg_players": bg_players,
-        "bg_by_region": bg_players_by_region,
-        "duo_players": duo_players,
-        "duo_by_region": duo_players_by_region,
-        "avg_time_per_player": total_time / (bg_players + duo_players),
-    }
-
-    # Log each stat separately for better visibility
-    for key, value in stats.items():
-        if isinstance(value, float):
-            logger.info(f"{key}: {value:.2f}")
+def test_us_fetch():
+    logger.info("Testing US region fetch")
+    bg_data = getLeaderboardSnapshot(region="US", game_type="battlegrounds")
+    
+    # Check if we got data for US
+    if "US" in bg_data and "battlegrounds" in bg_data["US"]:
+        players = bg_data["US"]["battlegrounds"]
+        logger.info(f"Total US players: {len(players)}")
+        
+        # Check lii's data
+        if "lii" in players:
+            logger.info(f"lii's data: MMR={players['lii']['rating']}, Rank={players['lii']['rank']}")
+        
+        # Check for any duplicate names
+        names = [name.lower() for name in players.keys()]
+        duplicates = set([name for name in names if names.count(name) > 1])
+        if duplicates:
+            logger.warning(f"Found duplicate players: {duplicates}")
         else:
-            logger.info(f"{key}: {value}")
-
+            logger.info("No duplicate players found")
 
 if __name__ == "__main__":
-    test_parallel_fetch()
+    test_us_fetch()
