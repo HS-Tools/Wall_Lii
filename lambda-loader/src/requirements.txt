@@ -1,3 +1,5 @@
 requests
 boto3
+requests-futures
+python-dotenv
 # Add any other dependencies here

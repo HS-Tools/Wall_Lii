@@ -4,6 +4,7 @@ from datetime import datetime
 import aiocron
 import boto3
 import requests
+from botocore.config import Config
 from dotenv import load_dotenv
 
 from default_alias import alias as default_alias
@@ -34,12 +35,24 @@ class LeaderboardBot:
         # Load AWS credentials from .env
         load_dotenv()
 
+        # Configure boto3 with specific settings
+        config = Config(
+            region_name="us-east-1",
+            retries={"max_attempts": 1, "mode": "standard"},
+            connect_timeout=5,
+            read_timeout=5,
+        )
+
         # AWS DynamoDB for all tables
         self.dynamodb = boto3.resource(
             "dynamodb",
+            config=config,
             region_name="us-east-1",
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            endpoint_url="https://dynamodb.us-east-1.amazonaws.com",  # Force AWS endpoint
+            use_ssl=True,  # Force SSL
+            verify=True,  # Verify SSL cert
         )
 
         self.table = self.dynamodb.Table(table_name)
@@ -111,7 +124,12 @@ class LeaderboardBot:
         print(
             f"Debug - Looking up player {tag} in region {region} for {game_type}"
         )  # Debug print
-        result = get_player_stats(tag.lower(), region, game_type=game_type)
+        result = get_player_stats(
+            tag.lower(),
+            region,
+            game_type=game_type,
+            dynamodb_client=self.dynamodb,  # Pass the bot's client
+        )
         print(f"Debug - Got result: {result}")  # Debug print
         return self.format_rank_response(result)
 

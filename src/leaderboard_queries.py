@@ -1,24 +1,60 @@
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import boto3
+from botocore.config import Config
+from botocore.exceptions import ClientError, NoCredentialsError
+from dotenv import load_dotenv
 
 from logger import setup_logger
 
 logger = setup_logger("leaderboard_queries")
 
-try:
-    dynamodb = boto3.resource(
-        "dynamodb",
-        region_name="us-east-1",
-        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-    )
-    logger.info("Successfully established DynamoDB connection")
-except Exception as e:
-    print(f"Error establishing DynamoDB connection: {e}")
-    raise
+# Get the project root directory (where .env should be)
+project_root = Path(__file__).parent.parent
+env_path = project_root / ".env"
+
+print(f"Debug - Looking for .env at: {env_path}")
+print(f"Debug - .env exists: {env_path.exists()}")
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path=env_path)
+
+# Debug print environment variables
+print("Debug - AWS Credentials check:")
+print(f"AWS_ACCESS_KEY_ID present: {'AWS_ACCESS_KEY_ID' in os.environ}")
+print(f"AWS_SECRET_ACCESS_KEY present: {'AWS_SECRET_ACCESS_KEY' in os.environ}")
+
+# Verify credentials before creating the client
+aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+if not aws_access_key or not aws_secret_key:
+    print("Error: AWS credentials not found in environment variables")
+    print(f"Available environment variables: {list(os.environ.keys())}")
+    raise ValueError("AWS credentials not found")
+
+# Configure boto3 with specific settings
+config = Config(
+    region_name="us-east-1",
+    retries={"max_attempts": 1, "mode": "standard"},  # Reduce to 1 attempt
+    connect_timeout=5,
+    read_timeout=5,
+)
+
+# Create the DynamoDB client with explicit configuration
+dynamodb = boto3.resource(
+    "dynamodb",
+    config=config,
+    region_name="us-east-1",
+    aws_access_key_id=aws_access_key,
+    aws_secret_access_key=aws_secret_key,
+    endpoint_url="https://dynamodb.us-east-1.amazonaws.com",  # Force AWS endpoint
+    use_ssl=True,  # Force SSL
+    verify=True,  # Verify SSL cert
+)
 
 
 def view_table_contents(table_name="HearthstoneLeaderboard"):
@@ -42,6 +78,7 @@ def get_player_stats(
     server=None,
     game_type="battlegrounds",
     table_name="HearthstoneLeaderboard",
+    dynamodb_client=None,
 ):
     """Get current stats for a player. If server is None, returns highest MMR across all servers."""
     logger.debug(
@@ -49,8 +86,9 @@ def get_player_stats(
         extra={"player": player_name, "server": server, "game_type": game_type},
     )
 
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
+    # Use provided client if available, otherwise use global
+    db = dynamodb_client if dynamodb_client else dynamodb
+    table = db.Table(table_name)
 
     # If server is specified, query just that server
     if server:
