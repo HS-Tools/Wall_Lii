@@ -15,6 +15,8 @@ commands.Bot.event_command_error = None
 
 load_dotenv()
 
+os.environ["DYNAMODB_ENDPOINT"] = "http://localhost:8000"
+
 leaderboardBot = LeaderboardBot()
 
 initialChannels = leaderboardBot.getChannels()
@@ -86,7 +88,7 @@ def parseArgs(ctx):
 
 async def call(ctx, func, name, *args):
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
 
     response = func(*args)
@@ -94,7 +96,7 @@ async def call(ctx, func, name, *args):
         if not isServer(args[1]):
             response = "Invalid region provided.\n" + response
 
-    await ctx.send(f"{response} TEST")
+    await ctx.send(response)
 
 
 @twitchBot.command(name="buddy")
@@ -254,30 +256,32 @@ async def event_message(msg):
 async def getRank(ctx):
     args = parseArgs(ctx)
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
+    print(f"Debug - Getting rank for args: {args}")  # Add debug print
     response = leaderboardBot.get_rank(*args)
-    await ctx.send(f"{response} TEST")
+    print(f"Debug - Got response: {response}")  # Add debug print
+    await ctx.send(response)
 
 
 @twitchBot.command(name="bgdaily")
 async def getDailyStats(ctx):
     args = parseArgs(ctx)
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
     response = leaderboardBot.get_daily_stats(*args)
-    await ctx.send(f"{response} TEST")
+    await ctx.send(response)
 
 
 @twitchBot.command(name="bgweekly")
 async def getWeeklyStats(ctx):
     args = parseArgs(ctx)
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
     response = leaderboardBot.get_weekly_stats(*args)
-    await ctx.send(f"{response} TEST")
+    await ctx.send(response)
 
 
 @twitchBot.command(name="tomorrow")
@@ -285,9 +289,9 @@ async def tomorrow(ctx):
     args = parseArgs(ctx)
     name = args[0]
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
-    await ctx.send(f"{name} will be rank 1 for sure liiYep TEST")
+    await ctx.send(f"{name} will be rank 1 for sure liiYep")
 
 
 @twitchBot.command(name="patch")
@@ -344,10 +348,10 @@ async def duorank(ctx):
     """Get player info by rank or name for Duo mode"""
     args = parseArgs(ctx)
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
     response = leaderboardBot.get_rank(*args, game_type="battlegroundsduo")
-    await ctx.send(f"{response} TEST")
+    await ctx.send(response)
 
 
 @twitchBot.command(name="duodaily")
@@ -355,10 +359,10 @@ async def duodaily(ctx):
     """Get daily stats for Duo mode"""
     args = parseArgs(ctx)
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
     response = leaderboardBot.get_daily_stats(*args, game_type="battlegroundsduo")
-    await ctx.send(f"{response} TEST")
+    await ctx.send(response)
 
 
 @twitchBot.command(name="duoweekly")
@@ -366,10 +370,24 @@ async def duoweekly(ctx):
     """Get weekly stats for Duo mode"""
     args = parseArgs(ctx)
     if args[0][0] == "!":
-        await ctx.send("Names can't start with '!' TEST")
+        await ctx.send("Names can't start with '!'")
         return
     response = leaderboardBot.get_weekly_stats(*args, game_type="battlegroundsduo")
-    await ctx.send(f"{response} TEST")
+    await ctx.send(response)
+
+
+@twitchBot.event
+async def event_error(error: Exception, data: str = None):
+    """Handle any errors that occur in the bot"""
+    print(f"Error: {error}")
+    if data:
+        print(f"Data: {data}")
+
+
+@twitchBot.command(name="test")
+async def test(ctx):
+    """Test command to verify bot is working"""
+    await ctx.send("Bot is working!")
 
 
 if __name__ == "__main__":

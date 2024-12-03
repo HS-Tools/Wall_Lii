@@ -1,752 +1,587 @@
 import os
-from collections import defaultdict
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 import boto3
-from botocore.config import Config
-from botocore.exceptions import ClientError, NoCredentialsError
-from dotenv import load_dotenv
 
 from logger import setup_logger
+from parseRegion import parseServer
 
 logger = setup_logger("leaderboard_queries")
 
-# Get the project root directory (where .env should be)
-project_root = Path(__file__).parent.parent
-env_path = project_root / ".env"
-
-print(f"Debug - Looking for .env at: {env_path}")
-print(f"Debug - .env exists: {env_path.exists()}")
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path=env_path)
-
-# Debug print environment variables
-print("Debug - AWS Credentials check:")
-print(f"AWS_ACCESS_KEY_ID present: {'AWS_ACCESS_KEY_ID' in os.environ}")
-print(f"AWS_SECRET_ACCESS_KEY present: {'AWS_SECRET_ACCESS_KEY' in os.environ}")
-
-# Verify credentials before creating the client
-aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-
-if not aws_access_key or not aws_secret_key:
-    print("Error: AWS credentials not found in environment variables")
-    print(f"Available environment variables: {list(os.environ.keys())}")
-    raise ValueError("AWS credentials not found")
-
-# Configure boto3 with specific settings
-config = Config(
-    region_name="us-east-1",
-    retries={"max_attempts": 1, "mode": "standard"},  # Reduce to 1 attempt
-    connect_timeout=5,
-    read_timeout=5,
-)
-
-# Create the DynamoDB client with explicit configuration
-dynamodb = boto3.resource(
-    "dynamodb",
-    config=config,
-    region_name="us-east-1",
-    aws_access_key_id=aws_access_key,
-    aws_secret_access_key=aws_secret_key,
-    endpoint_url="https://dynamodb.us-east-1.amazonaws.com",  # Force AWS endpoint
-    use_ssl=True,  # Force SSL
-    verify=True,  # Verify SSL cert
-)
+VALID_SERVERS = {"NA", "EU", "AP"}
 
 
-def view_table_contents(table_name="HearthstoneLeaderboard"):
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
+class LeaderboardDB:
+    def __init__(
+        self, endpoint_url=None, test_db=None, table_name="HearthstoneLeaderboard"
+    ):
+        """Initialize DB connection"""
+        if test_db:
+            self.dynamodb = test_db
+            self.table = test_db
+            self.alias_table = test_db  # For testing
+            logger.info("Using test DB for all tables")
+        else:
+            # Configure AWS client for alias table (always use AWS)
+            aws_kwargs = {
+                "region_name": "us-east-1",
+                "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+                "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            }
 
-    # Scan the table
-    response = table.scan()
-    items = response["Items"]
+            logger.info(
+                f"AWS credentials present: {bool(aws_kwargs['aws_access_key_id'] and aws_kwargs['aws_secret_access_key'])}"
+            )
 
-    # Print each item nicely formatted
-    print(f"\nFound {len(items)} items in table '{table_name}':")
-    for item in items:
-        print("\n-------------------")
-        for key, value in item.items():
-            print(f"{key}: {value}")
+            # Configure local/AWS client for leaderboard table
+            local_kwargs = aws_kwargs.copy()
+            if endpoint_url:
+                local_kwargs.update(
+                    {
+                        "endpoint_url": endpoint_url,
+                        "aws_access_key_id": "dummy",
+                        "aws_secret_access_key": "dummy",
+                    }
+                )
 
+            self.dynamodb = boto3.resource("dynamodb", **local_kwargs)
+            self.table = self.dynamodb.Table(table_name)
 
-def get_player_stats(
-    player_name,
-    server=None,
-    game_type="battlegrounds",
-    table_name="HearthstoneLeaderboard",
-    dynamodb_client=None,
-):
-    """Get current stats for a player. If server is None, returns highest MMR across all servers."""
-    logger.debug(
-        "Getting stats",
-        extra={"player": player_name, "server": server, "game_type": game_type},
-    )
+            # Alias table always uses AWS connection
+            aws_dynamodb = boto3.resource("dynamodb", **aws_kwargs)
+            self.alias_table = aws_dynamodb.Table("player-alias-table")
 
-    # Use provided client if available, otherwise use global
-    db = dynamodb_client if dynamodb_client else dynamodb
-    table = db.Table(table_name)
+            # Test alias table connection
+            try:
+                self.alias_table.table_status
+                logger.info("Successfully connected to alias table")
+            except Exception as e:
+                logger.error(f"Failed to connect to alias table: {e}")
 
-    # If server is specified, query just that server
-    if server:
-        player_key = f"{player_name.lower()}#{server}#{game_type}"
-        print(f"Debug - Querying with player_key: {player_key}")
-        response = table.query(
-            KeyConditionExpression="player_key = :pk",
-            ExpressionAttributeValues={":pk": player_key},
-            ScanIndexForward=False,  # Get most recent first
-            Limit=1,
-        )
-        print(f"Debug - Query response: {response}")
+        # Load aliases
+        self.aliases = self._load_aliases()
+        logger.info(f"Initialized with {len(self.aliases)} aliases")
 
-        if not response["Items"]:
-            return f"Player {player_name} not found in {server}. Try another server or check the spelling."
+    def _load_aliases(self):
+        """Load aliases from DynamoDB table"""
+        try:
+            response = self.alias_table.scan()
+            aliases = {
+                item["Alias"].lower(): item["PlayerName"].lower()
+                for item in response["Items"]
+            }
+            logger.info(f"Loaded {len(aliases)} aliases")
+            return aliases
+        except Exception as e:
+            logger.error(f"Could not load aliases: {e}")
+            return {}
 
-        item = response["Items"][0]
-        return {
-            "name": item["player_name"],
-            "rank": item["rank"],
-            "rating": item["MMR"],
-            "server": item["server"],
-            "timestamp": item["timestamp"],
-        }
+    def _resolve_name(self, player_name):
+        """Resolve player name through alias table"""
+        if not player_name:
+            return None
 
-    # If no server specified, check all servers
-    all_items = []
-    for server in ["US", "EU", "AP"]:
-        player_key = f"{player_name.lower()}#{server}#{game_type}"
-        response = table.query(
-            KeyConditionExpression="player_key = :pk",
-            ExpressionAttributeValues={":pk": player_key},
-            ScanIndexForward=False,  # Get most recent first
-            Limit=1,
-        )
-        if response["Items"]:
-            all_items.append(response["Items"][0])  # Already sorted by timestamp
+        # Clean input by removing invisible characters
+        lookup_name = "".join(c for c in player_name if c.isprintable()).strip().lower()
+        resolved = self.aliases.get(lookup_name, lookup_name)
+        if resolved != lookup_name:
+            logger.info(f"Resolved alias: {lookup_name} -> {resolved}")
+        return resolved
 
-    if not all_items:
-        return f"Player {player_name} not found in any server. Check the spelling or try using their BattleTag."
+    def _parse_server(self, server):
+        """Normalize server name or return None"""
+        if not server:
+            return None
 
-    # Find entry with highest MMR among most recent entries
-    highest_mmr_item = max(all_items, key=lambda x: x["MMR"])
-    return {
-        "name": highest_mmr_item["player_name"],
-        "rank": highest_mmr_item["rank"],
-        "rating": highest_mmr_item["MMR"],
-        "server": highest_mmr_item["server"],
-        "timestamp": highest_mmr_item["timestamp"],
-    }
+        # Strip invisible characters and whitespace
+        server = "".join(c for c in server if c.isprintable()).strip()
+        if not server:  # If server becomes empty after cleaning
+            return None
 
+        parsed = parseServer(server)
+        if parsed not in VALID_SERVERS:
+            return f"Invalid server: {server}. Valid servers are: NA, EU, AP"
+        return parsed
 
-def get_player_by_rank(
-    rank, server, game_type="battlegrounds", table_name="HearthstoneLeaderboard"
-):
-    """Get player at a specific rank."""
-    print(f"Debug - Looking up rank {rank} in {server} {game_type}")
+    def _is_valid_server(self, server):
+        """Check if server is valid or error message"""
+        return isinstance(server, str) and server in VALID_SERVERS
 
-    try:
-        table = dynamodb.Table(table_name)
-        server_key = f"{server}#{game_type}"
+    def get_player_stats(self, player_name, server=None, game_mode="0"):
+        """Get a player's current stats"""
+        # Resolve alias first
+        player_name = self._resolve_name(player_name)
+        if not player_name:
+            return None
 
-        # Convert rank to Decimal if it's not already
-        if isinstance(rank, str):
-            rank = int(rank)
+        if server:
+            # Direct query if server is known
+            game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
+            response = self.table.query(
+                KeyConditionExpression="GameModeServerPlayer = :gmsp",
+                ExpressionAttributeValues={":gmsp": game_mode_server_player},
+            )
+        else:
+            # Scan with filter if server unknown
+            response = self.table.scan(
+                FilterExpression="PlayerName = :name AND GameMode = :mode",
+                ExpressionAttributeValues={
+                    ":name": player_name.lower(),
+                    ":mode": game_mode,
+                },
+            )
 
-        response = table.query(
-            IndexName="RankIndex",
-            KeyConditionExpression="server_key = :rk AND #r = :r",
-            ExpressionAttributeNames={
-                "#r": "rank"  # Use expression attribute name for reserved keyword
-            },
-            ExpressionAttributeValues={":rk": server_key, ":r": rank},
-            ScanIndexForward=False,  # Get most recent first
-            Limit=1,
+        if not response.get("Items"):
+            return None
+
+        # Return highest rating if multiple servers
+        return max(response["Items"], key=lambda x: x["LatestRating"])
+
+    def get_player_history(self, player_name, server=None, game_mode="0", hours=24):
+        """Get a player's rating history"""
+        player_name = self._resolve_name(player_name)
+        # First get current stats to find server if not provided
+        if not server:
+            stats = self.get_player_stats(player_name, game_mode=game_mode)
+            if not stats:
+                return None
+            server = stats["Server"]
+
+        game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
+        response = self.table.query(
+            KeyConditionExpression="GameModeServerPlayer = :gmsp",
+            ExpressionAttributeValues={":gmsp": game_mode_server_player},
         )
 
         if not response.get("Items"):
-            print(f"Debug - No items found for rank {rank} in {server}")
-            return f"No player found at rank {rank} for {server}"
+            return None
 
-        item = response["Items"][0]
-        result = {
-            "name": item["player_name"],
-            "rank": item["rank"],
-            "rating": item["MMR"],
-            "server": item["server"],
-            "timestamp": item["timestamp"],
+        # Get history within time window using UTC
+        cutoff = int((datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp())
+        history = response["Items"][0].get("RatingHistory", [])
+        recent_history = [h for h in history if h[1] >= cutoff]
+
+        return recent_history
+
+    def get_top_players(self, server, game_mode="0", limit=10):
+        """Get top players for a region"""
+        game_mode_server = f"{game_mode}#{server}"
+
+        response = self.table.query(
+            IndexName="RankLookupIndex",
+            KeyConditionExpression="GameModeServer = :gms",
+            ExpressionAttributeValues={":gms": game_mode_server},
+            Limit=limit,
+        )
+
+        return response.get("Items", [])
+
+    def get_rank_player(self, rank, server, game_mode="0"):
+        """Get player at specific rank in a region"""
+        game_mode_server = f"{game_mode}#{server}"
+
+        response = self.table.query(
+            IndexName="RankLookupIndex",
+            KeyConditionExpression="GameModeServer = :gms AND CurrentRank = :rank",
+            ExpressionAttributeValues={
+                ":gms": game_mode_server,
+                ":rank": Decimal(str(rank)),
+            },
+        )
+
+        items = response.get("Items", [])
+        return items[0] if items else None
+
+    def get_best_rating(self, player_name, game_mode="0"):
+        """Get player's highest rating across all regions"""
+        response = self.table.scan(
+            FilterExpression="PlayerName = :name AND GameMode = :mode",
+            ExpressionAttributeValues={
+                ":name": player_name.lower(),
+                ":mode": game_mode,
+            },
+        )
+
+        items = response.get("Items", [])
+        return max(items, key=lambda x: x["LatestRating"]) if items else None
+
+    def get_player_peak(self, player_name, server=None, game_mode="0", hours=None):
+        """Get player's peak rating within time window. If hours is None, get all-time peak"""
+        player_name = self._resolve_name(player_name)
+        # First get current stats to find server if not provided
+        if not server:
+            stats = self.get_player_stats(player_name, game_mode=game_mode)
+            if not stats:
+                return None
+            server = stats["Server"]
+
+        game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
+        response = self.table.query(
+            KeyConditionExpression="GameModeServerPlayer = :gmsp",
+            ExpressionAttributeValues={":gmsp": game_mode_server_player},
+        )
+
+        if not response.get("Items"):
+            return None
+
+        # Get full history or filtered by time window
+        history = response["Items"][0].get("RatingHistory", [])
+        if hours:
+            cutoff = int(
+                (datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp()
+            )
+            history = [h for h in history if h[1] >= cutoff]
+
+        if not history:
+            return None
+
+        peak = max(history, key=lambda x: x[0])
+        return {"rating": peak[0], "timestamp": peak[1]}
+
+    def get_region_stats(self, server, game_mode="0"):
+        """Get region statistics (avg rating, player count, etc)"""
+        game_mode_server = f"{game_mode}#{server}"
+
+        response = self.table.query(
+            IndexName="RankLookupIndex",
+            KeyConditionExpression="GameModeServer = :gms",
+            ExpressionAttributeValues={":gms": game_mode_server},
+        )
+
+        items = response.get("Items", [])
+        if not items:
+            return None
+
+        ratings = [int(item["LatestRating"]) for item in items]
+        return {
+            "player_count": len(ratings),
+            "avg_rating": sum(ratings) / len(ratings),
+            "max_rating": max(ratings),
+            "min_rating": min(ratings),
         }
-        return result
 
-    except Exception as e:
-        print(f"Debug - Error in get_player_by_rank: {str(e)}")
-        return f"Error looking up rank {rank}: {str(e)}"
-
-
-def get_player_mmr_changes(
-    player_name,
-    server=None,
-    game_type="battlegrounds",
-    table_name="HearthstoneLeaderboard",
-):
-    """Get MMR changes for a player in the last 24 hours."""
-
-    # First determine if this is a rank lookup
-    try:
-        rank = int(player_name)
-        if server is None:
-            return "Server is required when looking up by rank"
-        # Get the player at this rank
-        player_result = get_player_by_rank(rank, server, game_type, table_name)
-        if isinstance(player_result, str):  # Error message
-            return player_result
-        player_name = player_result["name"]
-    except ValueError:
-        # Not a number, treat as player name
-        player_name = player_name
-
-    print(f"Debug - Getting MMR changes for player: {player_name}")
-
-    # If server is specified, verify player exists in that server
-    if server:
-        player_check = get_player_stats(player_name, server, game_type=game_type)
-        if isinstance(player_check, str):  # Error message
-            return player_check
-    # If no server specified, get the player's highest MMR server
-    elif server is None:
-        stats = get_player_stats(player_name, game_type=game_type)
-        if isinstance(stats, str):  # Error message
+    def _normalize_stats(self, stats):
+        """Normalize stats dictionary to use consistent key names
+        Converts:
+            - current_rank -> CurrentRank
+            - current_rating -> LatestRating
+            - server -> Server
+        """
+        if not stats:
             return stats
-        server = stats["server"]
-        print(f"Debug - Using highest MMR server: {server}")
 
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
-
-    # Calculate timestamps for last 24 hours
-    now = datetime.utcnow()  # Use UTC instead of local time
-    yesterday = now - timedelta(hours=24)
-
-    start_time = yesterday.strftime("%Y-%m-%dT%H:%M:%S.%f")
-    end_time = now.strftime("%Y-%m-%dT%H:%M:%S.%f")
-    print(f"Debug - Time window: {start_time} to {end_time}")
-
-    # Get all entries for this player/server in last 24 hours
-    player_key = f"{player_name.lower()}#{server}#{game_type}"
-    response = table.query(
-        KeyConditionExpression="player_key = :pk AND #ts BETWEEN :start AND :end",
-        ExpressionAttributeNames={"#ts": "timestamp"},
-        ExpressionAttributeValues={
-            ":pk": player_key,
-            ":start": start_time,
-            ":end": end_time,
-        },
-    )
-
-    print(f"Debug - Found {len(response['Items'])} entries")
-    for item in response["Items"]:
-        print(
-            f"Debug - Entry: {item['timestamp']} - MMR: {item['MMR']} - Rank: {item['rank']}"
-        )
-
-    # Filter by last 24 hours - no need for this anymore since we used BETWEEN in query
-    recent_items = response["Items"]  # Already filtered by timestamp
-
-    print(f"Debug - Found {len(recent_items)} entries in last 24 hours")
-    print(f"Debug - Recent entries: {recent_items}")
-
-    if not recent_items:
-        # Get current stats instead of returning empty data
-        current_stats = get_player_stats(player_name, server, game_type=game_type)
-        if isinstance(current_stats, str):  # Error message
-            return current_stats
-
-        return {
-            "name": player_name,
-            "server": server,
-            "num_games": 0,
-            "initial_mmr": current_stats["rating"],
-            "final_mmr": current_stats["rating"],
-            "net_change": 0,
-            "mmr_changes": [],
-            "game_type": game_type,
+        normalized = stats.copy()
+        key_mapping = {
+            "current_rank": "CurrentRank",
+            "current_rating": "LatestRating",
+            "server": "Server",
         }
 
-    # Sort by timestamp
-    games = sorted(recent_items, key=lambda x: x["timestamp"])
-    print(f"Debug - Sorted games: {games}")
+        for old_key, new_key in key_mapping.items():
+            if old_key in normalized:
+                normalized[new_key] = normalized.pop(old_key)
 
-    # Calculate MMR changes
-    mmr_changes = []
-    for i in range(1, len(games)):
-        change = games[i]["MMR"] - games[i - 1]["MMR"]
-        if change != 0:  # Only count non-zero changes
-            mmr_changes.append(change)
-            print(f"Debug - Found MMR change: {change}")
+        return normalized
 
-    result = {
-        "name": player_name,
-        "server": server,
-        "num_games": len(mmr_changes),
-        "initial_mmr": games[0]["MMR"],
-        "final_mmr": games[-1]["MMR"],
-        "net_change": games[-1]["MMR"] - games[0]["MMR"],
-        "mmr_changes": mmr_changes,
-        "game_type": game_type,
-    }
-    print(f"Debug - Final result: {result}")
-    return result
+    def get_daily_stats(self, player_name, server=None, game_mode="0"):
+        """Get a player's daily stats including games played and MMR changes"""
+        server = self._parse_server(server)
+        if server and not self._is_valid_server(server):
+            return server  # Return error message
 
+        # Handle rank lookup first
+        try:
+            rank = int(player_name)
+            if server:
+                player = self.get_rank_player(rank, server, game_mode)
+                if player:
+                    player_name = player["PlayerName"]
+        except ValueError:
+            # Not a rank lookup, resolve alias
+            player_name = self._resolve_name(player_name)
 
-def format_chat_response(query_type, result):
-    """
-    Format query results into chat-friendly responses.
-    """
-    if isinstance(result, str):  # Error message
-        return result
+        history = self.get_player_history(player_name, server, game_mode, hours=24)
+        if not history:
+            # Try to get current stats to distinguish between "not found" and "no games"
+            stats = self.get_player_stats(player_name, server, game_mode)
+            if not stats:
+                return {"found": False}
 
-    if query_type == "player_stats":
-        return (
-            f"{result['name']} is currently Rank {result['rank']} "
-            f"({result['rating']} MMR) on {result['server']}"
-        )
-
-    elif query_type == "rank_lookup":
-        return (
-            f"Rank {result['rank']} on {result['server']} is "
-            f"{result['name']} with {result['rating']} MMR"
-        )
-
-    elif query_type == "mmr_changes":
-        if result["num_games"] == 0:
-            return (
-                f"{result['name']} hasn't played any games today on {result['server']}"
-            )
-
-        net_change = result["net_change"]
-        change_str = f"+{net_change}" if net_change > 0 else str(net_change)
-
-        # Convert Decimal values to strings with proper formatting
-        mmr_changes_str = []
-        for change in result["mmr_changes"]:
-            change_val = int(change)  # Convert Decimal to int
-            change_str = f"+{change_val}" if change_val > 0 else str(change_val)
-            mmr_changes_str.append(change_str)
-
-        deltas = f"({', '.join(mmr_changes_str)})"
-
-        return (
-            f"{result['name']} on {result['server']}: {result['initial_mmr']} → "
-            f"{result['final_mmr']} MMR ({change_str}) over {result['num_games']} games {deltas}"
-        )
-
-    elif query_type == "weekly_progress":
-        if result["start_mmr"] is None:
-            return f"No data found for {result['player_name']} in the past week"
-
-        # Determine if end_date is today
-        end_date = datetime.strptime(result["end_date"], "%Y-%m-%d")
-        today = datetime.now().date()
-        days_ago = (
-            "today"
-            if end_date.date() == today
-            else f"{(today - end_date.date()).days} days ago"
-        )
-
-        # Format daily changes (including zeros)
-        daily_changes = []
-        for day in result["daily_progress"]:
-            change = day["net_change"]
-            change_str = f"+{change}" if change > 0 else str(change)
-            daily_changes.append(change_str)
-
-        daily_summary = ", ".join(daily_changes)
-
-        # Format total change
-        total_change = result["total_net_change"]
-        total_change_str = f"+{total_change}" if total_change > 0 else str(total_change)
-
-        return (
-            f"{result['player_name']} on {result['server']} (as of {days_ago}): "
-            f"{result['start_mmr']} → {result['end_mmr']} MMR ({total_change_str}) "
-            f"[{daily_summary}]"
-        )
-
-    elif query_type == "most_active":
-        if isinstance(result, str):  # Error message
-            return result
-
-        net_change = result["net_change"]
-        change_str = f"+{net_change}" if net_change > 0 else str(net_change)
-        deltas = f"({', '.join(result['mmr_changes'])})"
-
-        return (
-            f"Most active player on {result['server']} {result['game_type']}: "
-            f"{result['name']} with {result['num_games']} games. "
-            f"MMR {result['initial_mmr']} → {result['final_mmr']} ({change_str}) {deltas}"
-        )
-
-    return "Invalid query type"
-
-
-def get_weekly_progress(
-    player_name_or_rank,
-    server=None,
-    end_date=None,
-    game_type="battlegrounds",
-    days=7,
-    table_name="HearthstoneLeaderboard",
-):
-    """Get weekly progress for a player."""
-    # First determine if this is a rank lookup
-    try:
-        rank = int(player_name_or_rank)
-        if server is None:
-            return "Server is required when looking up by rank"
-        # Get the player at this rank
-        player_result = get_player_by_rank(rank, server, game_type, table_name)
-        if isinstance(player_result, str):  # Error message
-            return player_result
-        player_name = player_result["name"]
-    except ValueError:
-        # Not a number, treat as player name
-        player_name = player_name_or_rank
-
-    # If server is specified, verify player exists in that server
-    if server:
-        player_check = get_player_stats(player_name, server, game_type=game_type)
-        if isinstance(player_check, str):  # Error message
-            return f"Player {player_name} not found in {server}. Check the spelling or try another server."
-    # If no server specified, get the player's highest MMR server
-    elif server is None:
-        stats = get_player_stats(player_name, game_type=game_type)
-        if isinstance(stats, str):  # Error message
-            return f"Player {player_name} not found in any server. Check the spelling or try using their BattleTag."
-        server = stats["server"]
-        print(f"Debug - Using highest MMR server: {server}")
-
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
-    player_key = f"{player_name.lower()}#{server}#{game_type}"
-
-    # Calculate date range
-    if end_date:
-        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-    else:
-        end_dt = datetime.utcnow()
-    start_dt = end_dt - timedelta(days=days)
-
-    start_time = start_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
-    end_time = end_dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
-
-    # Add debug prints
-    print(f"Debug - player_key: {player_key}")
-    print(f"Debug - start_time: {start_time}")
-    print(f"Debug - end_time: {end_time}")
-
-    # First try to get the current stats
-    current_stats = get_player_stats(player_name, server, game_type=game_type)
-    if isinstance(current_stats, str):  # Error message
-        return current_stats
-
-    # Query all entries in date range
-    response = table.query(
-        KeyConditionExpression="player_key = :pk AND #ts BETWEEN :start AND :end",
-        ExpressionAttributeNames={"#ts": "timestamp"},
-        ExpressionAttributeValues={
-            ":pk": player_key,
-            ":start": start_time,
-            ":end": end_time,
-        },
-    )
-
-    print(f"Debug - Query response: {response}")
-
-    # If no historical data, return current stats with no changes
-    if not response["Items"]:
-        return {
-            "player_name": player_name,
-            "server": server,
-            "start_mmr": current_stats["rating"],  # Use current MMR
-            "end_mmr": current_stats["rating"],  # Use current MMR
-            "total_net_change": 0,
-            "daily_progress": [
-                {"date": d.strftime("%Y-%m-%d"), "net_change": 0}
-                for d in (start_dt + timedelta(days=x) for x in range(days))
-            ],
-            "end_date": end_dt.strftime("%Y-%m-%d"),
-        }
-
-    # Group entries by date
-    daily_entries = defaultdict(list)
-    for item in response["Items"]:
-        date = datetime.strptime(item["timestamp"], "%Y-%m-%dT%H:%M:%S.%f").date()
-        daily_entries[date].append(item)
-
-    # Calculate daily progress
-    daily_progress = []
-    current_date = start_dt.date()  # Convert to date for comparison
-    start_mmr = None
-    end_mmr = None
-
-    while current_date <= end_dt.date():  # Compare dates not datetimes
-        if current_date in daily_entries:
-            day_games = sorted(
-                daily_entries[current_date],
-                key=lambda x: x["timestamp"],  # Use timestamp
-            )
-            day_start_mmr = day_games[0]["MMR"]
-            day_end_mmr = day_games[-1]["MMR"]
-            net_change = day_end_mmr - day_start_mmr
-
-            if start_mmr is None:
-                start_mmr = day_start_mmr
-            end_mmr = day_end_mmr
-        else:
-            net_change = 0
-
-        daily_progress.append(
-            {"date": current_date.strftime("%Y-%m-%d"), "net_change": net_change}
-        )
-        current_date += timedelta(days=1)
-
-    if start_mmr is None:  # No data found
-        start_mmr = 0
-        end_mmr = 0
-
-    return {
-        "player_name": player_name,
-        "server": server,
-        "start_mmr": start_mmr,
-        "end_mmr": end_mmr,
-        "total_net_change": end_mmr - start_mmr if end_mmr and start_mmr else 0,
-        "daily_progress": daily_progress,
-        "end_date": end_dt.strftime("%Y-%m-%d"),
-    }
-
-
-def get_player_mmr_changes_by_rank(
-    rank,
-    server,
-    date=None,
-    game_type="battlegrounds",
-    table_name="HearthstoneLeaderboard",
-):
-    """
-    Get MMR changes for the player at a specific rank.
-
-    Args:
-        rank (int): Rank to look up (1-200)
-        server (str): Server/region (US, EU, AP)
-        date (str): Date to check in format 'YYYY-MM-DD' (defaults to today)
-        game_type (str): Either "battlegrounds" or "battlegroundsduo"
-        table_name (str): DynamoDB table name
-
-    Returns:
-        dict: Contains initial_mmr, final_mmr, changes list, and net change
-        str: Error message if rank not found
-    """
-    # First get the player at this rank
-    player_result = get_player_by_rank(rank, server, game_type, table_name)
-    if isinstance(player_result, str):  # Error message
-        return player_result
-
-    # Now get their MMR changes
-    return get_player_mmr_changes(
-        player_result["name"], server, date, game_type, table_name
-    )
-
-
-def get_weekly_progress_by_rank(
-    rank,
-    server,
-    end_date=None,
-    game_type="battlegrounds",
-    days=7,
-    table_name="HearthstoneLeaderboard",
-):
-    """
-    Get weekly progress for the player at a specific rank.
-
-    Args:
-        rank (int): Rank to look up (1-200)
-        server (str): Server/region (US, EU, AP)
-        end_date (str): End date in format 'YYYY-MM-DD' (defaults to today)
-        game_type (str): Either "battlegrounds" or "battlegroundsduo"
-        days (int): Number of days to look back (default 7)
-        table_name (str): DynamoDB table name
-
-    Returns:
-        dict: Contains daily_progress, start_mmr, end_mmr, and net_change
-        str: Error message if rank not found
-    """
-    # First get the player at this rank
-    player_result = get_player_by_rank(rank, server, game_type, table_name)
-    if isinstance(player_result, str):  # Error message
-        return player_result
-
-    # Now get their weekly progress
-    return get_weekly_progress(
-        player_result["name"], server, end_date, game_type, days, table_name
-    )
-
-
-def get_most_active_player(
-    server, game_type="battlegrounds", table_name="HearthstoneLeaderboard"
-):
-    """Get the most active player in the last 24 hours."""
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
-    server_key = f"{server}#{game_type}"
-
-    # Get all entries for this server/game_type in last 24 hours
-    now = datetime.utcnow()
-    yesterday = now - timedelta(hours=24)
-    start_time = yesterday.strftime("%Y-%m-%dT%H:%M:%S.%f")
-    end_time = now.strftime("%Y-%m-%dT%H:%M:%S.%f")
-
-    # Query using RankIndex to get all players
-    response = table.query(
-        IndexName="RankIndex",
-        KeyConditionExpression="server_key = :rk",
-        FilterExpression="#ts BETWEEN :start AND :end",
-        ExpressionAttributeNames={"#ts": "timestamp"},
-        ExpressionAttributeValues={
-            ":rk": server_key,
-            ":start": start_time,
-            ":end": end_time,
-        },
-    )
-
-    if not response["Items"]:
-        return f"No games found in the last 24 hours for {server} {game_type}"
-
-    print(f"Found {len(response['Items'])} total entries")
-
-    # Group entries by player
-    player_games = defaultdict(list)
-    for item in response["Items"]:
-        player_games[item["player_name"]].append(item)
-
-    print(f"Found {len(player_games)} unique players")
-
-    # Process each player's games and count actual MMR changes
-    player_real_games = {}
-    for player_name, games in player_games.items():
-        # Sort by timestamp
-        sorted_games = sorted(games, key=lambda x: x["timestamp"])
-        mmr_changes = []
-
-        # Look for actual MMR changes
-        for i in range(1, len(sorted_games)):
-            mmr_diff = sorted_games[i]["MMR"] - sorted_games[i - 1]["MMR"]
-            time_diff = datetime.strptime(
-                sorted_games[i]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f"
-            ) - datetime.strptime(
-                sorted_games[i - 1]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f"
-            )
-
-            # Only count as a game if:
-            # 1. MMR changed
-            # 2. At least 5 minutes between entries
-            # 3. MMR change is reasonable (e.g., between -300 and +300)
-            if (
-                abs(mmr_diff) > 0
-                and time_diff >= timedelta(minutes=5)
-                and abs(mmr_diff) <= 300
-            ):
-                mmr_changes.append(mmr_diff)
-
-        if mmr_changes:  # Only include players with actual MMR changes
-            player_real_games[player_name] = {
-                "games": sorted_games,
-                "mmr_changes": mmr_changes,
-                "num_games": len(mmr_changes),
+            return {
+                "found": True,
+                "has_games": False,
+                "CurrentRank": stats.get("CurrentRank", 0),
+                "LatestRating": stats.get("LatestRating", 0),
+                "Server": stats.get("Server", server or "Unknown"),
+                "PlayerName": stats.get("PlayerName", player_name),
             }
 
-    if not player_real_games:
-        return f"No games with MMR changes found in the last 24 hours for {server} {game_type}"
+        # A player has games only if they have 2 or more entries
+        has_games = len(history) >= 2
 
-    # Find player with most actual games
-    most_active_player = max(player_real_games.items(), key=lambda x: x[1]["num_games"])
-    player_name = most_active_player[0]
-    games_data = most_active_player[1]
+        # Get current stats for rank info - PASS GAME_MODE HERE
+        stats = self.get_player_stats(
+            player_name, server, game_mode
+        )  # Add game_mode parameter
+        if not stats:
+            stats = {"CurrentRank": 0, "LatestRating": 0, "Server": server or "Unknown"}
 
-    # Format MMR changes
-    mmr_changes = [
-        f"+{change}" if change > 0 else str(change)
-        for change in games_data["mmr_changes"]
-    ]
-    all_games = games_data["games"]
+        # Calculate changes only if they have games
+        changes = []
+        if has_games:
+            for i in range(1, len(history)):
+                change = int(history[i][0]) - int(history[i - 1][0])
+                changes.append(change)
 
-    return {
-        "name": player_name,
-        "server": server,
-        "game_type": game_type,
-        "num_games": len(mmr_changes),
-        "initial_mmr": all_games[0]["MMR"],
-        "final_mmr": all_games[-1]["MMR"],
-        "net_change": all_games[-1]["MMR"] - all_games[0]["MMR"],
-        "mmr_changes": mmr_changes,
-    }
+        return {
+            "found": True,
+            "has_games": has_games,
+            "CurrentRank": stats.get("CurrentRank", 0),
+            "LatestRating": stats.get("LatestRating", 0),
+            "Server": stats.get("Server", server or "Unknown"),
+            "start_rating": int(history[0][0]),
+            "current_rating": int(history[-1][0]),
+            "games_played": len(changes),
+            "rating_changes": changes,
+        }
 
+    def _format_no_games_response(self, player_name, stats, timeframe=""):
+        """Format consistent response for when a player has no games played"""
+        # Use the actual player name from stats if available (for rank lookups)
+        display_name = stats.get("PlayerName", player_name)
+        return (
+            f"{display_name} is rank {stats['CurrentRank']} in {stats['Server']} "
+            f"at {stats['LatestRating']} with 0 games played{timeframe}"
+        )
 
-def debug_print_all_items(table_name="HearthstoneLeaderboard"):
-    """Print all items in the table for debugging"""
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
-    response = table.scan()
-    items = response["Items"]
+    def format_daily_stats(self, player_or_rank, server=None, game_mode="0"):
+        """Format daily stats for a player in chat-ready format"""
+        # Clean input first
+        player_or_rank = "".join(c for c in player_or_rank if c.isprintable()).strip()
 
-    print("\nAll items in table:")
-    print(f"Found {len(items)} items")
-    for item in items:
-        print(f"\nplayer_key: {item['player_key']}")
-        print(f"timestamp: {item['timestamp']}")
-        print(f"player_name: {item['player_name']}")
-        print(f"server: {item['server']}")
-        print(f"rank: {item['rank']}")
-        print(f"MMR: {item['MMR']}")
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
+        if error:
+            return error
 
+        stats = self.get_daily_stats(player_name, server, game_mode)
 
-def debug_print_player_entries(player_name, table_name="HearthstoneLeaderboard"):
-    """Print all entries for a specific player"""
-    # Use the global dynamodb connection
-    table = dynamodb.Table(table_name)
+        if not stats["found"]:
+            return f"{player_name} is not on any BG leaderboards"
 
-    # Query each server/game_type combination
-    servers = ["US", "EU", "AP"]
-    game_types = ["battlegrounds", "battlegroundsduo"]
+        if not stats["has_games"]:
+            # Use PlayerName from stats for rank lookups
+            display_name = stats.get("PlayerName", player_name)
+            return self._format_no_games_response(display_name, stats)
 
-    all_items = []
-    for server in servers:
-        for game_type in game_types:
-            player_key = f"{player_name.lower()}#{server}#{game_type}"
-            response = table.query(
-                KeyConditionExpression="player_key = :pk",
-                ExpressionAttributeValues={":pk": player_key},
+        # Calculate total MMR change
+        total_change = stats["current_rating"] - stats["start_rating"]
+        total_change_str = f" ({'+' if total_change > 0 else ''}{total_change})"
+
+        # Use PlayerName from stats for rank lookups
+        display_name = stats.get("PlayerName", player_name)
+
+        changes_str = ", ".join(
+            f"{'+' if c > 0 else ''}{c}" for c in stats["rating_changes"]
+        )
+        return (
+            f"{display_name} started today at {stats['start_rating']} in {stats['Server']} and is now {stats['current_rating']}{total_change_str} "
+            f"with {stats['games_played']} games played. Their record is: {changes_str}"
+        )
+
+    def format_peak_stats(self, player_or_rank, server=None, game_mode="0"):
+        """Format peak stats for a player in chat-ready format"""
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
+        if error:
+            return error
+
+        # Resolve alias before lookup
+        resolved_name = self._resolve_name(player_name)
+
+        if not server:
+            # Find server with highest rating
+            response = self.table.scan(
+                FilterExpression="PlayerName = :name AND GameMode = :mode",
+                ExpressionAttributeValues={":name": resolved_name, ":mode": game_mode},
             )
-            all_items.extend(response["Items"])
+            items = response.get("Items", [])
+            if not items:
+                return f"{resolved_name} is not on any BG leaderboards"
+            best = max(items, key=lambda x: x["LatestRating"])
+            server = best["Server"]
 
-    print(f"\nFound {len(all_items)} entries for player {player_name}:")
-    for item in all_items:
-        print("\n-------------------")
-        print(f"timestamp: {item['timestamp']}")
-        print(f"server: {item['server']}")
-        print(f"rank: {item['rank']}")
-        print(f"MMR: {item['MMR']}")
+        peak = self.get_player_peak(resolved_name, server, game_mode, hours=None)
+        if not peak:
+            return f"{resolved_name} has no rating history"
 
+        return f"{resolved_name}'s peak rating in {server}: {peak['rating']}"
 
-def debug_print_table_indexes(table_name="HearthstoneLeaderboard"):
-    table = dynamodb.Table(table_name)
-    print("\nTable Indexes:")
-    for index in table.global_secondary_indexes:
-        print(f"Index Name: {index['IndexName']}")
-        print(f"Key Schema: {index['KeySchema']}")
+    def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
+        """Format player stats in chat-ready format"""
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
+        if error:
+            return error
 
+        # Resolve alias before lookup
+        resolved_name = self._resolve_name(player_name)
 
-if __name__ == "__main__":
-    debug_print_table_indexes()
-    debug_print_player_entries("shadybunny")
+        if server:
+            # Direct server lookup
+            stats = self.get_player_stats(resolved_name, server, game_mode)
+            if not stats:
+                return f"{resolved_name} is not on any BG leaderboards"
+            return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}"
+
+        # Find best rating across servers
+        response = self.table.scan(
+            FilterExpression="PlayerName = :name AND GameMode = :mode",
+            ExpressionAttributeValues={":name": resolved_name, ":mode": game_mode},
+        )
+
+        items = response.get("Items", [])
+        if not items:
+            return f"{resolved_name} is not on any BG leaderboards"
+
+        # Get best rating and other servers
+        best = max(items, key=lambda x: x["LatestRating"])
+        others = [i for i in items if i["Server"] != best["Server"]]
+
+        if others:
+            other = max(others, key=lambda x: x["LatestRating"])
+            return (
+                f"{resolved_name} is rank {best['CurrentRank']} in {best['Server']} at {best['LatestRating']} "
+                f"(also rank {other['CurrentRank']} {other['Server']} at {other['LatestRating']})"
+            )
+
+        return f"{resolved_name} is rank {best['CurrentRank']} in {best['Server']} at {best['LatestRating']}"
+
+    def format_region_stats(self, server, game_mode="0"):
+        """Format region stats in chat-ready format"""
+        server = self._parse_server(server)
+        if not self._is_valid_server(server):
+            return server  # Return error message
+
+        stats = self.get_region_stats(server, game_mode)
+        if not stats:
+            return f"No stats available for {server}"
+
+        return f"{server} has {stats['player_count']} players with an average rating of {int(stats['avg_rating'])}. The highest rating is {stats['max_rating']}"
+
+    def format_top_players(self, server, game_mode="0"):
+        """Format top 5 players in chat-ready format"""
+        server = self._parse_server(server)
+        if not self._is_valid_server(server):
+            return server  # Return error message
+
+        players = self.get_top_players(server, game_mode, limit=5)
+        if not players:
+            return f"No players found in {server}"
+
+        # Format each player as "name (rating)"
+        formatted = [
+            f"{i+1}. {p['PlayerName']} ({p['LatestRating']})"
+            for i, p in enumerate(players)
+        ]
+
+        return f"Top 5 {server}: {', '.join(formatted)}"
+
+    def _handle_rank_or_name(self, player_or_rank, server=None, game_mode="0"):
+        """Handle rank or player name lookup"""
+        # Clean server first to handle invisible characters
+        server = self._parse_server(server)
+
+        # Handle rank lookup
+        try:
+            rank = int(player_or_rank)
+            if not server:
+                return None, None, "Server is required for rank lookup"
+
+            if not self._is_valid_server(server):
+                return None, None, server  # Return error message from _parse_server
+
+            player = self.get_rank_player(rank, server, game_mode)
+            if not player:
+                return None, None, f"No player found at rank {rank} in {server}"
+
+            return player["PlayerName"], server, None
+
+        # Handle player name lookup
+        except ValueError:
+            player_name = player_or_rank
+            if server and not self._is_valid_server(server):
+                return None, None, server
+            return player_name, server, None
+
+    def format_weekly_stats(self, player_or_rank, server=None, game_mode="0"):
+        """Format weekly stats for a player in chat-ready format"""
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
+        if error:
+            return error
+
+        # Resolve alias before lookup
+        resolved_name = self._resolve_name(player_name)
+
+        # If no server specified, find the one with highest rating
+        if not server:
+            response = self.table.scan(
+                FilterExpression="PlayerName = :name AND GameMode = :mode",
+                ExpressionAttributeValues={":name": resolved_name, ":mode": game_mode},
+            )
+            items = response.get("Items", [])
+            if not items:
+                return f"{resolved_name} is not on any BG leaderboards"
+            best = max(items, key=lambda x: x["LatestRating"])
+            server = best["Server"]
+
+        # Get 7-day history
+        history = self.get_player_history(
+            resolved_name, server, game_mode, hours=24 * 7
+        )
+        if not history:
+            stats = self.get_player_stats(resolved_name, server, game_mode)
+            if not stats:
+                return f"{resolved_name} is not on any BG leaderboards"
+            return self._format_no_games_response(resolved_name, stats, " this week")
+
+        # A player has games only if they have 2 or more entries
+        has_games = len(history) >= 2
+        if not has_games:
+            stats = self.get_player_stats(resolved_name, server, game_mode)
+            return self._format_no_games_response(resolved_name, stats, " this week")
+
+        # Calculate daily deltas using UTC
+        daily_changes = [0] * 7
+        current_time = datetime.now(timezone.utc)
+
+        for i in range(1, len(history)):
+            prev_rating = int(history[i - 1][0])
+            curr_rating = int(history[i][0])
+            timestamp = int(float(history[i][1]))
+            days_ago = (
+                current_time - datetime.fromtimestamp(timestamp, timezone.utc)
+            ).days
+            if 0 <= days_ago < 7:
+                daily_changes[days_ago] += curr_rating - prev_rating
+
+        # Calculate total MMR change from start to end
+        total_change = int(history[-1][0]) - int(history[0][0])
+        total_change_str = f" ({'+' if total_change > 0 else ''}{total_change})"
+
+        # Format daily changes
+        daily_str = [
+            f"{change:+d}" if change != 0 else "0" for change in reversed(daily_changes)
+        ]
+
+        return (
+            f"{resolved_name} started the week at {int(history[0][0])} in {server} "
+            f"and is now {int(history[-1][0])}{total_change_str} with {len(history) - 1} games played. "
+            f"[{', '.join(daily_str)}]"
+        )

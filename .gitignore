@@ -59,3 +59,18 @@ output.txt
 
 # Test files
 test_*.py
+
+# DynamoDB local
+.dynamodb/
+docker/dynamodb/
+
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/

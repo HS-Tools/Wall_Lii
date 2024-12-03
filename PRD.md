@@ -1,227 +1,427 @@
-# Hearthstone Battlegrounds Leaderboard Bot - Product Requirements Document
+# Hearthstone Battlegrounds Leaderboard Bot
 
-## Product Overview
+## Overview
 
-A Twitch chat bot that tracks and provides real-time Hearthstone Battlegrounds leaderboard statistics, including player rankings, MMR changes, and daily/weekly progress.
+A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard statistics, including player rankings, MMR changes, and daily/weekly progress.
 
 ## Core Components
 
-### 1. Twitch Bot
+### 1. Data Collection (AWS Lambda)
 
-- Responds to chat commands for player stats and rankings
-- Handles player aliases for easier lookups
-- Supports multiple game modes (Battlegrounds, Battlegrounds Duo)
-- Supports multiple regions (NA, EU, AP)
-- Provides real-time MMR and rank information
+- Fetches leaderboard data every 2 minutes
+- Supports both game modes:
+  - Regular Battlegrounds (mode: 0)
+  - Battlegrounds Duo (mode: 1)
+- Covers all servers (NA, EU, AP)
+- Uses UTC timestamps for consistency
+- Optimized logging (only significant changes >301 MMR)
+- Handles duplicate player names:
+  - Tracks name occurrences per server/mode
+  - Appends count to duplicate names (e.g., "mia2")
+  - Logs duplicate name occurrences
+  - Ensures unique player keys in database
 
-### 2. AWS Lambda Function
+### 2. Data Storage (DynamoDB)
 
-- Periodically fetches leaderboard data from Blizzard's API
-- Stores player data in DynamoDB
-- Tracks MMR changes and rank updates
-- Currently debugging data freshness issues with specific players (e.g., beterbabbit)
+- Schema:
+  - Primary Key: GameModeServerPlayer (e.g., "0#NA#beterbabbit")
+  - GSI: RankLookupIndex (GameModeServer, CurrentRank)
+  - RatingHistory: Array of [rating, timestamp] pairs
+- Environments:
+  - Development: HearthstoneLeaderboard (local)
+  - Production: HearthstoneLeaderboardV2 (AWS)
 
-### 3. Data Storage
+### 3. Bot Interface
 
-- Uses AWS DynamoDB for persistent storage
-- Maintains player history for statistical analysis
-- Stores player aliases and channel configurations
+- Supports both local and AWS DynamoDB via --aws flag
+- Handles player lookups and rank queries
+- Supports multiple game modes and servers
+- Provides formatted responses for chat
+- Supports player aliases and default channel names
 
-## Key Features
+### 4. Player Resolution
 
-### Current Features
+- Aliases:
 
-1. **Player Lookups**
+  - Maps alternative names to actual player names
+  - Example: "beter" → "beterbabbit", "hapa" → "hapabear"
+  - Stored in alias table for easy updates
+  - All player lookup commands support aliases:
+    - !bgrank
+    - !bgdaily
+    - !bgweekly
+    - !peak
+  - Alias Management:
+    - Check alias table for updates every minute
+    - Support for new aliases, updates, and deletions
+    - Maintain local cache for performance
+    - No service interruption during updates
 
-   - `!bgrank <player> <region>` - Current rank and MMR
-   - `!bgdaily <player> <region>` - Daily MMR changes and games played
-   - `!bgweekly <player> <region>` - Weekly progress and MMR trends
-   - `!duorank <player> <region>` - Current duo rank and MMR
-   - `!duodaily <player> <region>` - Daily duo MMR changes and games played
-   - `!duoweekly <player> <region>` - Weekly duo progress and MMR trends
+- Default Channel Names:
+  - Each Twitch channel can have a default player name
+  - Used when commands are called with no arguments
+  - Example: "!bgrank" in channel "liihs" resolves to "!bgrank lii"
 
-2. **Rank Lookups**
+## Commands and Responses
 
-   - Look up players by rank (e.g., `!bgrank 1 na`)
-   - Support for top 1000 players
+### Player Stats
 
-3. **Alias System**
-   - Custom aliases for popular players
-   - Automatic alias resolution
+1. `!bgrank <player|rank> [server]`
 
-### Data Management
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
 
-- Stores historical MMR data
-- Tracks player performance over time
-- Updates data periodically via Lambda function
+   # Alias lookup
+   {resolved_player} is rank {rank} in {server} at {rating}
 
-## Technical Requirements
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
 
-### Infrastructure
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
 
-- AWS Lambda for data collection
-- DynamoDB for data storage
-- Python-based bot implementation
-- AWS SAM for Lambda deployment
+   # Rank lookup
+   {player} is rank {rank} in {server} at {rating}
+   ```
 
-### Dependencies
+2. `!bgdaily <player|rank> [server]`
 
-- boto3 for AWS interactions
-- python-dotenv for configuration
-- requests for API calls
-- aiocron for scheduled tasks
+   ```
+   # Default channel and alias lookups supported
+   # With games played
+   {player} started today at {start_rating} in {server} and is now {current_rating} with {games} games played. Their record is: {changes}
 
-## Current Issues/Improvements Needed
+   # No games played
+   {player} is rank {rank} in {server} at {rating} with 0 games played
+   ```
 
-1. Lambda function data freshness
+3. `!bgweekly <player|rank> [server]`
 
-   - Investigating update frequency
-   - Adding debug logging for specific players
-   - Verifying data storage logic
+   ```
+   # Default channel and alias lookups supported
+   # With games played
+   {player} started the week at {start_rating} in {server} and is now {current_rating} with {games} games played. [{daily_changes}]
 
-2. Local Development
-   - Improving development environment setup
-   - Streamlining deployment process
-   - Better handling of local vs. production configurations
+   # No games played
+   {player} is rank {rank} in {server} at {rating} with 0 games played this week
+   ```
 
-3. Scaling Requirements
-   - Currently fetching top 100 players per region
-   - Short term: Scale to 1000 players per region
-   - Long term: Scale to 10000 players per region
-   - Need to optimize Lambda performance and timeout settings
-   - Consider parallel processing and batch updates
+4. `!peak <player|rank> [server]`
+   ```
+   # Default channel and alias lookups supported
+   {player}'s peak rating in {server}: {rating}
+   ```
 
-### Data Access Patterns
+### Server Stats
 
-#### Primary Access Patterns
-1. **Player Lookup (Most Common)**
-   - Input: PlayerName (partial/full), GameMode
-   - Output: Current rank and latest rating
-   - Query Requirements:
-     - Fast player name search (case-insensitive)
-     - Filter by game mode
-     - Access latest rating without scanning full history
-     - Compare ranks across servers for same player
+1. `!stats <server>`
 
-2. **Rank Lookup (Common)**
-   - Input: Rank, GameMode, Server
-   - Output: Player's latest rating
-   - Query Requirements:
-     - Direct access by rank within a server/mode combination
-     - Access latest rating without scanning full history
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
 
-### Proposed Table Structure
+2. `!top <server>`
+   ```
+   Top 5 {server}: 1. {player1} ({rating1}), 2. {player2} ({rating2})...
+   ```
 
-#### Main Table Design
-- **Partition Key**: `{GameMode}#{Server}#{PlayerName}`
-  - Example: "0#NA#kripp" (for Battlegrounds NA player)
-- **Sort Key**: `Season`
-  - Enables historical season data queries
+### Error Responses
 
-#### Attributes
-- **CurrentRank**: Number
-- **LatestRating**: Number (denormalized for quick access)
-- **RatingHistory**: List[Tuple]
-  - Format: [[rating, epoch], ...]
-  - Latest rating always at end of list
+```
+# Invalid server
+Invalid server: {server}. Valid servers are: NA, EU, AP
 
-#### Global Secondary Indexes (GSIs)
+# Player not found
+{player} is not on any BG leaderboards
 
-1. **RankLookupIndex**
-   - Partition Key: `{GameMode}#{Server}#{Season}`
-   - Sort Key: `CurrentRank`
-   - Projected Attributes:
-     - PlayerName
-     - LatestRating
-   - Optimizes rank-based queries
+# Rank lookup errors
+Server is required for rank lookup
+No player found at rank {rank} in {server}
+```
 
-2. **PlayerLookupIndex**
-   - Partition Key: `PlayerName`
-   - Sort Key: `{GameMode}#{Season}`
-   - Projected Attributes:
-     - CurrentRank
-     - LatestRating
-     - Server
-   - Enables cross-server player searches
+## Data Rules
 
-### Query Implementations
+1. Rating Updates
 
-1. **Player Search Query**
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
 
-### Lambda Function Specification
+2. Time Handling
 
-#### Basic Configuration
-- Execution Frequency: 2 minutes (configurable)
-- Timeout: TBD based on performance testing
-- Memory: TBD based on performance testing
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
 
-#### Data Collection Process
-1. **API Endpoints**
-   - Format: `https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData`
-   - Parameters:
-     - region: US, EU, AP
-     - leaderboardId: battlegrounds, battlegroundsduo
-     - seasonId: current season
-     - page: 1-N (25 players per page)
+3. Server Validation
 
-2. **Pagination Handling**
-   - Fetch 25 players per API call
-   - Continue until either:
-     - No more players available
-     - Reached configured player limit (X)
-   - Handle empty/invalid responses gracefully
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
 
-3. **Data Processing Rules**
-   - **New Players**
-     ```
-     If no entry exists for (PlayerName, Region, GameMode):
-         Create new entry with current rank/rating
-     ```
-   
-   - **Existing Players**
-     ```
-     If entry exists:
-         Update current rank
-         If current rating != latest rating in history:
-             Append new rating to history
-     ```
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
 
-   - **Name Collision Handling**
-     ```
-     If duplicate name detected (same name, different rank/rating):
-         If cannot verify identity:
-             Create new entry with incrementing suffix
-             Flag entry for potential manual review
-         Track collision in separate table for monitoring
-     ```
+### Player Stats
 
-#### Error Handling
-1. **API Failures**
-   - Implement exponential backoff
-   - Log failed requests
-   - Continue with remaining regions/modes
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
 
-2. **Data Validation**
-   - Verify rating ranges are reasonable
-   - Validate player name formats
-   - Check for impossible rank changes
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
 
-#### Monitoring
-1. **Performance Metrics**
-   - API response times
-   - Processing time per batch
-   - Number of players processed
+1. `!bgrank <player|rank> [server]`
 
-2. **Data Quality Metrics**
-   - Number of name collisions
-   - Invalid data points
-   - Missing data points
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
 
-#### Future Considerations
-1. **Rate Limiting**
-   - Monitor API usage limits
-   - Implement request throttling if needed
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
 
-2. **Data Cleanup**
-   - Archive historical data
-   - Clean up unresolved name collisions
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak

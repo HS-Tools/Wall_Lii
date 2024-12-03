@@ -1,12 +1,10 @@
 import json
 import time
 from collections import defaultdict
-from concurrent.futures import as_completed
 from datetime import datetime
 from typing import Dict, Optional
 
 import requests
-from requests_futures.sessions import FuturesSession
 
 from logger import setup_logger
 
@@ -29,117 +27,74 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
     return output
 
 
-def getLeaderboardSnapshot(
-    region: str = None, game_type: str = "battlegrounds", page_size: int = 25
-) -> Dict:
-    """Get leaderboard data with parallel fetching and pagination."""
-    base_url = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-    regions = ["US", "EU", "AP"] if region is None else [region]
-    max_players = 100  # Fetch top 1000 players
-    season_id = 13
+def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=4):
+    """
+    Fetch leaderboard data from Blizzard API
+    """
+    # Standardize region names
+    region_mapping = {
+        "US": "NA",  # Map US to NA
+        "EU": "EU",  # Keep EU as is
+        "AP": "AP",  # Keep AP as is
+    }
 
-    all_data = {}
-    session = FuturesSession(max_workers=3)  # One worker per region
-    region_futures = {}
+    result = {}
 
-    # Start all region fetches in parallel
-    for r in regions:
-        region_futures[r] = {
-            'players': {},
-            'name_counts': defaultdict(int),
-            'page': 1,
-            'futures': [],
-            'processed_pages': set()  # Track which pages we've processed
-        }
-        # Queue first page for each region
-        url = f"{base_url}?region={r}&leaderboardId={game_type}&seasonId={season_id}&page=1"
-        region_futures[r]['futures'].append((1, session.get(url)))  # Store page number with future
+    for api_region in ["US", "EU", "AP"]:
+        normalized_region = region_mapping[api_region]  # Convert US to NA
+        result[normalized_region] = {game_type: {}}
+        players = {}
+        name_counts = {}  # Track duplicate names
 
-    # Process responses as they complete
-    while region_futures:
-        completed_regions = []
-        for r in list(region_futures.keys()):
-            if r in completed_regions:  # Skip if region already completed
-                continue
-                
-            region_data = region_futures[r]
-            
-            # Process any completed futures
-            completed_futures = []
-            for page_num, future in region_data['futures']:
-                if future.done():
-                    completed_futures.append((page_num, future))
-                    try:
-                        # Skip if we've already processed this page
-                        if page_num in region_data['processed_pages']:
-                            continue
-                        region_data['processed_pages'].add(page_num)
+        for page in range(1, max_pages + 1):
+            try:
+                url = f"https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
+                params = {
+                    "region": api_region,  # Use original region for API
+                    "leaderboardId": game_type,
+                    "page": page,
+                }
 
-                        response = future.result()
-                        if response.status_code == 429:  # Rate limited
-                            retry_after = int(response.headers.get("Retry-After", 60))
-                            logger.warning(f"Rate limited on {r}, waiting {retry_after}s")
-                            time.sleep(retry_after)
-                            # Requeue the request
-                            url = response.request.url
-                            region_data['futures'].append((page_num, session.get(url)))
-                            continue
+                response = requests.get(url, params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    rows = data.get("leaderboard", {}).get("rows", [])
 
-                        response.raise_for_status()
-                        players = response.json().get("leaderboard", {}).get("rows", [])
-                        
-                        if not players:  # No more players on this page
-                            completed_regions.append(r)
-                            all_data[r] = {game_type: region_data['players']}
-                            logger.info(f"Completed {r} - Total Players: {len(region_data['players'])}")
-                            break
+                    for row in rows:
+                        if row and row.get("accountid"):
+                            player_name = row["accountid"].lower()
 
-                        # Process players from this page (only once)
-                        processed_players = set()  # Track players we've seen
-                        for account in players:
-                            if account and account["accountid"]:
-                                player_id = account["accountid"].lower()
-                                if player_id in processed_players:
-                                    continue  # Skip if we've seen this player
-                                processed_players.add(player_id)
-                                rank = account["rank"]
-                                if rank > max_players:  # Only break if we've exceeded max_players
-                                    completed_regions.append(r)
-                                    all_data[r] = {game_type: region_data['players']}
-                                    logger.info(f"Completed {r} - Total Players: {len(region_data['players'])}")
-                                    break
+                            # Handle duplicate names
+                            if player_name in name_counts:
+                                name_counts[player_name] += 1
+                                player_name = f"{player_name}{name_counts[player_name]}"
+                            else:
+                                name_counts[player_name] = 1
 
-                                base_name = account["accountid"].encode("utf-8").lower().decode("utf-8")
-                                region_data['name_counts'][base_name] += 1
-                                name = (f"{base_name}{region_data['name_counts'][base_name]}" 
-                                       if region_data['name_counts'][base_name] > 1 else base_name)
+                            players[player_name] = {
+                                "rank": row["rank"],
+                                "rating": row["rating"],
+                            }
 
-                                region_data['players'][name] = {
-                                    "rank": rank,
-                                    "rating": account["rating"],
-                                }
+                else:
+                    logger.error(
+                        f"Error fetching {normalized_region} page {page}: {response.status_code}"
+                    )
 
-                                # Only log if it's lii
-                                if account["accountid"].lower() == "lii":
-                                    logger.info(f"Found lii in {r}: MMR={account['rating']}, Rank={account['rank']}")
+            except Exception as e:
+                logger.error(
+                    f"Error in API call for {normalized_region} page {page}: {str(e)}"
+                )
 
-                        # Queue next page if needed
-                        if len(region_data['players']) < max_players:  # Remove rank check here
-                            region_data['page'] += 1
-                            url = f"{base_url}?region={r}&leaderboardId={game_type}&seasonId={season_id}&page={region_data['page']}"
-                            region_data['futures'].append((region_data['page'], session.get(url)))
+        result[normalized_region][game_type] = players
+        logger.info(f"Fetched {len(players)} players from {normalized_region}")
 
-                    except requests.exceptions.RequestException as e:
-                        logger.error(f"Error fetching {r} leaderboard: {e}")
-                        completed_regions.append(r)
-                        break
+        # Log duplicate names if any
+        duplicates = {name: count for name, count in name_counts.items() if count > 1}
+        if duplicates:
+            logger.info(f"Found duplicate names in {normalized_region}: {duplicates}")
 
-            # If region is complete, log final count
-            if r in completed_regions:
-                logger.info(f"Completed {r} - Total Players: {len(region_data['players'])}")
-
-    logger.info(f"All regions completed for {game_type}")
-    return all_data
+    return result
 
 
 if __name__ == "__main__":  ## run the function if this program is called

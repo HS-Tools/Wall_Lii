@@ -1,153 +1,142 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import boto3
 from api import getLeaderboardSnapshot
-from boto3.session import Config
 
 from logger import setup_logger
 
 logger = setup_logger("dbUpdater")
 
 
-def decimal_default(obj):
-    if isinstance(obj, Decimal):
-        return int(obj)
-    raise TypeError
-
-
-def handler(event, context):
-    """
-    AWS Lambda handler to fetch and store leaderboard data
-    """
+def lambda_handler(event, context):
+    """AWS Lambda handler to fetch and store leaderboard data"""
     try:
         logger.info("Starting leaderboard fetch")
 
-        # Configure boto3 with specific settings
-        config = Config(
-            region_name="us-east-1",
-            retries={"max_attempts": 2, "mode": "standard"},
-            connect_timeout=10,  # Increased timeout for Lambda
-            read_timeout=10,
-        )
+        # Get max_pages from event or use default (4 pages = 100 players)
+        max_pages = event.get("max_pages", 4)
 
-        # Initialize DynamoDB client with better configuration
-        dynamodb = boto3.resource("dynamodb", config=config, region_name="us-east-1")
-        table = dynamodb.Table(os.environ["TABLE_NAME"])
+        # Get DynamoDB table - handle local testing
+        table_name = os.environ["TABLE_NAME"]
+        endpoint_url = os.environ.get("DYNAMODB_ENDPOINT_URL")  # None in production
 
-        # Debug check - get beterbabbit's latest entry before update
-        beter_key = "beterbabbit#US#battlegrounds"
-        beter_response = table.query(
-            KeyConditionExpression="player_key = :pk",
-            ExpressionAttributeValues={":pk": beter_key},
-            ScanIndexForward=False,
-            Limit=1,
-        )
-        if beter_response["Items"]:
-            last_beter = beter_response["Items"][0]
-            logger.info(
-                f"beterbabbit's last entry: MMR={last_beter['MMR']}, Rank={last_beter['rank']}, Time={last_beter['timestamp']}"
-            )
-        else:
-            logger.info("No previous entries found for beterbabbit")
+        # Initialize DynamoDB client
+        dynamodb_kwargs = {"region_name": "us-east-1"}
+        if endpoint_url:
+            dynamodb_kwargs["endpoint_url"] = endpoint_url
+
+        dynamodb = boto3.resource("dynamodb", **dynamodb_kwargs)
+        table = dynamodb.Table(table_name)
 
         # Get leaderboard data for both game modes
-        bg_data = getLeaderboardSnapshot(game_type="battlegrounds")
-        duo_data = getLeaderboardSnapshot(game_type="battlegroundsduo")
+        bg_data = getLeaderboardSnapshot(game_type="battlegrounds", max_pages=max_pages)
+        duo_data = getLeaderboardSnapshot(
+            game_type="battlegroundsduo", max_pages=max_pages
+        )
 
-        # Debug check - print beterbabbit's new data if present
-        if "US" in bg_data and "battlegrounds" in bg_data["US"]:
-            if "beterbabbit" in bg_data["US"]["battlegrounds"]:
-                new_beter = bg_data["US"]["battlegrounds"]["beterbabbit"]
-                logger.info(
-                    f"beterbabbit's new data: MMR={new_beter['rating']}, Rank={new_beter['rank']}"
+        def update_player_data(player_name, rank, rating, game_mode, server, table):
+            """Update a player's data in DynamoDB"""
+            # Normalize server name
+            server_mapping = {"US": "NA", "EU": "EU", "AP": "AP"}
+            server = server_mapping.get(server, server)
+
+            # Create composite keys
+            game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
+            game_mode_server = f"{game_mode}#{server}"
+
+            try:
+                # Get existing item
+                response = table.query(
+                    KeyConditionExpression="GameModeServerPlayer = :gmsp",
+                    ExpressionAttributeValues={":gmsp": game_mode_server_player},
                 )
-            else:
-                logger.warning("beterbabbit not found in new leaderboard data")
 
-        timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
-        current_time = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+                # Get existing history or start new
+                if response.get("Items"):
+                    rating_history = response["Items"][0].get("RatingHistory", [])
+                    current_rating = rating_history[-1][0] if rating_history else None
+                else:
+                    rating_history = []
+                    current_rating = None
 
-        def store_player_data(data, game_type):
-            updates = 0
-            skips = 0
+                # Add new rating if changed
+                current_time = int(datetime.now(timezone.utc).timestamp())
+                rating_decimal = Decimal(str(rating))
+
+                # Only update if rating changed and enough time passed
+                should_update = not rating_history or (
+                    current_rating != rating_decimal
+                    and not any(h[0] == rating_decimal for h in rating_history[-3:])
+                    and (
+                        not rating_history or current_time - rating_history[-1][1] >= 60
+                    )
+                )
+
+                if should_update:
+                    rating_history.append([rating_decimal, current_time])
+
+                    item = {
+                        "GameModeServerPlayer": game_mode_server_player,
+                        "GameModeServer": game_mode_server,
+                        "PlayerName": player_name.lower(),
+                        "GameMode": game_mode,
+                        "Server": server,
+                        "CurrentRank": Decimal(str(rank)),
+                        "LatestRating": rating_decimal,
+                        "RatingHistory": rating_history,
+                    }
+
+                    table.put_item(Item=item)
+
+                    # Only log significant rating changes (e.g., >301)
+                    old_rating = (
+                        rating_history[-2][0] if len(rating_history) > 1 else None
+                    )
+                    if old_rating:
+                        change = rating - old_rating
+                        if abs(change) > 301:
+                            logger.info(
+                                f"Significant rating change for {player_name}: {old_rating} → {rating} ({'+' if change > 0 else ''}{change}) in {server}"
+                            )
+
+                    return True
+
+                return False
+
+            except Exception as e:
+                logger.error(f"Error updating {player_name}: {str(e)}")
+                return False
+
+        # Process updates for each game mode
+        updates = {"battlegrounds": 0, "battlegroundsduo": 0}
+
+        for game_type, data in [
+            ("battlegrounds", bg_data),
+            ("battlegroundsduo", duo_data),
+        ]:
+            mode_num = "0" if game_type == "battlegrounds" else "1"
             for server, server_data in data.items():
                 for mode, players in server_data.items():
                     for player_name, stats in players.items():
-                        player_key = f"{player_name}#{server}#{game_type}"
-
-                        # Check last entry for this player
-                        response = table.query(
-                            KeyConditionExpression="player_key = :pk",
-                            ScanIndexForward=False,
-                            Limit=1,
-                            ExpressionAttributeValues={":pk": player_key},
-                        )
-
-                        # Special logging for lii
-                        if player_name == "lii":
-                            if response["Items"]:
-                                last_entry = response["Items"][0]
-                                logger.info(
-                                    f"lii comparison - API: MMR={stats['rating']}, Rank={stats['rank']} | "
-                                    f"DB: MMR={last_entry['MMR']}, Rank={last_entry['rank']}, Time={last_entry['timestamp']}"
-                                )
-                            else:
-                                logger.info(f"No previous entries for lii, new data: MMR={stats['rating']}, Rank={stats['rank']}")
-
-                        should_store = True
-                        if response["Items"]:
-                            last_entry = response["Items"][0]
-                            # Only store if MMR or rank changed
-                            if (
-                                int(last_entry["MMR"]) == stats["rating"]
-                                and int(last_entry["rank"]) == stats["rank"]
-                            ):
-                                should_store = False
-                                skips += 1
-                            else:
-                                logger.info(
-                                    f"Updating {player_name} due to: MMR change: {last_entry['MMR']} != {stats['rating']}, "
-                                    f"Rank change: {last_entry['rank']} != {stats['rank']}"
-                                )
-
-                        if should_store:
-                            updates += 1
-                            table.put_item(
-                                Item={
-                                    "player_key": player_key,
-                                    "timestamp": timestamp,
-                                    "player_name": player_name,
-                                    "server": server,
-                                    "server_key": f"{server}#{game_type}",
-                                    "rank": stats["rank"],
-                                    "MMR": stats["rating"],
-                                }
-                            )
-
-            logger.info(
-                f"Game type {game_type}: Updated {updates} players, skipped {skips} unchanged entries"
-            )
-            return updates, skips
-
-        # Store data for both game modes
-        bg_updates, bg_skips = store_player_data(bg_data, "battlegrounds")
-        duo_updates, duo_skips = store_player_data(duo_data, "battlegroundsduo")
+                        if update_player_data(
+                            player_name=player_name,
+                            rank=stats["rank"],
+                            rating=stats["rating"],
+                            game_mode=mode_num,
+                            server=server,
+                            table=table,
+                        ):
+                            updates[game_type] += 1
 
         return {
             "statusCode": 200,
             "body": json.dumps(
                 {
                     "message": "Successfully updated leaderboard data",
-                    "updates": {
-                        "battlegrounds": {"updated": bg_updates, "skipped": bg_skips},
-                        "battlegroundsduo": {
-                            "updated": duo_updates,
-                            "skipped": duo_skips,
-                        },
-                    },
+                    "updates": updates,
                 }
             ),
         }
@@ -156,20 +145,5 @@ def handler(event, context):
         logger.error(f"Error: {str(e)}")
         return {
             "statusCode": 500,
-            "body": json.dumps(f"Error updating leaderboard data: {str(e)}"),
+            "body": json.dumps({"error": f"Error updating leaderboard data: {str(e)}"}),
         }
-
-def get_player_mmr_changes(player_name, server=None, game_type="battlegrounds"):
-    # Get current time in UTC
-    now = datetime.now()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    # Format for DynamoDB comparison
-    today_start_str = today_start.strftime("%Y-%m-%dT%H:%M:%S.%f")
-
-    # Calculate MMR changes between consecutive entries
-    mmr_changes = []
-    for i in range(1, len(items)):
-        prev_mmr = int(items[i-1]["MMR"])
-        curr_mmr = int(items[i]["MMR"])
-        mmr_changes.append(curr_mmr - prev_mmr)

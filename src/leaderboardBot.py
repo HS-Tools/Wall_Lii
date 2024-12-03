@@ -35,29 +35,39 @@ class LeaderboardBot:
         # Load AWS credentials from .env
         load_dotenv()
 
-        # Configure boto3 with specific settings
+        # Configure AWS client for alias and channel tables
         config = Config(
             region_name="us-east-1",
             retries={"max_attempts": 1, "mode": "standard"},
             connect_timeout=5,
             read_timeout=5,
         )
-
-        # AWS DynamoDB for all tables
-        self.dynamodb = boto3.resource(
+        aws_dynamodb = boto3.resource(
             "dynamodb",
             config=config,
             region_name="us-east-1",
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            endpoint_url="https://dynamodb.us-east-1.amazonaws.com",  # Force AWS endpoint
-            use_ssl=True,  # Force SSL
-            verify=True,  # Verify SSL cert
+            endpoint_url="https://dynamodb.us-east-1.amazonaws.com",
+            use_ssl=True,
+            verify=True,
         )
 
+        # Configure local client for leaderboard table
+        if os.getenv("DYNAMODB_ENDPOINT"):  # Local development
+            self.dynamodb = boto3.resource(
+                "dynamodb",
+                endpoint_url=os.getenv("DYNAMODB_ENDPOINT"),
+                region_name="us-east-1",
+                aws_access_key_id="dummy",
+                aws_secret_access_key="dummy",
+            )
+        else:  # AWS environment
+            self.dynamodb = aws_dynamodb
+
         self.table = self.dynamodb.Table(table_name)
-        self.alias_table = self.dynamodb.Table("player-alias-table")
-        self.channel_table = self.dynamodb.Table("channel-table")
+        self.alias_table = aws_dynamodb.Table("player-alias-table")  # Always use AWS
+        self.channel_table = aws_dynamodb.Table("channel-table")  # Always use AWS
         self.patch_link = "Waiting to fetch latest post..."
         self.updateAlias()
         aiocron.crontab("* * * * *", func=self.fetchPatchLink)
@@ -124,12 +134,7 @@ class LeaderboardBot:
         print(
             f"Debug - Looking up player {tag} in region {region} for {game_type}"
         )  # Debug print
-        result = get_player_stats(
-            tag.lower(),
-            region,
-            game_type=game_type,
-            dynamodb_client=self.dynamodb,  # Pass the bot's client
-        )
+        result = get_player_stats(tag.lower(), region, game_type=game_type)
         print(f"Debug - Got result: {result}")  # Debug print
         return self.format_rank_response(result)
 
@@ -164,10 +169,13 @@ class LeaderboardBot:
 
     def format_rank_response(self, result):
         """Format rank query results for Twitch chat"""
+        print(f"Debug - Formatting response: {result}")  # Add debug print
         if isinstance(result, str):  # Error message
             return result
 
-        return f"{result['name']} is rank {result['rank']} in {result['server']} with {result['rating']} mmr liiHappyCat"
+        response = f"{result['name']} is rank {result['rank']} in {result['server']} with {result['rating']} mmr liiHappyCat"
+        print(f"Debug - Formatted response: {response}")  # Add debug print
+        return response
 
     def format_daily_response(self, result):
         """Format daily stats for Twitch chat"""

@@ -1,5 +1,5 @@
-requests
 boto3
+requests
 requests-futures
-python-dotenv
-# Add any other dependencies here
+moto[dynamodb]
+pytest
