@@ -421,3 +421,60 @@ Bot now connects to specific channels by default:
    - Adjust cache timing based on usage
    - Expand cached data based on needs
    - Implement advanced analytics
+## Help Command Enhancement
+
+### Objective
+
+- Provide detailed help information for each command.
+- Allow users to request specific help using `!help <command>`.
+
+### Implementation Plan
+
+1. **Base Help Command**:
+   - Update the base `!help` command to list all available commands.
+   - Include instructions for using `!help <command>` to get detailed information.
+
+2. **Specific Help Commands**:
+   - Implement specific help responses for each command.
+   - Provide detailed descriptions, usage examples, and any relevant notes.
+
+3. **Command Descriptions**:
+   - `!help rank`: Explain how to use the `!rank` command, including options for specifying players and servers.
+   - `!help day`: Describe the `!day` command, detailing how to view daily stats.
+   - `!help week`: Provide information on the `!week` command for weekly stats.
+   - `!help peak`: Elaborate on the `!peak` command to view peak ratings.
+   - `!help stats`: Explain the `!stats` command for server statistics.
+   - `!help top`: Detail the `!top` command for viewing top players.
+
+### User Communication
+
+1. **Base Help Message**:
+   - "Use `!help <command>` for detailed information on a specific command."
+   - List all available commands with a brief description.
+
+2. **Specific Help Responses**:
+   - Provide clear, concise information tailored to each command.
+   - Include examples of command usage.
+
+### Expected Benefits
+
+1. **Improved User Experience**:
+   - Users can easily find detailed information about commands.
+   - Reduces confusion and enhances usability.
+
+2. **Increased Engagement**:
+   - Encourages users to explore and use more commands.
+   - Provides a self-service option for learning about bot features.
+
+### Timeline
+
+1. **Phase 1 - Base Help Command Update**:
+   - Update the base help command to include instructions for specific help.
+
+2. **Phase 2 - Implement Specific Help Commands**:
+   - Develop detailed help responses for each command.
+   - Test and refine based on user feedback.
+
+3. **Phase 3 - Continuous Improvement**:
+   - Gather user feedback to improve help content.
+   - Update help information as new commands are added or existing ones are modified.

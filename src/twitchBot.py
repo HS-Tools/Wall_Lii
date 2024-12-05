@@ -210,20 +210,59 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(response)
 
     @commands.command(name="help")
-    async def help(self, ctx):
-        """Display all available commands"""
-        help_message = (
-            "Commands (solo/duo): "
-            "!rank/!duorank, "
-            "!day/!duoday, "
-            "!week/!duoweek, "
-            "!peak/!duopeak, "
-            "!stats/!duostats, "
-            "!top/!duotop. "
-            "Milestones: !8k through !21k [server]. "
-            "Valid servers: NA, EU, AP"
-        )
-        await ctx.send(help_message)
+    async def help_command(self, ctx, command_name=None):
+        """Display help information for commands"""
+        if clean_input(command_name) is None or clean_input(command_name) == "":
+            # Base help message
+            help_message = (
+                "Available commands: !rank, !day, !week, !peak, !stats, !top. "
+                "Use `!help <command>` for detailed information on a specific command."
+            )
+            await ctx.send(help_message)
+        else:
+            # Specific help messages
+            command_name = command_name.lower()
+            help_messages = {
+                "rank": (
+                    "!rank [player] [server]: Get the rank of a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !rank lii NA or !duorank lii NA"
+                ),
+                "day": (
+                    "!day [player] [server]: Get daily stats for a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !day lii NA or !duoday lii NA"
+                ),
+                "week": (
+                    "!week [player] [server]: Get weekly stats for a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !week lii NA or !duoweek lii NA"
+                ),
+                "peak": (
+                    "!peak [player] [server]: Get the peak rating of a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !peak lii NA or !duopeak lii NA"
+                ),
+                "stats": (
+                    "!stats [server]: Display server stats. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "If no server is specified, stats for all servers are shown. "
+                    "Example: !stats NA or !duostats NA"
+                ),
+                "top": (
+                    "![duo]top [server]: Display top players. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "If no server is specified, top players globally are shown. "
+                    "Example: !top NA or !duotop NA"
+                ),
+            }
+
+            # Send specific help message or default if command not found
+            await ctx.send(help_messages.get(command_name, "Command not found. Use `!help` to see available commands."))
 
     @commands.command(name="8k")
     async def eight_k(self, ctx, server=None):
