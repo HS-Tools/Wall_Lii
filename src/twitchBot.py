@@ -67,6 +67,7 @@ class LeaderboardBot(commands.Bot):
                 "tume111",
                 "doudzo",
                 "slyders_hs",
+                "saphirexx"
             ],
         )
         # Initialize DB connection
