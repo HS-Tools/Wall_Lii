@@ -75,128 +75,80 @@ class LeaderboardBot(commands.Bot):
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
 
-    @commands.command(name="duorank")
-    async def duorank(self, ctx, player_or_rank=None, server=None):
-        """Same as bgrank but for duo mode"""
-        player_or_rank = clean_input(player_or_rank)
-
-        if player_or_rank is None or player_or_rank == "":
-            player_or_rank = ctx.channel.name
-
-        server = clean_input(server)
-        response = self.db.format_player_stats(
-            player_or_rank, server, game_mode="1"
-        )  # '1' for duo mode
-        await ctx.send(response)
-
-    @commands.command(name="bgrank")
-    async def bgrank(self, ctx, player_or_rank=None, server=None):
+    @commands.command(name="rank", aliases=["bgrank", "duorank"])
+    async def rank_command(self, ctx, player_or_rank=None, server=None):
         """Get player rank, defaulting to channel name if no player specified"""
-        # Use channel name as default player if none provided
         player_or_rank = clean_input(player_or_rank)
 
         if player_or_rank is None or player_or_rank == "":
             player_or_rank = ctx.channel.name
 
         server = clean_input(server)
-        response = self.db.format_player_stats(player_or_rank, server, game_mode="0")
+        
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!');
+        game_mode = "1" if command_used == "duorank" else "0"
+        
+        response = self.db.format_player_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
-    @commands.command(name="duodaily")
-    async def duodaily(self, ctx, player_or_rank=None, server=None):
-        """Same as bgdaily but for duo mode"""
+    @commands.command(name="day", aliases=["bgdaily", "daily" "duoday", "duodaily"])
+    async def day_command(self, ctx, player_or_rank=None, server=None):
+        """Get player's daily stats for both regular and duo modes"""
         player_or_rank = clean_input(player_or_rank)
 
         if player_or_rank is None or player_or_rank == "":
             player_or_rank = ctx.channel.name
 
         server = clean_input(server)
-        response = self.db.format_daily_stats(
-            player_or_rank, server, game_mode="1"
-        )  # '1' for duo mode
+        
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!');
+        game_mode = "1" if command_used == "duodaily" or command_used == "duoday" else "0"
+        
+        response = self.db.format_daily_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
-    @commands.command(name="bgdaily")
-    async def bgdaily(self, ctx, player_or_rank=None, server=None):
-        """Keep existing bgdaily but explicitly set game_mode"""
+    @commands.command(name="week", aliases=["bgweekly", "duoweek", "duoweekly"])
+    async def week_command(self, ctx, player_or_rank=None, server=None):
+        """Get player's weekly stats for both regular and duo modes"""
         player_or_rank = clean_input(player_or_rank)
 
         if player_or_rank is None or player_or_rank == "":
             player_or_rank = ctx.channel.name
 
         server = clean_input(server)
-        response = self.db.format_daily_stats(
-            player_or_rank, server, game_mode="0"
-        )  # '0' for regular mode
+        
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!');
+        game_mode = "1" if command_used == "duoweek" or command_used == "duoweekly" else "0"
+        
+        response = self.db.format_weekly_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
-    @commands.command(name="duopeak")
-    async def duopeak(self, ctx, player_or_rank=None, server=None):
-        """Same as peak but for duo mode"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
+    @commands.command(name="peak", aliases=["duopeak"])
+    async def peak_command(self, ctx, player_or_rank=None, server=None):
+        """Get player's peak rating for both regular and duo modes"""
         player_or_rank = clean_input(player_or_rank)
 
         if player_or_rank is None or player_or_rank == "":
             player_or_rank = ctx.channel.name
 
         server = clean_input(server)
-        response = self.db.format_peak_stats(
-            player_or_rank, server, game_mode="1"
-        )  # '1' for duo mode
+        
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!');
+        game_mode = "1" if command_used == "duopeak" else "0"
+        
+        response = self.db.format_peak_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
-    @commands.command(name="peak")
-    async def peak(self, ctx, player_name=None, server=None):
-        """Keep existing peak but explicitly set game_mode"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
-        player_name = clean_input(player_name)
-
-        if player_name is None or player_name == "":
-            player_name = ctx.channel.name
-
-        server = clean_input(server)
-        response = self.db.format_peak_stats(
-            player_name, server, game_mode="0"
-        )  # '0' for regular mode
-        await ctx.send(response)
-
-    @commands.command(name="duostats")
-    async def duostats(self, ctx, server=None):
-        """Same as stats but for duo mode"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
-        server = clean_input(server)
-        if server is None or server == "":
-            # No server specified, get stats for all servers
-            servers = ["NA", "EU", "AP"]
-            responses = []
-            for srv in servers:
-                response = self.db.format_region_stats(srv, game_mode="1")
-                if "No stats available" not in response:
-                    # Omit the maximum MMR part
-                    response = response.split(". The highest rating is")[0]
-                    responses.append(response)
-            await ctx.send(" | ".join(responses))
-        else:
-            # Server specified, get stats for that server
-            server = clean_input(server)
-            response = self.db.format_region_stats(server, game_mode="1")
-            await ctx.send(response)
-
-    @commands.command(name="stats")
+    @commands.command(name="stats", aliases=["bgstats", "duostats"])
     async def stats(self, ctx, server=None):
         """Display server stats, or all servers if no server specified"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!');
+        game_mode = "1" if command_used == "duostats" else "0"
 
         server = clean_input(server)
         if server is None or server == "":
@@ -204,7 +156,7 @@ class LeaderboardBot(commands.Bot):
             servers = ["NA", "EU", "AP"]
             responses = []
             for srv in servers:
-                response = self.db.format_region_stats(srv, game_mode="0")
+                response = self.db.format_region_stats(srv, game_mode)
                 if "No stats available" not in response:
                     # Omit the maximum MMR part
                     response = response.split(". The highest rating is")[0]
@@ -213,50 +165,20 @@ class LeaderboardBot(commands.Bot):
         else:
             # Server specified, get stats for that server
             server = clean_input(server)
-            response = self.db.format_region_stats(server, game_mode="0")
+            response = self.db.format_region_stats(server, game_mode)
             await ctx.send(response)
 
-    @commands.command(name="duotop")
-    async def duotop(self, ctx, server=None):
-        """Same as top but for duo mode"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
-        server = clean_input(server)
-        if server is None or server == "":
-            # No server specified, get top players globally
-            players = self.db.get_top_players_global(game_mode="1", limit=10)
-            if not players:
-                await ctx.send("No players found globally")
-                return
-
-            # Format each player as "name (rating) from server"
-            formatted = [
-                f"{i+1}. {p['PlayerName']}: {p['LatestRating']} ({p['Server']})"
-                for i, p in enumerate(players)
-            ]
-
-            await ctx.send(f"Top 10 globally: {', '.join(formatted)}")
-        else:
-            # Server specified, get top players for that server
-            server = clean_input(server)
-            response = self.db.format_top_players(server, game_mode="1")
-
-            print("Response:", response)
-            await ctx.send(response)
-
-    @commands.command(name="bgtop")
+    @commands.command(name="top", aliases=["bgtop", "duotop"])
     async def bgtop(self, ctx, server=None):
         """Display top players, or top globally if no server specified"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!');
+        game_mode = "1" if command_used == "duotop" else "0"
 
         server = clean_input(server)
         if server is None or server == "":
             # No server specified, get top players globally
-            players = self.db.get_top_players_global(game_mode="0", limit=10)
+            players = self.db.get_top_players_global(game_mode)
             if not players:
                 await ctx.send("No players found globally")
                 return
@@ -271,38 +193,10 @@ class LeaderboardBot(commands.Bot):
         else:
             # Server specified, get top players for that server
             server = clean_input(server)
-            response = self.db.format_top_players(server, game_mode="0")
+            response = self.db.format_top_players(server, game_mode)
 
             print("Response:", response)
             await ctx.send(response)
-
-    @commands.command(name="duoweekly")
-    async def duoweekly(self, ctx, player_or_rank=None, server=None):
-        """Same as bgweekly but for duo mode"""
-        player_or_rank = clean_input(player_or_rank)
-
-        if player_or_rank is None or player_or_rank == "":
-            player_or_rank = ctx.channel.name
-
-        server = clean_input(server)
-        response = self.db.format_weekly_stats(
-            player_or_rank, server, game_mode="1"
-        )  # '1' for duo mode
-        await ctx.send(response)
-
-    @commands.command(name="bgweekly")
-    async def bgweekly(self, ctx, player_name=None, server=None):
-        """Keep existing bgweekly but explicitly set game_mode"""
-        player_name = clean_input(player_name)
-
-        if player_name is None or player_name == "":
-            player_name = ctx.channel.name
-
-        server = clean_input(server)
-        response = self.db.format_weekly_stats(
-            player_name, server, game_mode="0"
-        )  # '0' for regular mode
-        await ctx.send(response)
 
     @commands.command(name="help")
     async def help(self, ctx):
@@ -323,9 +217,6 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="8k")
     async def eight_k(self, ctx, server=None):
         """Show first player to reach 8000 rating"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
 
         server = clean_input(server)
         response = self.db.format_milestone_stats(8000, server)
@@ -334,9 +225,6 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="9k")
     async def nine_k(self, ctx, server=None):
         """Show first player to reach 9000 rating"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
 
         server = clean_input(server)
         response = self.db.format_milestone_stats(9000, server)
@@ -344,9 +232,6 @@ class LeaderboardBot(commands.Bot):
 
     @commands.command(name="10k")
     async def ten_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
 
         server = clean_input(server)
         response = self.db.format_milestone_stats(10000, server)
@@ -354,49 +239,30 @@ class LeaderboardBot(commands.Bot):
 
     @commands.command(name="11k")
     async def eleven_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(11000, server)
         await ctx.send(response)
 
     @commands.command(name="12k")
     async def twelve_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(12000, server)
         await ctx.send(response)
 
     @commands.command(name="13k")
     async def thirteen_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(13000, server)
         await ctx.send(response)
 
     @commands.command(name="14k")
     async def fourteen_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(14000, server)
         await ctx.send(response)
 
     @commands.command(name="15k")
     async def fifteen_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
 
         server = clean_input(server)
         response = self.db.format_milestone_stats(15000, server)
@@ -404,20 +270,12 @@ class LeaderboardBot(commands.Bot):
 
     @commands.command(name="16k")
     async def sixteen_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(16000, server)
         await ctx.send(response)
 
     @commands.command(name="17k")
     async def seventeen_k(self, ctx, server=None):
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(17000, server)
         await ctx.send(response)
@@ -425,10 +283,6 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="18k")
     async def eighteen_k(self, ctx, server=None):
         """Show first player to reach 18000 rating"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(18000, server)
         await ctx.send(response)
@@ -436,10 +290,6 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="19k")
     async def nineteen_k(self, ctx, server=None):
         """Show first player to reach 19000 rating"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(19000, server)
         await ctx.send(response)
@@ -447,10 +297,6 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="20k")
     async def twenty_k(self, ctx, server=None):
         """Show first player to reach 20000 rating"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(20000, server)
         await ctx.send(response)
@@ -458,10 +304,6 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="21k")
     async def twentyone_k(self, ctx, server=None):
         """Show first player to reach 21000 rating"""
-        if ctx.channel.name != "liihs":
-            await ctx.send("This command is not available in this channel.")
-            return
-
         server = clean_input(server)
         response = self.db.format_milestone_stats(21000, server)
         await ctx.send(response)
