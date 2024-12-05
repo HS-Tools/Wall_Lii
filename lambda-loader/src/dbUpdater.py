@@ -83,16 +83,11 @@ def lambda_handler(event, context):
         # Get max_pages from event or use default (4 pages = 100 players)
         max_pages = event.get("max_pages", 4)
 
-        # Get DynamoDB table - handle local testing
+        # Get DynamoDB table
         table_name = os.environ["TABLE_NAME"]
-        endpoint_url = os.environ.get("DYNAMODB_ENDPOINT_URL")  # None in production
 
         # Initialize DynamoDB client
-        dynamodb_kwargs = {"region_name": "us-east-1"}
-        if endpoint_url:
-            dynamodb_kwargs["endpoint_url"] = endpoint_url
-
-        dynamodb = boto3.resource("dynamodb", **dynamodb_kwargs)
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         table = dynamodb.Table(table_name)
 
         # Get leaderboard data for both game modes
@@ -120,27 +115,31 @@ def lambda_handler(event, context):
 
                 # Get existing history or start new
                 if response.get("Items"):
-                    rating_history = response["Items"][0].get("RatingHistory", [])
+                    item = response["Items"][0]
+                    rating_history = item.get("RatingHistory", [])
                     current_rating = rating_history[-1][0] if rating_history else None
+                    current_rank = item.get("CurrentRank")
                 else:
                     rating_history = []
                     current_rating = None
+                    current_rank = None
 
                 # Add new rating if changed
                 current_time = int(datetime.now(timezone.utc).timestamp())
                 rating_decimal = Decimal(str(rating))
+                rank_decimal = Decimal(str(rank))
 
-                # Only update if rating changed and enough time passed
-                should_update = not rating_history or (
-                    current_rating != rating_decimal
-                    and not any(h[0] == rating_decimal for h in rating_history[-3:])
-                    and (
-                        not rating_history or current_time - rating_history[-1][1] >= 60
-                    )
+                # Determine if an update is needed
+                should_update = (
+                    not rating_history or
+                    (current_rating != rating_decimal and not any(h[0] == rating_decimal for h in rating_history[-3:]) and
+                     (not rating_history or current_time - rating_history[-1][1] >= 60)) or
+                    (current_rank != rank_decimal)
                 )
 
                 if should_update:
-                    rating_history.append([rating_decimal, current_time])
+                    if current_rating != rating_decimal:
+                        rating_history.append([rating_decimal, current_time])
 
                     item = {
                         "GameModeServerPlayer": game_mode_server_player,
@@ -148,7 +147,7 @@ def lambda_handler(event, context):
                         "PlayerName": player_name.lower(),
                         "GameMode": game_mode,
                         "Server": server,
-                        "CurrentRank": Decimal(str(rank)),
+                        "CurrentRank": rank_decimal,
                         "LatestRating": rating_decimal,
                         "RatingHistory": rating_history,
                     }
@@ -156,9 +155,7 @@ def lambda_handler(event, context):
                     table.put_item(Item=item)
 
                     # Log significant rating changes (>301 MMR)
-                    old_rating = (
-                        rating_history[-2][0] if len(rating_history) > 1 else None
-                    )
+                    old_rating = rating_history[-2][0] if len(rating_history) > 1 else None
                     if old_rating:
                         change = rating - old_rating
                         if abs(change) > 301:
