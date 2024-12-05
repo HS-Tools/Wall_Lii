@@ -3,3 +3,4 @@ requests
 requests-futures
 moto[dynamodb]
 pytest
+pytz

@@ -11,6 +11,70 @@ from logger import setup_logger
 logger = setup_logger("dbUpdater")
 
 
+def check_milestones(player_name, rating, game_mode, server, table):
+    """Check if player has reached a new milestone"""
+    try:
+        # Current season is 14
+        season = "14"
+        season_game_mode_server = f"{season}-{game_mode}-{server}"
+
+        logger.info(
+            f"Checking milestones for {player_name} ({rating}) in {season_game_mode_server}"
+        )
+
+        # Get milestone table name from environment
+        milestone_table_name = os.environ.get(
+            "MILESTONE_TABLE_NAME", "MilestoneTracking"
+        )
+        logger.info(f"Using milestone table: {milestone_table_name}")
+
+        # Use same resource as main table but different table name
+        milestone_table = boto3.resource("dynamodb").Table(milestone_table_name)
+
+        # Get highest milestone achieved for this server/mode
+        response = milestone_table.query(
+            KeyConditionExpression="SeasonGameModeServer = :sgs",
+            ExpressionAttributeValues={":sgs": season_game_mode_server},
+        )
+
+        # Find next milestone to check
+        items = response.get("Items", [])
+        current_milestones = [int(float(item["Milestone"])) for item in items]
+        logger.info(f"Current milestones: {current_milestones}")
+
+        # Get highest possible milestone for this rating
+        max_possible = (rating // 1000) * 1000
+
+        next_milestone = 8000  # Start at 8k
+        if current_milestones:
+            highest_milestone = max(current_milestones)
+            next_milestone = (highest_milestone // 1000 + 1) * 1000
+
+        logger.info(
+            f"Next milestone to check: {next_milestone} (max possible: {max_possible})"
+        )
+
+        # Check if player has reached next milestone
+        if rating >= next_milestone and next_milestone <= max_possible:
+            milestone_table.put_item(
+                Item={
+                    "SeasonGameModeServer": season_game_mode_server,
+                    "Milestone": next_milestone,
+                    "PlayerName": player_name,
+                    "Timestamp": int(datetime.now(timezone.utc).timestamp()),
+                    "Rating": rating,
+                }
+            )
+            logger.info(
+                f"New milestone: {player_name} reached {next_milestone} in {server}"
+            )
+        else:
+            logger.info(f"No new milestone: {rating} < {next_milestone}")
+
+    except Exception as e:
+        logger.error(f"Error checking milestones: {str(e)}")
+
+
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
@@ -39,15 +103,15 @@ def lambda_handler(event, context):
 
         def update_player_data(player_name, rank, rating, game_mode, server, table):
             """Update a player's data in DynamoDB"""
-            # Normalize server name
-            server_mapping = {"US": "NA", "EU": "EU", "AP": "AP"}
-            server = server_mapping.get(server, server)
-
-            # Create composite keys
-            game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
-            game_mode_server = f"{game_mode}#{server}"
-
             try:
+                # Normalize server name
+                server_mapping = {"US": "NA", "EU": "EU", "AP": "AP"}
+                server = server_mapping.get(server, server)
+
+                # Create composite keys
+                game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
+                game_mode_server = f"{game_mode}#{server}"
+
                 # Get existing item
                 response = table.query(
                     KeyConditionExpression="GameModeServerPlayer = :gmsp",
@@ -91,7 +155,7 @@ def lambda_handler(event, context):
 
                     table.put_item(Item=item)
 
-                    # Only log significant rating changes (e.g., >301)
+                    # Log significant rating changes (>301 MMR)
                     old_rating = (
                         rating_history[-2][0] if len(rating_history) > 1 else None
                     )
@@ -102,9 +166,14 @@ def lambda_handler(event, context):
                                 f"Significant rating change for {player_name}: {old_rating} → {rating} ({'+' if change > 0 else ''}{change}) in {server}"
                             )
 
-                    return True
+                # Check milestones for rank 1 player regardless of update
+                if rank == 1:
+                    logger.info(
+                        f"Found rank 1 player: {player_name} ({rating}) in {server}"
+                    )
+                    check_milestones(player_name, rating, game_mode, server, table)
 
-                return False
+                return should_update
 
             except Exception as e:
                 logger.error(f"Error updating {player_name}: {str(e)}")

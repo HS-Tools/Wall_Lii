@@ -1,9 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
+Description: >
+  Hearthstone Battlegrounds Leaderboard Lambda
 
 Resources:
   LeaderboardTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       TableName: HearthstoneLeaderboardV2
       BillingMode: PAY_PER_REQUEST
@@ -14,9 +17,15 @@ Resources:
           AttributeType: S
         - AttributeName: CurrentRank
           AttributeType: N
+        - AttributeName: PlayerName
+          AttributeType: S
+        - AttributeName: GameMode
+          AttributeType: S
       KeySchema:
         - AttributeName: GameModeServerPlayer
           KeyType: HASH
+        - AttributeName: GameModeServer
+          KeyType: RANGE
       GlobalSecondaryIndexes:
         - IndexName: RankLookupIndex
           KeySchema:
@@ -26,6 +35,33 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+        - IndexName: PlayerLookupIndex
+          KeySchema:
+            - AttributeName: PlayerName
+              KeyType: HASH
+            - AttributeName: GameMode
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  MilestoneTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: MilestoneTracking
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: SeasonGameModeServer
+          AttributeType: S
+        - AttributeName: Milestone
+          AttributeType: N
+      KeySchema:
+        - AttributeName: SeasonGameModeServer
+          KeyType: HASH
+        - AttributeName: Milestone
+          KeyType: RANGE
 
   LeaderboardUpdaterFunction:
     Type: AWS::Serverless::Function
@@ -38,9 +74,12 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref LeaderboardTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MilestoneTable
       Environment:
         Variables:
           TABLE_NAME: !Ref LeaderboardTable
+          MILESTONE_TABLE_NAME: !Ref MilestoneTable
       Events:
         ScheduledUpdate:
           Type: Schedule

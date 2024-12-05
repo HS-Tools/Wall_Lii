@@ -27,7 +27,7 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
     return output
 
 
-def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=4):
+def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=8):
     """
     Fetch leaderboard data from Blizzard API
     """
@@ -52,6 +52,7 @@ def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=4):
                 params = {
                     "region": api_region,  # Use original region for API
                     "leaderboardId": game_type,
+                    "seasonId": "14",  # Current season
                     "page": page,
                 }
 
