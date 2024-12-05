@@ -31,42 +31,42 @@ class LeaderboardBot(commands.Bot):
             prefix=prefix,
             initial_channels=[
                 "liihs",
-                "jeefhs",
-                "rdulive",
-                "dogdog",
-                "xqn_thesad",
-                "matsuri_hs",
-                "zorgo_hs",
-                "sunbaconrelaxer",
-                "shadybunny",
-                "hapabear",
-                "sjow",
-                "bofur_hs",
-                "ixxdeee",
-                "wobbleweezy",
-                "awedragon",
-                "benice92",
-                "sevel07",
-                "zavadahs",
-                "pockyplays",
-                "terry_tsang_gaming",
-                "dreads",
-                "sunglitters",
-                "fasteddiehs",
-                "fritterus",
-                "bixentehs",
-                "beterbabbit",
-                "asmodaitv",
-                "jkirek_",
-                "harain",
-                "missbowers",
-                "educated_collins",
-                "gospodarlive",
-                "neflida",
-                "babofat",
-                "tume111",
-                "doudzo",
-                "slyders_hs",
+                # "jeefhs",
+                # "rdulive",
+                # "dogdog",
+                # "xqn_thesad",
+                # "matsuri_hs",
+                # "zorgo_hs",
+                # "sunbaconrelaxer",
+                # "shadybunny",
+                # "hapabear",
+                # "sjow",
+                # "bofur_hs",
+                # "ixxdeee",
+                # "wobbleweezy",
+                # "awedragon",
+                # "benice92",
+                # "sevel07",
+                # "zavadahs",
+                # "pockyplays",
+                # "terry_tsang_gaming",
+                # "dreads",
+                # "sunglitters",
+                # "fasteddiehs",
+                # "fritterus",
+                # "bixentehs",
+                # "beterbabbit",
+                # "asmodaitv",
+                # "jkirek_",
+                # "harain",
+                # "missbowers",
+                # "educated_collins",
+                # "gospodarlive",
+                # "neflida",
+                # "babofat",
+                # "tume111",
+                # "doudzo",
+                # "slyders_hs",
             ],
         )
         # Initialize DB connection
@@ -89,8 +89,19 @@ class LeaderboardBot(commands.Bot):
         command_used = ctx.message.content.split()[0].lstrip('!');
         game_mode = "1" if command_used == "duorank" else "0"
         
-        response = self.db.format_player_stats(player_or_rank, server, game_mode)
-        await ctx.send(response)
+        if player_or_rank.isdigit() and (server is None or server == ""):
+            # No server specified, get players at the specified rank for all servers
+            servers = ["NA", "EU", "AP"]
+            responses = []
+            for srv in servers:
+                response = self.db.format_player_stats(player_or_rank, srv, game_mode)
+                if "No player found" not in response:
+                    responses.append(response)
+            await ctx.send(" | ".join(responses))
+        else:
+            # Regular player or rank lookup
+            response = self.db.format_player_stats(player_or_rank, server, game_mode)
+            await ctx.send(response)
 
     @commands.command(name="day", aliases=["bgdaily", "daily" "duoday", "duodaily"])
     async def day_command(self, ctx, player_or_rank=None, server=None):
@@ -202,10 +213,10 @@ class LeaderboardBot(commands.Bot):
     async def help(self, ctx):
         """Display all available commands"""
         help_message = (
-            "Commands (regular/duo): "
-            "!bgrank/!duorank, "
-            "!bgdaily/!duodaily, "
-            "!bgweekly/!duoweekly, "
+            "Commands (solo/duo): "
+            "!rank/!duorank, "
+            "!day/!duoday, "
+            "!week/!duoweek, "
             "!peak/!duopeak, "
             "!stats/!duostats, "
             "!top/!duotop. "

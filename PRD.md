@@ -605,124 +605,1931 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
      - !bgweekly
      - !peak
 
-### Fun Commands
+### Player Stats
 
-1. `!goodbot`
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
    ```
-   MrDestructoid Just doing my job MrDestructoid
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
    ```
-   - Simple response to acknowledge the bot
-   - Uses Twitch emotes
-   - No parameters needed
-
-# Season 14 Updates
-
-## Milestone Tracking
-
-- Added milestone tracking for player ratings (8k-21k)
-- Tracks first player to reach each milestone per server/mode
-- Stores milestone data in new DynamoDB table (MilestoneTracking)
-- Added milestone commands (!8k through !21k) showing both regular and duo achievements
-
-## Season Transition Process
-
-1. Archive previous season's data
-
-   - Back up existing leaderboard table
-   - Delete original table
-   - Deploy new infrastructure for new season
-
-2. Update Season References
-   - Update seasonId in API calls
-   - Update milestone tracking for new season
-   - Reset milestone tracking for new achievements
-
-## Infrastructure Changes
-
-- Added MilestoneTracking table
-
-  - Partition key: SeasonGameModeServer (e.g., "14-0-NA")
-  - Sort key: Milestone (e.g., 8000)
-  - Tracks: PlayerName, Rating, Timestamp
-
-- Modified HearthstoneLeaderboardV2 table
-  - Stores current season data
-  - Pay-per-request billing
-  - Supports both regular and duo modes
-
-## Bot Commands
-
-- Added milestone commands:
-  - Format: !<rating>k [server]
-  - Example: !8k EU
-  - Shows both regular and duo achievements
-  - Range: 8k through 21k
-
-# Infrastructure Requirements
-
-## TwitchBot Hosting
-
-### Current Challenges
-
-- Raspberry Pi hosting is unstable during internet outages
-- No automatic recovery after connection loss
-- EC2 solution ($10/month) is cost-prohibitive
-- Environment variables need to be maintained
-- Bot needs to reconnect to channels after outages
-
-### Requirements
-
-1. High Availability
-
-   - Auto-restart on failure
-   - Reconnect to Twitch after internet outages
-   - Handle environment variable persistence
-
-2. Cost Efficiency
-
-   - Target monthly cost: <$5
-   - Minimize compute resources
-   - Use free tier where possible
-
-3. Monitoring
-   - Track uptime
-   - Alert on failures
-   - Log connection issues
-
-### Potential Solutions to Investigate
-
-1. AWS Lightsail
-
-   - Lower cost than EC2
-   - Simpler management
-   - Free tier eligible
-
-2. Oracle Cloud Free Tier
-
-   - Always free compute instances
-   - 24/7 availability
-   - Sufficient for bot requirements
-
-3. Enhanced Raspberry Pi Setup
-
-   - Systemd service for auto-restart
-   - Health check scripts
-   - UPS for power stability
-
-4. Container-based Solution
-   - Docker container
-   - Auto-restart policies
-   - Easy environment management
-
-# Updates to Commands Section
 
 ### Server Stats
 
-1. `!stats <server>` and `!duostats <server>`
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
 
    ```
-   # Single server
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
    {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
+- !bgdaily → !duodaily
+- !bgweekly → !duoweekly
+- !peak → !duopeak
+
+1. `!bgrank <player|rank> [server]`
+
+   ```
+   # Default channel lookup (no arguments)
+   {default_player} is rank {rank} in {server} at {rating}
+
+   # Player lookup
+   {player} is rank {rank} in {server} at {rating}
+
+   # Player lookup (multiple servers)
+   {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
+   ```
+
+### Server Stats
+
+Each command has a duo mode version that shows Battlegrounds Duo stats:
+
+- !stats → !duostats
+- !top → !duotop
+
+1. `!stats <server>`
+   ```
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+   ```
+
+## Data Rules
+
+1. Rating Updates
+
+   - Store new rating if changed and 60+ seconds since last update
+   - Prevent duplicate entries within last 3 updates
+   - Track significant changes (>301 MMR)
+
+2. Time Handling
+
+   - All timestamps in UTC
+   - Daily stats: last 24 hours
+   - Weekly stats: last 7 days
+   - Peak rating: all-time
+
+3. Server Validation
+
+   - Valid servers: NA, EU, AP
+   - US automatically maps to NA
+   - Case-insensitive handling
+
+4. Name Resolution
+   - Alias resolution takes precedence over direct lookups
+   - Default channel name used when no arguments provided
+   - Commands supporting default names:
+     - !bgrank
+     - !bgdaily
+     - !bgweekly
+     - !peak
+
+### Player Stats
+
+Each command has a duo mode version that queries Battlegrounds Duo leaderboard:
+
+- !bgrank → !duorank
 
    # No server specified (shows all servers)
    NA has {count} players with average {avg} | EU has {count} players with average {avg} | AP has {count} players with average {avg}
@@ -1045,3 +2852,75 @@ Bot now connects to specific channels by default:
    - Users can choose their preferred command style
    - No forced migration
    - Both styles fully supported
+
+
+## Performance Optimization
+
+### Data Prefetching
+
+1. **Top Players Prefetch**:
+   - Fetch and cache top 100 players every 2 minutes
+   - Store data for both regular and duo modes
+   - Cache by server (NA, EU, AP)
+   - Data to cache:
+     - Player rankings
+     - Current ratings
+     - Daily/weekly progress
+   - Benefits:
+     - Faster response for `!rank`, `!top`, `!stats`
+     - Reduced database load
+     - Improved user experience
+
+2. **Cache Management**:
+   - Clear cache on new data fetch
+   - Maintain separate caches for different game modes
+   - Handle cache misses gracefully
+   - Fall back to database queries when needed
+
+### Command Usage Analytics
+
+1. **Command Logging**:
+   - Log each command invocation:
+     - Command name
+     - User who issued command
+     - Channel where command was used
+     - Timestamp
+     - Arguments provided
+     - Response time
+     - Success/failure status
+
+2. **Usage Metrics**:
+   - Track:
+     - Most used commands
+     - Peak usage times
+     - Common errors
+     - Popular channels
+     - Frequent users
+   - Use data to:
+     - Optimize caching strategy
+     - Identify performance bottlenecks
+     - Guide feature development
+     - Monitor bot health
+
+3. **Privacy Considerations**:
+   - Store only necessary user data
+   - Implement data retention policies
+   - Ensure GDPR compliance
+   - Allow users to opt out of tracking
+
+### Implementation Priority
+
+1. **Phase 1**: Command logging
+   - Implement basic logging
+   - Set up log analysis
+   - Monitor command patterns
+
+2. **Phase 2**: Top players prefetch
+   - Implement caching system
+   - Add background fetch task
+   - Monitor performance impact
+
+3. **Phase 3**: Optimization
+   - Adjust cache timing based on usage
+   - Expand cached data based on needs
+   - Implement advanced analytics
