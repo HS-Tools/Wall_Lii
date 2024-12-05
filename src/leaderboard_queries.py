@@ -14,9 +14,7 @@ VALID_SERVERS = {"NA", "EU", "AP"}
 
 
 class LeaderboardDB:
-    def __init__(
-        self, endpoint_url=None, test_db=None, table_name="HearthstoneLeaderboard"
-    ):
+    def __init__(self, test_db=None, table_name="HearthstoneLeaderboard"):
         """Initialize DB connection"""
         if test_db:
             self.dynamodb = test_db
@@ -35,18 +33,8 @@ class LeaderboardDB:
                 f"AWS credentials present: {bool(aws_kwargs['aws_access_key_id'] and aws_kwargs['aws_secret_access_key'])}"
             )
 
-            # Configure local/AWS client for leaderboard table
-            local_kwargs = aws_kwargs.copy()
-            if endpoint_url:
-                local_kwargs.update(
-                    {
-                        "endpoint_url": endpoint_url,
-                        "aws_access_key_id": "dummy",
-                        "aws_secret_access_key": "dummy",
-                    }
-                )
-
-            self.dynamodb = boto3.resource("dynamodb", **local_kwargs)
+            # Initialize DynamoDB resource without endpoint_url
+            self.dynamodb = boto3.resource("dynamodb", **aws_kwargs)
             self.table = self.dynamodb.Table(table_name)
 
             # Alias table always uses AWS connection
