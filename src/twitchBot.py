@@ -21,7 +21,7 @@ def clean_input(text):
 
 
 class LeaderboardBot(commands.Bot):
-    def __init__(self, token, prefix, initial_channels, use_aws=False):
+    def __init__(self, token, prefix, initial_channels):
         # Initialize bot with environment variables
         super().__init__(
             token=token,
@@ -70,15 +70,7 @@ class LeaderboardBot(commands.Bot):
             ],
         )
         # Initialize DB connection
-        if use_aws:
-            # Use AWS DynamoDB
-            self.db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
-        else:
-            # Use local test DynamoDB
-            self.db = LeaderboardDB(
-                endpoint_url="http://localhost:8000",
-                table_name="HearthstoneLeaderboardTest",  # Use test table
-            )
+        self.db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
 
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
@@ -497,7 +489,7 @@ def main():
 
     # Initialize and run bot
     bot = LeaderboardBot(
-        token=token, prefix=prefix, initial_channels=channels, use_aws=args.aws
+        token=token, prefix=prefix, initial_channels=channels
     )
     bot.run()
 
