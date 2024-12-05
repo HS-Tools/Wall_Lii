@@ -24,12 +24,21 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
 ### 2. Data Storage (DynamoDB)
 
 - Schema:
+
   - Primary Key: GameModeServerPlayer (e.g., "0#NA#beterbabbit")
   - GSI: RankLookupIndex (GameModeServer, CurrentRank)
+  - GSI: PlayerLookupIndex (PlayerName, GameMode)
   - RatingHistory: Array of [rating, timestamp] pairs
-- Environments:
-  - Development: HearthstoneLeaderboard (local)
-  - Production: HearthstoneLeaderboardV2 (AWS)
+
+- MilestoneTracking
+
+  - Primary Key: SeasonGameModeServer (e.g., "14-0-NA")
+  - Sort Key: Milestone (e.g., 8000)
+  - Attributes: PlayerName, Rating, Timestamp
+
+- player-alias-table
+  - Stores player name aliases
+  - Used for resolving alternative names
 
 ### 3. Bot Interface
 
@@ -85,23 +94,23 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
    {player} is rank {rank} in {server} at {rating}
    ```
 
-2. `!bgdaily <player|rank> [server]`
+2. `!bgdaily/!duodaily <player|rank> [server]`
 
    ```
    # Default channel and alias lookups supported
    # With games played
-   {player} started today at {start_rating} in {server} and is now {current_rating} with {games} games played. Their record is: {changes}
+   {player} climbed/fell from {start_rating} to {current_rating} ({change}) in {server} over {games} games: [{changes}] liiHappyCat/liiCat
 
    # No games played
    {player} is rank {rank} in {server} at {rating} with 0 games played
    ```
 
-3. `!bgweekly <player|rank> [server]`
+3. `!bgweekly/!duoweekly <player|rank> [server]`
 
    ```
    # Default channel and alias lookups supported
    # With games played
-   {player} started the week at {start_rating} in {server} and is now {current_rating} with {games} games played. [{daily_changes}]
+   {player} climbed/fell from {start_rating} to {current_rating} ({change}) in {server} over {games} games: [{daily_changes}] liiHappyCat/liiCat
 
    # No games played
    {player} is rank {rank} in {server} at {rating} with 0 games played this week
@@ -116,6 +125,7 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
 ### Milestone Stats
 
 1. Rating Milestones (!8k through !18k)
+
    - Track first player to reach each 1000-rating milestone (8000, 9000, etc.)
    - Support server-specific queries (!8k na) and global queries (!8k)
    - Show player name, server, and date of achievement
@@ -141,13 +151,14 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
      - Track milestones per season/server/game mode
      - Efficient querying without scanning main leaderboard table
    - Example responses:
+
      ```
      # Server specific
      {player} was the first to reach {k}k in {server} on {date}
-     
+
      # Global (any server)
      {player} was the first to reach {k}k (in {server}) on {date}
-     
+
      # Not reached
      No one has reached {k}k in {server} yet!
      No one has reached {k}k in any server yet!
@@ -415,13 +426,16 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
 # Season 14 Updates
 
 ## Milestone Tracking
+
 - Added milestone tracking for player ratings (8k-21k)
 - Tracks first player to reach each milestone per server/mode
 - Stores milestone data in new DynamoDB table (MilestoneTracking)
 - Added milestone commands (!8k through !21k) showing both regular and duo achievements
 
 ## Season Transition Process
+
 1. Archive previous season's data
+
    - Back up existing leaderboard table
    - Delete original table
    - Deploy new infrastructure for new season
@@ -432,7 +446,9 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
    - Reset milestone tracking for new achievements
 
 ## Infrastructure Changes
+
 - Added MilestoneTracking table
+
   - Partition key: SeasonGameModeServer (e.g., "14-0-NA")
   - Sort key: Milestone (e.g., 8000)
   - Tracks: PlayerName, Rating, Timestamp
@@ -443,6 +459,7 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
   - Supports both regular and duo modes
 
 ## Bot Commands
+
 - Added milestone commands:
   - Format: !<rating>k [server]
   - Example: !8k EU
@@ -454,6 +471,7 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
 ## TwitchBot Hosting
 
 ### Current Challenges
+
 - Raspberry Pi hosting is unstable during internet outages
 - No automatic recovery after connection loss
 - EC2 solution ($10/month) is cost-prohibitive
@@ -461,12 +479,15 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
 - Bot needs to reconnect to channels after outages
 
 ### Requirements
+
 1. High Availability
+
    - Auto-restart on failure
    - Reconnect to Twitch after internet outages
    - Handle environment variable persistence
 
 2. Cost Efficiency
+
    - Target monthly cost: <$5
    - Minimize compute resources
    - Use free tier where possible
@@ -477,17 +498,21 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
    - Log connection issues
 
 ### Potential Solutions to Investigate
+
 1. AWS Lightsail
+
    - Lower cost than EC2
    - Simpler management
    - Free tier eligible
 
 2. Oracle Cloud Free Tier
+
    - Always free compute instances
    - 24/7 availability
    - Sufficient for bot requirements
 
 3. Enhanced Raspberry Pi Setup
+
    - Systemd service for auto-restart
    - Health check scripts
    - UPS for power stability
@@ -497,3 +522,58 @@ Each command has a duo mode version that shows Battlegrounds Duo stats:
    - Auto-restart policies
    - Easy environment management
 
+# Updates to Commands Section
+
+### Server Stats
+
+1. `!stats <server>` and `!duostats <server>`
+
+   ```
+   # Single server
+   {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
+
+   # No server specified (shows all servers)
+   NA has {count} players with average {avg} | EU has {count} players with average {avg} | AP has {count} players with average {avg}
+   ```
+
+2. `!bgtop <server>` and `!duotop <server>`
+
+   ```
+   # Single server
+   Top 10 {server}: 1. {player1}: {rating1}, 2. {player2}: {rating2}...
+
+   # No server specified (shows global top 10)
+   Top 10 globally: 1. {player1}: {rating1} ({server1}), 2. {player2}: {rating2} ({server2})...
+   ```
+
+### Command Naming Convention
+
+All regular Battlegrounds commands now have a "bg" prefix to distinguish them from duo mode:
+
+Duo mode commands use "duo" prefix:
+
+### Help Command
+
+Updated help message format:
+
+```
+Commands (regular/duo): !bgrank/!duorank, !bgdaily/!duodaily, !bgweekly/!duoweekly, !peak/!duopeak, !stats/!duostats, !top/!duotop. Milestones: !8k through !21k [server]. Valid servers: NA, EU, AP
+```
+
+### Initial Channels
+
+Bot now connects to specific channels by default:
+
+- liihs
+- haitahs
+- beterbabbit
+- slyders_hs
+
+### Fun Commands
+
+1. `!goodbot`
+   ```
+   MrDestructoid Just doing my job MrDestructoid
+   ```
+   - Simple response using Twitch emotes
+   - No parameters needed

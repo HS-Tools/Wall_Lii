@@ -109,38 +109,36 @@ class LeaderboardDB:
         """Check if server is valid or error message"""
         return isinstance(server, str) and server in VALID_SERVERS
 
-    def get_player_stats(self, player_name, server=None, game_mode='0'):
+    def get_player_stats(self, player_name, server=None, game_mode="0"):
         """Get a player's current stats"""
         # Resolve alias first
         player_name = self._resolve_name(player_name)
         if not player_name:
             return None
-        
+
         if server:
             # Direct query if server is known
             game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
             response = self.table.query(
-                KeyConditionExpression='GameModeServerPlayer = :gmsp',
-                ExpressionAttributeValues={
-                    ':gmsp': game_mode_server_player
-                }
+                KeyConditionExpression="GameModeServerPlayer = :gmsp",
+                ExpressionAttributeValues={":gmsp": game_mode_server_player},
             )
         else:
             # Use PlayerLookupIndex instead of scan
             response = self.table.query(
-                IndexName='PlayerLookupIndex',
-                KeyConditionExpression='PlayerName = :name AND GameMode = :mode',
+                IndexName="PlayerLookupIndex",
+                KeyConditionExpression="PlayerName = :name AND GameMode = :mode",
                 ExpressionAttributeValues={
-                    ':name': player_name.lower(),
-                    ':mode': game_mode
-                }
+                    ":name": player_name.lower(),
+                    ":mode": game_mode,
+                },
             )
 
-        if not response.get('Items'):
+        if not response.get("Items"):
             return None
-        
+
         # Return highest rating if multiple servers
-        return max(response['Items'], key=lambda x: x['LatestRating'])
+        return max(response["Items"], key=lambda x: x["LatestRating"])
 
     def get_player_history(self, player_name, server=None, game_mode="0", hours=24):
         """Get a player's rating history"""
@@ -318,7 +316,7 @@ class LeaderboardDB:
                 "CurrentRank": stats.get("CurrentRank", 0),
                 "LatestRating": stats.get("LatestRating", 0),
                 "Server": stats.get("Server", server or "Unknown"),
-                "PlayerName": player_name
+                "PlayerName": player_name,
             }
 
         # A player has games only if they have 2 or more entries
@@ -331,14 +329,14 @@ class LeaderboardDB:
                 "CurrentRank": 0,
                 "LatestRating": 0,
                 "Server": server or "Unknown",
-                "PlayerName": player_name
+                "PlayerName": player_name,
             }
 
         # Calculate changes only if they have games
         changes = []
         if has_games:
             for i in range(1, len(history)):
-                change = int(history[i][0]) - int(history[i-1][0])
+                change = int(history[i][0]) - int(history[i - 1][0])
                 changes.append(change)
 
         return {
@@ -351,7 +349,7 @@ class LeaderboardDB:
             "start_rating": int(history[0][0]),
             "current_rating": int(history[-1][0]),
             "games_played": len(changes),
-            "rating_changes": changes
+            "rating_changes": changes,
         }
 
     def _format_no_games_response(self, player_name, stats, timeframe=""):
@@ -367,34 +365,41 @@ class LeaderboardDB:
         """Format daily stats for a player in chat-ready format"""
         # Clean input first
         player_or_rank = "".join(c for c in player_or_rank if c.isprintable()).strip()
-        
-        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
         if error:
             return error
-        
-        resolved_name = self._resolve_name(player_name)  # <-- Here's the alias resolution
-        
+
+        resolved_name = self._resolve_name(
+            player_name
+        )  # <-- Here's the alias resolution
+
         stats = self.get_daily_stats(resolved_name, server, game_mode)
-        
+
         if not stats["found"]:
             return f"{resolved_name} is not on any BG leaderboards"
-        
+
         if not stats["has_games"]:
             # Use PlayerName from stats for rank lookups
             display_name = stats.get("PlayerName", resolved_name)
             return self._format_no_games_response(display_name, stats)
-        
+
         # Calculate total MMR change
         total_change = stats["current_rating"] - stats["start_rating"]
         total_change_str = f" ({'+' if total_change > 0 else ''}{total_change})"
-        
+
         # Use resolved name from stats
         display_name = stats.get("PlayerName", resolved_name)
-        
-        changes_str = ", ".join(f"{'+' if c > 0 else ''}{c}" for c in stats["rating_changes"])
+
+        changes_str = ", ".join(
+            f"{'+' if c > 0 else ''}{c}" for c in stats["rating_changes"]
+        )
         return (
-            f"{display_name} started today at {stats['start_rating']} in {stats['Server']} and is now {stats['current_rating']}{total_change_str} "
-            f"with {stats['games_played']} games played. Their record is: {changes_str}"
+            f"{display_name} {'climbed' if total_change > 0 else 'fell'} from {stats['start_rating']} to "
+            f"{stats['current_rating']} ({'+' if total_change > 0 else '-'}{abs(total_change)}) in {stats['Server']} "
+            f"over {stats['games_played']} games: [{changes_str}] {'liiHappyCat' if total_change > 0 else 'liiCat'}"
         )
 
     def format_peak_stats(self, player_or_rank, server=None, game_mode="0"):
@@ -424,7 +429,9 @@ class LeaderboardDB:
         if not peak:
             return f"{resolved_name} has no rating history"
 
-        return f"{resolved_name}'s peak rating in {server} this season: {peak['rating']}"
+        return (
+            f"{resolved_name}'s peak rating in {server} this season: {peak['rating']}"
+        )
 
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
         """Format player stats in chat-ready format"""
@@ -587,12 +594,12 @@ class LeaderboardDB:
         ]
 
         return (
-            f"{resolved_name} started the week at {int(history[0][0])} in {server} "
-            f"and is now {int(history[-1][0])}{total_change_str} with {len(history) - 1} games played. "
-            f"[{', '.join(daily_str)}]"
+            f"{resolved_name} {'climbed' if total_change > 0 else 'fell'} from {int(history[0][0])} to "
+            f"{int(history[-1][0])} ({'+' if total_change > 0 else '-'}{abs(total_change)}) in {server} "
+            f"over {len(history) - 1} games: [{', '.join(daily_str)}] {'liiHappyCat' if total_change > 0 else 'liiCat'}"
         )
 
-    def format_milestone_stats(self, rating_threshold, server=None, game_mode='0'):
+    def format_milestone_stats(self, rating_threshold, server=None, game_mode="0"):
         """Format milestone stats for chat"""
         try:
             # Validate server first if provided
@@ -602,78 +609,92 @@ class LeaderboardDB:
                     return "Invalid server. Valid servers are: NA, EU, AP"
 
             # Get both regular and duo milestones
-            regular = self._get_milestone(rating_threshold, server, '0')
-            duo = self._get_milestone(rating_threshold, server, '1')
-            
+            regular = self._get_milestone(rating_threshold, server, "0")
+            duo = self._get_milestone(rating_threshold, server, "1")
+
             # Format responses
             k_rating = rating_threshold // 1000
-            
+
             if not regular and not duo:
                 if server:
                     return f"No one has reached {k_rating}k in {server} yet!"
                 return f"No one has reached {k_rating}k in any server yet!"
-            
+
             # Build combined response
             response = []
-            
+
             # Add regular milestone if exists
             if regular:
                 # Convert UTC to NY time
-                ny_tz = pytz.timezone('America/New_York')
-                utc_time = datetime.fromtimestamp(int(float(regular['Timestamp'])), pytz.UTC)
+                ny_tz = pytz.timezone("America/New_York")
+                utc_time = datetime.fromtimestamp(
+                    int(float(regular["Timestamp"])), pytz.UTC
+                )
                 ny_time = utc_time.astimezone(ny_tz)
-                date = ny_time.strftime('%B %d %I:%M %p ET')  # e.g., "December 03 3:45 PM ET"
-                
-                server_str = server if server else regular['SeasonGameModeServer'].split('-')[2]
-                response.append(f"{regular['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}")
-            
+                date = ny_time.strftime(
+                    "%B %d %I:%M %p ET"
+                )  # e.g., "December 03 3:45 PM ET"
+
+                server_str = (
+                    server if server else regular["SeasonGameModeServer"].split("-")[2]
+                )
+                response.append(
+                    f"{regular['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
+                )
+
             # Add duo milestone if exists
             if duo:
-                ny_tz = pytz.timezone('America/New_York')
-                utc_time = datetime.fromtimestamp(int(float(duo['Timestamp'])), pytz.UTC)
+                ny_tz = pytz.timezone("America/New_York")
+                utc_time = datetime.fromtimestamp(
+                    int(float(duo["Timestamp"])), pytz.UTC
+                )
                 ny_time = utc_time.astimezone(ny_tz)
-                date = ny_time.strftime('%B %d %I:%M %p ET')
-                
-                server_str = server if server else duo['SeasonGameModeServer'].split('-')[2]
-                response.append(f"In Duos: {duo['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}")
-            
+                date = ny_time.strftime("%B %d %I:%M %p ET")
+
+                server_str = (
+                    server if server else duo["SeasonGameModeServer"].split("-")[2]
+                )
+                response.append(
+                    f"In Duos: {duo['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
+                )
+
             return " | ".join(response)
-                
+
         except Exception as e:
             logger.error(f"Error getting milestone stats: {str(e)}")
             return "Error getting milestone stats"
 
-    def _get_milestone(self, rating_threshold, server=None, game_mode='0'):
+    def _get_milestone(self, rating_threshold, server=None, game_mode="0"):
         """Helper to get milestone data for a specific mode"""
         try:
-            milestone_table = boto3.resource('dynamodb').Table('MilestoneTracking')
-            season = '14'
-            
+            milestone_table = boto3.resource("dynamodb").Table("MilestoneTracking")
+            season = "14"
+
             if server:
                 server = parseServer(server)
                 if not server:
                     return None
-                
+
                 season_game_mode_server = f"{season}-{game_mode}-{server}"
                 response = milestone_table.query(
-                    KeyConditionExpression='SeasonGameModeServer = :sgs AND Milestone = :m',
+                    KeyConditionExpression="SeasonGameModeServer = :sgs AND Milestone = :m",
                     ExpressionAttributeValues={
-                        ':sgs': season_game_mode_server,
-                        ':m': Decimal(str(rating_threshold))
-                    }
+                        ":sgs": season_game_mode_server,
+                        ":m": Decimal(str(rating_threshold)),
+                    },
                 )
             else:
                 response = milestone_table.scan(
-                    FilterExpression='Milestone = :m AND begins_with(SeasonGameModeServer, :prefix)',
+                    FilterExpression="Milestone = :m AND begins_with(SeasonGameModeServer, :prefix)",
                     ExpressionAttributeValues={
-                        ':m': Decimal(str(rating_threshold)),
-                        ':prefix': f"{season}-{game_mode}-"
-                    }
+                        ":m": Decimal(str(rating_threshold)),
+                        ":prefix": f"{season}-{game_mode}-",
+                    },
                 )
-            
-            items = response.get('Items', [])
-            return min(items, key=lambda x: int(x['Timestamp'])) if items else None
-            
+
+            items = response.get("Items", [])
+            return min(items, key=lambda x: int(x["Timestamp"])) if items else None
+
         except Exception as e:
             logger.error(f"Error in _get_milestone: {str(e)}")
             return None
@@ -686,7 +707,7 @@ class LeaderboardDB:
             # Format response with proper grammar
             player_count = len(players)
             player_str = "player" if player_count == 1 else "players"
-            
+
             return (
                 f"{server} has {player_count} {player_str} with an average rating of {avg_rating}. "
                 f"The highest rating is {max_rating}"
@@ -710,7 +731,9 @@ class LeaderboardDB:
                 return []
 
             # Sort players by rating and take the top 'limit' players
-            sorted_players = sorted(items, key=lambda x: int(x["LatestRating"]), reverse=True)
+            sorted_players = sorted(
+                items, key=lambda x: int(x["LatestRating"]), reverse=True
+            )
             return sorted_players[:limit]
 
         except Exception as e:

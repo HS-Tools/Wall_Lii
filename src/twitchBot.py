@@ -29,17 +29,55 @@ class LeaderboardBot(commands.Bot):
             client_id=os.environ["CLIENT_ID"],
             nick=os.environ["BOT_NICK"],
             prefix=prefix,
-            initial_channels=["liihs", "haitahs", "beterbabbit", "slyders_hs"]
+            initial_channels=[
+                "liihs",
+                "jeefhs",
+                "rdulive",
+                "dogdog",
+                "xqn_thesad",
+                "matsuri_hs",
+                "zorgo_hs",
+                "sunbaconrelaxer",
+                "shadybunny",
+                "hapabear",
+                "sjow",
+                "bofur_hs",
+                "ixxdeee",
+                "wobbleweezy",
+                "awedragon",
+                "benice92",
+                "sevel07",
+                "zavadahs",
+                "pockyplays",
+                "terry_tsang_gaming",
+                "dreads",
+                "sunglitters",
+                "fasteddiehs",
+                "fritterus",
+                "bixentehs",
+                "beterbabbit",
+                "asmodaitv",
+                "jkirek_",
+                "harain",
+                "missbowers",
+                "educated_collins",
+                "gospodarlive",
+                "neflida",
+                "babofat",
+                "tume111",
+                "doudzo",
+                "slyders_hs",
+            ],
         )
         # Initialize DB connection
         if use_aws:
             # Use AWS DynamoDB
-            self.db = LeaderboardDB(table_name='HearthstoneLeaderboardV2')
+            self.db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
         else:
             # Use local test DynamoDB
             self.db = LeaderboardDB(
-                endpoint_url='http://localhost:8000',
-                table_name='HearthstoneLeaderboardTest'  # Use test table
+                endpoint_url="http://localhost:8000",
+                table_name="HearthstoneLeaderboardTest",  # Use test table
             )
 
     async def event_ready(self):
@@ -52,7 +90,7 @@ class LeaderboardBot(commands.Bot):
 
         if player_or_rank is None or player_or_rank == "":
             player_or_rank = ctx.channel.name
-        
+
         server = clean_input(server)
         response = self.db.format_player_stats(
             player_or_rank, server, game_mode="1"
@@ -69,9 +107,7 @@ class LeaderboardBot(commands.Bot):
             player_or_rank = ctx.channel.name
 
         server = clean_input(server)
-        response = self.db.format_player_stats(
-            player_or_rank, server, game_mode="0"
-        )
+        response = self.db.format_player_stats(player_or_rank, server, game_mode="0")
         await ctx.send(response)
 
     @commands.command(name="duodaily")
@@ -105,6 +141,10 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="duopeak")
     async def duopeak(self, ctx, player_or_rank=None, server=None):
         """Same as peak but for duo mode"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         player_or_rank = clean_input(player_or_rank)
 
         if player_or_rank is None or player_or_rank == "":
@@ -119,6 +159,10 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="peak")
     async def peak(self, ctx, player_name=None, server=None):
         """Keep existing peak but explicitly set game_mode"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         player_name = clean_input(player_name)
 
         if player_name is None or player_name == "":
@@ -133,6 +177,10 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="duostats")
     async def duostats(self, ctx, server=None):
         """Same as stats but for duo mode"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         if server is None or server == "":
             # No server specified, get stats for all servers
@@ -154,6 +202,10 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="stats")
     async def stats(self, ctx, server=None):
         """Display server stats, or all servers if no server specified"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         if server is None or server == "":
             # No server specified, get stats for all servers
@@ -175,6 +227,10 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="duotop")
     async def duotop(self, ctx, server=None):
         """Same as top but for duo mode"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         if server is None or server == "":
             # No server specified, get top players globally
@@ -201,6 +257,10 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="bgtop")
     async def bgtop(self, ctx, server=None):
         """Display top players, or top globally if no server specified"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         if server is None or server == "":
             # No server specified, get top players globally
@@ -268,98 +328,153 @@ class LeaderboardBot(commands.Bot):
         )
         await ctx.send(help_message)
 
-    @commands.command(name='8k')
+    @commands.command(name="8k")
     async def eight_k(self, ctx, server=None):
         """Show first player to reach 8000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(8000, server)
         await ctx.send(response)
 
-    @commands.command(name='9k')
+    @commands.command(name="9k")
     async def nine_k(self, ctx, server=None):
         """Show first player to reach 9000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(9000, server)
         await ctx.send(response)
 
-    @commands.command(name='10k')
+    @commands.command(name="10k")
     async def ten_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(10000, server)
         await ctx.send(response)
 
-    @commands.command(name='11k')
+    @commands.command(name="11k")
     async def eleven_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(11000, server)
         await ctx.send(response)
 
-    @commands.command(name='12k')
+    @commands.command(name="12k")
     async def twelve_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(12000, server)
         await ctx.send(response)
 
-    @commands.command(name='13k')
+    @commands.command(name="13k")
     async def thirteen_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(13000, server)
         await ctx.send(response)
 
-    @commands.command(name='14k')
+    @commands.command(name="14k")
     async def fourteen_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(14000, server)
         await ctx.send(response)
 
-    @commands.command(name='15k')
+    @commands.command(name="15k")
     async def fifteen_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(15000, server)
         await ctx.send(response)
 
-    @commands.command(name='16k')
+    @commands.command(name="16k")
     async def sixteen_k(self, ctx, server=None):
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(16000, server)
         await ctx.send(response)
 
-    @commands.command(name='17k')
+    @commands.command(name="17k")
     async def seventeen_k(self, ctx, server=None):
-        """Show first player to reach 17000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(17000, server)
         await ctx.send(response)
 
-    @commands.command(name='18k')
+    @commands.command(name="18k")
     async def eighteen_k(self, ctx, server=None):
         """Show first player to reach 18000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(18000, server)
         await ctx.send(response)
 
-    @commands.command(name='19k')
+    @commands.command(name="19k")
     async def nineteen_k(self, ctx, server=None):
         """Show first player to reach 19000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(19000, server)
         await ctx.send(response)
 
-    @commands.command(name='20k')
+    @commands.command(name="20k")
     async def twenty_k(self, ctx, server=None):
         """Show first player to reach 20000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(20000, server)
         await ctx.send(response)
 
-    @commands.command(name='21k')
+    @commands.command(name="21k")
     async def twentyone_k(self, ctx, server=None):
         """Show first player to reach 21000 rating"""
+        if ctx.channel.name != "liihs":
+            await ctx.send("This command is not available in this channel.")
+            return
+
         server = clean_input(server)
         response = self.db.format_milestone_stats(21000, server)
         await ctx.send(response)
 
-    @commands.command(name='goodbot')
+    @commands.command(name="goodbot")
     async def goodbot(self, ctx):
         """Respond to praise with a robotic acknowledgment"""
         await ctx.send("MrDestructoid Just doing my job MrDestructoid")
