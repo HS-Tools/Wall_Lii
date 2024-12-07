@@ -27,7 +27,7 @@ def parseSnapshot(text, verbose=False, region="Unknown"):
     return output
 
 
-def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=8):
+def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=20):
     """
     Fetch leaderboard data from Blizzard API
     """
