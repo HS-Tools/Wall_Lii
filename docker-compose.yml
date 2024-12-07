@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+    working_dir: /home/dynamodblocal
+
+  updater:
+    build: .
+    depends_on:
+      - dynamodb-local
+    restart: always
+    command: python scripts/run_local_updater.py
