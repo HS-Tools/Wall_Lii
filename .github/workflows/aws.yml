@@ -18,20 +18,26 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.REGION }}
 
-      # Step 3: Install AWS SAM CLI
+      # Step 3: Install Python 3.9
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      # Step 4: Install AWS SAM CLI
       - name: Install AWS SAM CLI
         run: |
           pip install aws-sam-cli
 
-      # Step 4: Build the Lambda application
+      # Step 5: Build the SAM application
       - name: Build the Lambda application
         run: |
           sam build --template-file ./lambda-loader/template.yaml
 
-      # Step 5: Package the CloudFormation template
+      # Step 6: Package the CloudFormation template
       - name: Package the CloudFormation template
         run: |
           sam package \
@@ -40,7 +46,7 @@ jobs:
             --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
             --s3-prefix hearthstone-leaderboard-stack
 
-      # Step 6: Deploy the CloudFormation stack
+      # Step 7: Deploy the CloudFormation stack
       - name: Deploy the CloudFormation stack
         run: |
           sam deploy \
