@@ -1,4 +1,4 @@
-name: Cloudformation CI
+name: CloudFormation CI
 
 on:
   push:
@@ -10,38 +10,43 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      # Step 1: Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Step 2: Set up AWS Credentials
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.REGION }}
-      - name: Package and Deploy to AWS CloudFormation
-        run: |
-          mkdir -p lambda-loader/dist
-          cp -r lambda-loader/src/* lambda-loader/dist/
-          pip3 install -r lambda-loader/requirements.txt -t lambda-loader/dist/
-          ls lambda-loader/dist/
-          aws cloudformation package --template-file ./lambda-loader/template.yaml \
-            --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
-            --region ${{ secrets.REGION }} \
-            --output-template-file processed.template.yaml
-          aws cloudformation deploy --template-file processed.template.yaml \
-            --stack-name ${{ secrets.STACK_NAME }} \
-            --region ${{ secrets.REGION }} \
-            --capabilities CAPABILITY_IAM
-    # - name: Build and upload twitch and discord images
-    #   run: |
-    #     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 729861370591.dkr.ecr.us-east-1.amazonaws.com
-    #     docker build -t hs_leaderboards_twitch -f ./twitch.Dockerfile .
-    #     docker build -t hs_leaderboards_discord -f ./discord.Dockerfile .
-    #     docker tag hs_leaderboards_twitch:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_twitch:latest
-    #     docker tag hs_leaderboards_discord:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_discord:latest
-    #     docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_twitch:latest
-    #     docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/hs_leaderboards_discord:latest
 
-    # - name: Force new deployment of services
-    #   run: |
-    #     aws ecs update-service --cluster default --service hs_leaderboards_twitch --force-new-deployment
-    #     aws ecs update-service --cluster default --service hs_leaderboards_discord --force-new-deployment
+      # Step 3: Install AWS SAM CLI
+      - name: Install AWS SAM CLI
+        run: |
+          pip install aws-sam-cli
+
+      # Step 4: Build the Lambda application
+      - name: Build the Lambda application
+        run: |
+          sam build --template-file template.yaml
+
+      # Step 5: Package the CloudFormation template
+      - name: Package the CloudFormation template
+        run: |
+          sam package \
+            --template-file .aws-sam/build/template.yaml \
+            --output-template-file packaged.yaml \
+            --s3-bucket ${{ secrets.ARTIFACT_BUCKET }} \
+            --s3-prefix hearthstone-leaderboard-stack
+
+      # Step 6: Deploy the CloudFormation stack
+      - name: Deploy the CloudFormation stack
+        run: |
+          sam deploy \
+            --template-file packaged.yaml \
+            --stack-name hearthstone-leaderboard-stack \
+            --capabilities CAPABILITY_IAM \
+            --region us-east-1 \
+            --no-confirm-changeset \
+            --disable-rollback

@@ -4,7 +4,9 @@ Fetches Hearthstone Battlegrounds Leaderboard information regularly to enable us
 
 # Setup as a streamer
 
-Great news! No need to manually setup the bot to run for you. We have the bot running and freely available to all twitch stremers. Just go to liihs's [discord](https://discord.com/invite/C6NguFf). From there go to the channel `#wall-lii-requests` and use the directions in the pinned message.
+Currently, the bot is not available to add until I make some updates to the code.
+
+~~Great news! No need to manually setup the bot to run for you. We have the bot running and freely available to all twitch stremers. Just go to liihs's [discord](https://discord.com/invite/C6NguFf). From there go to the channel `#wall-lii-requests` and use the directions in the pinned message.~~
 
 Once the bot is connected to you chat you will see it under the viewers list.
 

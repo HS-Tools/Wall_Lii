@@ -6,8 +6,8 @@ from twitchio.ext import commands
 
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
-from leaderboardBot import LeaderBoardBot
-from parseRegion import isRegion
+from leaderboardBot import LeaderboardBot
+from parseRegion import isServer
 
 # Override twitchio error functions to stop spam in logs
 
@@ -15,14 +15,23 @@ commands.Bot.event_command_error = None
 
 load_dotenv()
 
-leaderboardBot = LeaderBoardBot()
+os.environ["DYNAMODB_ENDPOINT"] = "http://localhost:8000"
+
+leaderboardBot = LeaderboardBot()
 
 initialChannels = leaderboardBot.getChannels()
 greetingChannels = []
 buddyDict = get_buddy_dict()
 trinketDict = get_trinkets_dict()
 
-helpString = "HeyGuys I'm a bot that checks the BG leaderboard. My commands are !bgrank [name], !bgdaily [name], !yesterday [name], !buddy [hero], !goldenbuddy [hero], !buddygold [tier] !bgpatch and !calendar"
+helpString = (
+    "HeyGuys I'm a bot that checks the BG leaderboard. Commands: "
+    "!bgrank/!duorank [name/rank] [region], "
+    "!bgdaily/!duodaily [name] [region], "
+    "!bgweekly/!duoweekly [name] [region], "
+    "!buddy [hero], !goldenbuddy [hero], !buddygold [tier], "
+    "!bgpatch and !calendar"
+)
 
 twitchBot = commands.Bot(
     token=os.environ["TMI_TOKEN"],
@@ -32,41 +41,41 @@ twitchBot = commands.Bot(
     prefix=os.environ["BOT_PREFIX"],
     initial_channels=[
         "liihs",
-        "jeefhs",
-        "rdulive",
-        "dogdog",
-        "xqn_thesad",
-        "matsuri_hs",
-        "zorgo_hs",
-        "sunbaconrelaxer",
-        "shadybunny",
-        "hapabear",
-        "sjow",
-        "bofur_hs",
-        "ixxdeee",
-        "wobbleweezy",
-        "awedragon",
-        "benice92",
-        "sevel07",
-        "zavadahs",
-        "pockyplays",
-        "terry_tsang_gaming",
-        "dreads",
-        "sunglitters",
-        "fasteddiehs",
-        "fritterus",
-        "bixentehs",
-        "beterbabbit",
-        "asmodaitv",
-        "jkirek_",
-        "harain",
-        "missbowers",
-        "educated_collins",
-        "gospodarlive",
-        "neflida",
-        "babofat",
-        "tume111",
-        "doudzo",
+        # "jeefhs",
+        # "rdulive",
+        # "dogdog",
+        # "xqn_thesad",
+        # "matsuri_hs",
+        # "zorgo_hs",
+        # "sunbaconrelaxer",
+        # "shadybunny",
+        # "hapabear",
+        # "sjow",
+        # "bofur_hs",
+        # "ixxdeee",
+        # "wobbleweezy",
+        # "awedragon",
+        # "benice92",
+        # "sevel07",
+        # "zavadahs",
+        # "pockyplays",
+        # "terry_tsang_gaming",
+        # "dreads",
+        # "sunglitters",
+        # "fasteddiehs",
+        # "fritterus",
+        # "bixentehs",
+        # "beterbabbit",
+        # "asmodaitv",
+        # "jkirek_",
+        # "harain",
+        # "missbowers",
+        # "educated_collins",
+        # "gospodarlive",
+        # "neflida",
+        # "babofat",
+        # "tume111",
+        # "doudzo",
     ],
 )
 
@@ -84,7 +93,7 @@ async def call(ctx, func, name, *args):
 
     response = func(*args)
     if len(args) >= 2:
-        if not isRegion(args[1]):
+        if not isServer(args[1]):
             response = "Invalid region provided.\n" + response
 
     await ctx.send(response)
@@ -246,24 +255,42 @@ async def event_message(msg):
 @twitchBot.command(name="bgrank")
 async def getRank(ctx):
     args = parseArgs(ctx)
-    await call(ctx, leaderboardBot.getRankText, "rank", *args)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+    print(f"Debug - Getting rank for args: {args}")  # Add debug print
+    response = leaderboardBot.get_rank(*args)
+    print(f"Debug - Got response: {response}")  # Add debug print
+    await ctx.send(response)
 
 
 @twitchBot.command(name="bgdaily")
 async def getDailyStats(ctx):
     args = parseArgs(ctx)
-    await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+    response = leaderboardBot.get_daily_stats(*args)
+    await ctx.send(response)
+
+
+@twitchBot.command(name="bgweekly")
+async def getWeeklyStats(ctx):
+    args = parseArgs(ctx)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+    response = leaderboardBot.get_weekly_stats(*args)
+    await ctx.send(response)
 
 
 @twitchBot.command(name="tomorrow")
 async def tomorrow(ctx):
     args = parseArgs(ctx)
     name = args[0]
-
     if args[0][0] == "!":
         await ctx.send("Names can't start with '!'")
         return
-
     await ctx.send(f"{name} will be rank 1 for sure liiYep")
 
 
@@ -316,60 +343,53 @@ async def event_join(channel, user):
         greetingChannels.remove(channel.name)
 
 
+@twitchBot.command(name="duorank")
+async def duorank(ctx):
+    """Get player info by rank or name for Duo mode"""
+    args = parseArgs(ctx)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+    response = leaderboardBot.get_rank(*args, game_type="battlegroundsduo")
+    await ctx.send(response)
+
+
+@twitchBot.command(name="duodaily")
+async def duodaily(ctx):
+    """Get daily stats for Duo mode"""
+    args = parseArgs(ctx)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+    response = leaderboardBot.get_daily_stats(*args, game_type="battlegroundsduo")
+    await ctx.send(response)
+
+
+@twitchBot.command(name="duoweekly")
+async def duoweekly(ctx):
+    """Get weekly stats for Duo mode"""
+    args = parseArgs(ctx)
+    if args[0][0] == "!":
+        await ctx.send("Names can't start with '!'")
+        return
+    response = leaderboardBot.get_weekly_stats(*args, game_type="battlegroundsduo")
+    await ctx.send(response)
+
+
+@twitchBot.event
+async def event_error(error: Exception, data: str = None):
+    """Handle any errors that occur in the bot"""
+    print(f"Error: {error}")
+    if data:
+        print(f"Data: {data}")
+
+
+@twitchBot.command(name="test")
+async def test(ctx):
+    """Test command to verify bot is working"""
+    await ctx.send("Bot is working!")
+
+
 if __name__ == "__main__":
-
-    # @aiocron.crontab("* * * * *")  ## Every minute check for new channels
-    # async def updateChannels():
-    #     global initialChannels
-    #     global greetingChannels
-
-    #     channels = leaderboardBot.getChannels()
-
-    #     try:
-    #         joined_channels = list(map(lambda x: x.name, twitchBot.connected_channels))
-    #     except KeyError:
-    #         print("KeyError from connected_channels")
-    #         return
-
-    #     new_channels = []
-
-    #     for channel in channels:
-    #         if channel not in joined_channels:
-    #             new_channels.append(channel)
-
-    #         if channel not in initialChannels:
-    #             greetingChannels.append(channel)
-
-    #         # Rate limit on joining channels is 20 per 10 seconds. It'd be nice to join earlier than 20 per minute
-    #         if len(new_channels) >= 19:
-    #             break
-
-    #     if len(new_channels) > 0:
-    #         print("Joined these channels: " + str(new_channels))
-    #     try:
-    #         await twitchBot.join_channels(new_channels)
-    #     except Exception as err:
-    #         print(f"Joining error: ${err}")
-
-    #     # Update initialChannels in case there's a change to the configuration of a channel's name
-    #     initialChannels = leaderboardBot.getChannels()
-
-    @aiocron.crontab("* * * * *")  ## Every minute check for new alias
-    async def updateAlias():
-        leaderboardBot.getNewAlias()
-
-    @aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-    async def check_for_new_buddies():
-        global buddyDict
-        temp_dict = get_buddy_dict()
-        if temp_dict and len(temp_dict.keys()) > 0:
-            buddyDict = temp_dict
-
-    @aiocron.crontab("10 * * * *")  ## Every hour check for new trinkets
-    async def check_for_new_trinkets():
-        global trinketDict
-        temp_dict = get_trinkets_dict()
-        if temp_dict and len(temp_dict.keys()) > 0:
-            trinketDict = temp_dict
-
+    print(f"Debug - Starting bot")
     twitchBot.run()
