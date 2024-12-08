@@ -80,8 +80,8 @@ def lambda_handler(event, context):
     try:
         logger.info("Starting leaderboard fetch")
 
-        # Get max_pages from event or use default (4 pages = 100 players)
-        max_pages = event.get("max_pages", 4)
+        # Get max_pages from event or use default (40 pages = 1000 players)
+        max_pages = event.get("max_pages", 40)
 
         # Get DynamoDB table
         table_name = os.environ["TABLE_NAME"]
