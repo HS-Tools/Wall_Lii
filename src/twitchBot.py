@@ -1,7 +1,9 @@
 import argparse
 import os
+import aiocron
 
 from dotenv import load_dotenv
+import requests
 from twitchio.ext import commands
 
 from leaderboard_queries import LeaderboardDB
@@ -72,6 +74,7 @@ class LeaderboardBot(commands.Bot):
         )
         # Initialize DB connection
         self.db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
+        self.patch_link = "Currently fetching patch link..."
 
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
@@ -364,8 +367,53 @@ class LeaderboardBot(commands.Bot):
         """Respond to praise with a robotic acknowledgment"""
         await ctx.send("MrDestructoid Just doing my job MrDestructoid")
 
+    @commands.command(name="bgdailii")
+    async def bgdailii(self, ctx):
+        """Show daily stats for liihs"""
+        response = self.db.format_daily_stats("liihs", "NA", "0")
+        await ctx.send(response)
+
+    @commands.command(name="patch", aliases=["bgpatch"])
+    async def patch(self, ctx):
+        """Fetch the latest patch notes link"""
+        await ctx.send(f"{self.patch_link}")
+
+    async def fetchPatchLink(self):
+        # URL of the API
+        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+
+        # Send a request to fetch the JSON data from the API
+        response = requests.get(api_url)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            data = response.json()
+
+            # Loop through each article in the data
+            for article in data:
+                content = article.get("content", "")  # Extract the content field
+                # Check if 'battlegrounds' is mentioned in the content
+                if "battlegrounds" in content.lower():
+                    # Extract and print the article's 'defaultUrl'
+                    article_url = article.get("defaultUrl")
+                    title = article.get("title")
+                    return f"{title}: {article_url}"
+            else:
+                print("No article containing 'battlegrounds' found.")
+        else:
+            print(f"Failed to retrieve data. Status code: {response.status_code}")
+
+@aiocron.crontab('* * * * *')  # Runs every minute
+async def fetch_patch_link_cron():
+    if bot is None:
+        return
+    bot.patch_link = await bot.fetchPatchLink()
+    print(bot.patch_link)
+
 
 def main():
+    global bot
     # Add command line arguments
     parser = argparse.ArgumentParser(
         description="Twitch Bot for Hearthstone BG Leaderboard"
