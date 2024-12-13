@@ -158,15 +158,19 @@ class LeaderboardDB:
     def get_top_players(self, server, game_mode="0", limit=10):
         """Get top players for a region"""
         game_mode_server = f"{game_mode}#{server}"
-
-        response = self.table.query(
+        top10Response = self.table.query(
             IndexName="RankLookupIndex",
-            KeyConditionExpression="GameModeServer = :gms",
-            ExpressionAttributeValues={":gms": game_mode_server},
+            KeyConditionExpression=Key("GameModeServer").eq(game_mode_server),
+            ProjectionExpression="LatestRating, PlayerName",  # No alias required
             Limit=limit,
+            ScanIndexForward=True,  # Ascending order to get top ranks
         )
+        top10Response = [
+            {"LatestRating": item["LatestRating"], "Server": server, "PlayerName": item["PlayerName"]}
+            for item in top10Response.get("Items", [])
+        ]
 
-        return response.get("Items", [])
+        return top10Response
 
     def get_rank_player(self, rank, server, game_mode="0"):
         """Get player at specific rank in a region"""
@@ -692,21 +696,27 @@ class LeaderboardDB:
     def get_top_players_global(self, game_mode="0", limit=10):
         """Get top players globally across all servers"""
         try:
-            # Scan the table for all players in the specified game mode
-            response = self.table.scan(
-                FilterExpression="GameMode = :mode",
-                ExpressionAttributeValues={":mode": game_mode},
-            )
+            top10Global = []
 
-            items = response.get("Items", [])
-            if not items:
-                return []
+            for region in ['NA', 'EU', 'AP']:
+                game_mode_server = f"{game_mode}#{region}"
+                top10Response = self.table.query(
+                    IndexName="RankLookupIndex",
+                    KeyConditionExpression=Key("GameModeServer").eq(game_mode_server),
+                    ProjectionExpression="LatestRating, PlayerName",  # No alias required
+                    Limit=limit,
+                    ScanIndexForward=True,  # Ascending order to get top ranks
+                )
+                top10Response = [
+                    {"LatestRating": item["LatestRating"], "Server": region, "PlayerName": item["PlayerName"]}
+                    for item in top10Response.get("Items", [])
+                ]
 
-            # Sort players by rating and take the top 'limit' players
-            sorted_players = sorted(
-                items, key=lambda x: int(x["LatestRating"]), reverse=True
-            )
-            return sorted_players[:limit]
+                top10Global.extend(top10Response)
+
+            top10Global = sorted(top10Global, key=lambda x: int(x["LatestRating"]), reverse=True)[:limit]
+
+            return top10Global
 
         except Exception as e:
             logger.error(f"Error getting top players globally: {str(e)}")
