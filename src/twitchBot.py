@@ -210,7 +210,6 @@ class LeaderboardBot(commands.Bot):
             server = clean_input(server)
             response = self.db.format_top_players(server, game_mode)
 
-            print("Response:", response)
             await ctx.send(response)
 
     @commands.command(name="help")
