@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import boto3
+from boto3.dynamodb.conditions import Key
 import pytz
 
 from logger import setup_logger
@@ -157,15 +158,19 @@ class LeaderboardDB:
     def get_top_players(self, server, game_mode="0", limit=10):
         """Get top players for a region"""
         game_mode_server = f"{game_mode}#{server}"
-
-        response = self.table.query(
+        top10Response = self.table.query(
             IndexName="RankLookupIndex",
-            KeyConditionExpression="GameModeServer = :gms",
-            ExpressionAttributeValues={":gms": game_mode_server},
+            KeyConditionExpression=Key("GameModeServer").eq(game_mode_server),
+            ProjectionExpression="LatestRating, PlayerName",  # No alias required
             Limit=limit,
+            ScanIndexForward=True,  # Ascending order to get top ranks
         )
+        top10Response = [
+            {"LatestRating": item["LatestRating"], "Server": server, "PlayerName": item["PlayerName"]}
+            for item in top10Response.get("Items", [])
+        ]
 
-        return response.get("Items", [])
+        return top10Response
 
     def get_rank_player(self, rank, server, game_mode="0"):
         """Get player at specific rank in a region"""
@@ -233,23 +238,24 @@ class LeaderboardDB:
         """Get region statistics (avg rating, player count, etc)"""
         game_mode_server = f"{game_mode}#{server}"
 
-        response = self.table.query(
-            IndexName="RankLookupIndex",
-            KeyConditionExpression="GameModeServer = :gms",
+        countResponse = self.table.scan(
+            FilterExpression="GameModeServer = :gms",
+            Select="COUNT",
             ExpressionAttributeValues={":gms": game_mode_server},
         )
 
-        items = response.get("Items", [])
-        if not items:
-            return None
+        top25Response = self.table.query(
+            IndexName="RankLookupIndex",
+            KeyConditionExpression=Key("GameModeServer").eq(game_mode_server),
+            ProjectionExpression="LatestRating",  # No alias required
+            Limit=25,
+            ScanIndexForward=True,  # Ascending order to get top ranks
+        )
 
-        ratings = [int(item["LatestRating"]) for item in items]
-        return {
-            "player_count": len(ratings),
-            "avg_rating": sum(ratings) / len(ratings),
-            "max_rating": max(ratings),
-            "min_rating": min(ratings),
-        }
+        top25Average = sum(item["LatestRating"] for item in top25Response.get("Items", [])) // 25
+        count = countResponse.get("Count", 0)
+
+        return {'count': count, 'top25Average': top25Average}
 
     def _normalize_stats(self, stats):
         """Normalize stats dictionary to use consistent key names
@@ -472,7 +478,7 @@ class LeaderboardDB:
         if not stats:
             return f"No stats available for {server}"
 
-        return f"{server} has {stats['player_count']} {'player' if stats['player_count'] == 1 else 'players'} with an average rating of {int(stats['avg_rating'])}. The highest rating is {stats['max_rating']}"
+        return f"{server} has {stats['count']} {'player' if stats['count'] == 1 else 'players'} and Top 25 avg is {stats['top25Average']}"
 
     def format_top_players(self, server, game_mode="0"):
         """Format top 10 players in chat-ready format"""
@@ -687,42 +693,30 @@ class LeaderboardDB:
             logger.error(f"Error in _get_milestone: {str(e)}")
             return None
 
-    def format_server_stats(self, server, game_mode="0"):
-        """Format server stats for chat"""
-        try:
-            # ... existing code ...
-
-            # Format response with proper grammar
-            player_count = len(players)
-            player_str = "player" if player_count == 1 else "players"
-
-            return (
-                f"{server} has {player_count} {player_str} with an average rating of {avg_rating}. "
-                f"The highest rating is {max_rating}"
-            )
-
-        except Exception as e:
-            logger.error(f"Error getting server stats: {str(e)}")
-            return "Error getting server stats"
-
     def get_top_players_global(self, game_mode="0", limit=10):
         """Get top players globally across all servers"""
         try:
-            # Scan the table for all players in the specified game mode
-            response = self.table.scan(
-                FilterExpression="GameMode = :mode",
-                ExpressionAttributeValues={":mode": game_mode},
-            )
+            top10Global = []
 
-            items = response.get("Items", [])
-            if not items:
-                return []
+            for region in ['NA', 'EU', 'AP']:
+                game_mode_server = f"{game_mode}#{region}"
+                top10Response = self.table.query(
+                    IndexName="RankLookupIndex",
+                    KeyConditionExpression=Key("GameModeServer").eq(game_mode_server),
+                    ProjectionExpression="LatestRating, PlayerName",  # No alias required
+                    Limit=limit,
+                    ScanIndexForward=True,  # Ascending order to get top ranks
+                )
+                top10Response = [
+                    {"LatestRating": item["LatestRating"], "Server": region, "PlayerName": item["PlayerName"]}
+                    for item in top10Response.get("Items", [])
+                ]
 
-            # Sort players by rating and take the top 'limit' players
-            sorted_players = sorted(
-                items, key=lambda x: int(x["LatestRating"]), reverse=True
-            )
-            return sorted_players[:limit]
+                top10Global.extend(top10Response)
+
+            top10Global = sorted(top10Global, key=lambda x: int(x["LatestRating"]), reverse=True)[:limit]
+
+            return top10Global
 
         except Exception as e:
             logger.error(f"Error getting top players globally: {str(e)}")
