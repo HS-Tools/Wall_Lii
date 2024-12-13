@@ -15,11 +15,16 @@ logger = setup_logger("twitchBot")
 load_dotenv()
 
 
-def clean_input(text):
-    """Clean input text by removing invisible characters and extra whitespace"""
-    if not text:
-        return None
-    return "".join(c for c in text if c.isprintable()).strip()
+def clean_input(user_input):
+    """Cleans user input to remove any unwanted characters or prefixes."""
+    # Remove invisible characters and leading/trailing whitespace
+    cleaned = "".join(c for c in user_input if c.isprintable()).strip()
+
+    # Remove leading '!' to prevent commands
+    if cleaned.startswith("!"):
+        cleaned = cleaned.lstrip("!")  # Removes all leading '!' characters
+
+    return cleaned
 
 
 class LeaderboardBot(commands.Bot):
