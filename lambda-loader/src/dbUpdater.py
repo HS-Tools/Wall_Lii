@@ -107,60 +107,63 @@ def lambda_handler(event, context):
                 game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
                 game_mode_server = f"{game_mode}#{server}"
 
-                # Get existing item
+                # Step 1: Fetch only CurrentRank and LatestRating
                 response = table.query(
                     KeyConditionExpression="GameModeServerPlayer = :gmsp",
                     ExpressionAttributeValues={":gmsp": game_mode_server_player},
+                    ProjectionExpression="CurrentRank, LatestRating"
                 )
 
-                # Get existing history or start new
+                # Extract current values
                 if response.get("Items"):
                     item = response["Items"][0]
-                    rating_history = item.get("RatingHistory", [])
-                    current_rating = rating_history[-1][0] if rating_history else None
+                    current_rating = item.get("LatestRating")
                     current_rank = item.get("CurrentRank")
                 else:
-                    rating_history = []
                     current_rating = None
                     current_rank = None
 
-                # Add new rating if changed
+                # Step 2: Determine if an update is needed
                 current_time = int(datetime.now(timezone.utc).timestamp())
                 rating_decimal = Decimal(str(rating))
                 rank_decimal = Decimal(str(rank))
 
-                # Determine if an update is needed
                 should_update = (
-                    not rating_history or
-                    (current_rating != rating_decimal and not any(h[0] == rating_decimal for h in rating_history[-3:]) and
-                     (not rating_history or current_time - rating_history[-1][1] >= 60)) or
-                    (current_rank != rank_decimal)
+                    not current_rating or
+                    current_rating != rating_decimal or
+                    current_rank != rank_decimal
                 )
 
+                # Step 3: Perform conditional update with update_item
                 if should_update:
-                    if current_rating != rating_decimal:
-                        rating_history.append([rating_decimal, current_time])
-
-                    item = {
-                        "GameModeServerPlayer": game_mode_server_player,
-                        "GameModeServer": game_mode_server,
-                        "PlayerName": player_name.lower(),
-                        "GameMode": game_mode,
-                        "Server": server,
-                        "CurrentRank": rank_decimal,
-                        "LatestRating": rating_decimal,
-                        "RatingHistory": rating_history,
+                    # Incrementally update attributes
+                    update_expression = "SET CurrentRank = :new_rank, LatestRating = :new_rating"
+                    expression_attribute_values = {
+                        ":new_rank": rank_decimal,
+                        ":new_rating": rating_decimal,
                     }
 
-                    table.put_item(Item=item)
+                    # Append to RatingHistory if necessary
+                    if current_rating != rating_decimal:
+                        update_expression += ", RatingHistory = list_append(if_not_exists(RatingHistory, :empty_list), :new_history)"
+                        expression_attribute_values.update({
+                            ":empty_list": [],
+                            ":new_history": [[rating_decimal, current_time]],
+                        })
+
+                    table.update_item(
+                        Key={"GameModeServerPlayer": game_mode_server_player},
+                        UpdateExpression=update_expression,
+                        ExpressionAttributeValues=expression_attribute_values,
+                    )
 
                     # Log significant rating changes (>301 MMR)
-                    old_rating = rating_history[-2][0] if len(rating_history) > 1 else None
-                    if old_rating:
-                        change = rating - old_rating
+                    if current_rating:
+                        change = rating - float(current_rating)
                         if abs(change) > 301:
                             logger.info(
-                                f"Significant rating change for {player_name}: {old_rating} → {rating} ({'+' if change > 0 else ''}{change}) in {server}"
+                                f"Significant rating change for {player_name}: {current_rating} → {rating} "
+                                f"({'+' if change > 0 else ''}{change}) in {server}"
                             )
 
                 # Check milestones for rank 1 player regardless of update
