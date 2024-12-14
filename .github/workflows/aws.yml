@@ -55,4 +55,5 @@ jobs:
             --capabilities CAPABILITY_IAM \
             --region us-east-1 \
             --no-confirm-changeset \
-            --disable-rollback
+            --disable-rollback \
+            --no-fail-on-empty-changeset
