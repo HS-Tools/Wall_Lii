@@ -26,6 +26,8 @@ def clean_input(user_input):
     if cleaned.startswith("!"):
         cleaned = cleaned.lstrip("!")  # Removes all leading '!' characters
 
+    print(cleaned)
+
     return cleaned
 
 
@@ -383,6 +385,10 @@ class LeaderboardBot(commands.Bot):
     async def patch(self, ctx):
         """Fetch the latest patch notes link"""
         await ctx.send(f"{self.patch_link}")
+
+    @commands.command(name="origin")
+    async def origin(self, ctx):
+        await ctx.send("LiiHS is my daddy. My code is here: https://github.com/HS-Tools/Wall_Lii")
 
     async def fetchPatchLink(self):
         # URL of the API
