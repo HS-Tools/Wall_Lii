@@ -446,10 +446,13 @@ class LeaderboardDB:
             return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}"
 
         # Find best rating across servers
-        response = self.table.scan(
-            FilterExpression="PlayerName = :name AND GameMode = :mode",
-            ExpressionAttributeValues={":name": resolved_name, ":mode": game_mode},
-        )
+        response = self.table.query(
+            IndexName="PlayerLookupIndex",
+            KeyConditionExpression="PlayerName = :name AND GameMode = :mode",
+            ExpressionAttributeValues={
+                ":name": resolved_name.lower(),
+                ":mode": game_mode,
+            })
 
         items = response.get("Items", [])
         if not items:
@@ -538,10 +541,13 @@ class LeaderboardDB:
 
         # If no server specified, find the one with highest rating
         if not server:
-            response = self.table.scan(
-                FilterExpression="PlayerName = :name AND GameMode = :mode",
-                ExpressionAttributeValues={":name": resolved_name, ":mode": game_mode},
-            )
+            response = self.table.query(
+                IndexName="PlayerLookupIndex",
+                KeyConditionExpression="PlayerName = :name AND GameMode = :mode",
+                ExpressionAttributeValues={
+                    ":name": resolved_name.lower(),
+                    ":mode": game_mode,
+                })
             items = response.get("Items", [])
             if not items:
                 return f"{resolved_name} is not on any BG leaderboards"
