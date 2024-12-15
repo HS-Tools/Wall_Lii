@@ -1,20 +1,20 @@
-import asyncio
+# import asyncio
 import os
 from datetime import datetime
 
-import aiocron
+# import aiocron
 import discord
+from discord.ext import commands
 from dotenv import load_dotenv
 from pytz import timezone, utc
-
-from buddies import easter_egg_buddies_dict
-from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
-from leaderboardBot import LeaderBoardBot
-from parseRegion import isRegion
+from leaderboard_queries import LeaderboardDB
 
 load_dotenv()
 
-bot = discord.Bot()
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 channelIds = {
     "wall_lii": 811468284394209300,
@@ -35,397 +35,299 @@ emotes = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
 async def on_ready():
     print(f"We have logged in as {bot.user}")
 
-
-@bot.slash_command(guild_ids=[liiDiscordId, compHSDiscordId])
-async def hello(ctx):
-    await ctx.respond("Hello!")
-
-
-def getEmbedObject(text, player, command):
-    embed = discord.Embed(title=f"{player}'s {command}", description=text)
-
-    return embed
-
-
-def removeTwitchEmotes(s):
-    for key in emotes:
-        s = s.replace(key, "")
-    return s
-
-
-async def call(ctx, func, name, *args):
-    response = removeTwitchEmotes(func(*args))
-    if len(args) >= 2:
-        if not isRegion(args[1]):
-            response = "Invalid region provided.\n" + response
-
-    message = ctx.message
+async def process_bgrank(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    player_name,
+    region=None,
+    game_mode="0"
+):
     try:
-        await message.delete()
-    except:
-        pass
-    await ctx.respond(embed=getEmbedObject(response, args[0], name))
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a trinket's description"
-)
-@discord.option("trinket_name", description="Enter the trinket name")
-async def trinket(ctx: discord.ApplicationContext, trinket_name: str):
-    results = parse_trinket(trinket_name, trinketDict)
-
-    await ctx.defer()
-    asyncio.sleep(0.1)
-
-    if results is not None:
-        embed = discord.Embed(
-            description=results,
-        )
-        await ctx.respond(embed=embed)
-    else:
-        await ctx.respond("Trinket not found")
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a hero's buddy"
-)
-@discord.option("buddy_name", description="Enter the buddy name")
-async def buddy(ctx: discord.ApplicationContext, buddy_name: str):
-    results = parse_buddy(buddy_name, buddyDict, easter_egg_buddies_dict)
-
-    await ctx.defer()
-    asyncio.sleep(0.1)
-
-    if results and results[0] is not None:
-        embed = discord.Embed(
-            title=f"{results[0]}'s buddy",
-            description=results[1],
-        )
-        await ctx.respond(embed=embed)
-    else:
-        await ctx.respond("Buddy not found")
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a hero's golden buddy"
-)
-@discord.option("golden_buddy_name", description="Enter the golden buddy name")
-async def goldenbuddy(ctx: discord.ApplicationContext, golden_buddy_name: str):
-    results = parse_buddy(golden_buddy_name, buddyDict, easter_egg_buddies_dict)
-
-    await ctx.defer()
-    asyncio.sleep(0.1)
-
-    if results and results[0] is not None:
-        embed = discord.Embed(
-            title=f"{results[0]}'s golden buddy",
-            description=results[2],
-        )
-        await ctx.respond(embed=embed)
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId], description="Get a player's rank"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default="")
-async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
-    args = leaderboardBot.parseArgs("lii", player_name, region)
-    await call(ctx, leaderboardBot.getRankText, "rank", *args)
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's record from today",
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default="")
-async def bgdaily(ctx: discord.ApplicationContext, player_name: str, region: str):
-    args = leaderboardBot.parseArgs("lii", player_name, region)
-    await call(ctx, leaderboardBot.getDailyStatsText, "daily", *args)
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's record from yesterday",
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default="")
-async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: str):
-    args = leaderboardBot.parseArgs("lii", player_name, region)
-    args.append(True)
-    await call(ctx, leaderboardBot.getDailyStatsText, "yesterday", *args)
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get Liisus's record from today",
-)
-async def bgdailii(ctx: discord.ApplicationContext):
-    await call(ctx, leaderboardBot.getDailyStatsText, "daily", "lii")
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Tell wall_lii he's a good boy",
-)
-async def goodbot(ctx: discord.ApplicationContext):
-    await ctx.respond(":robot: Just doing my job :robot:")
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId], description="Map alias to player_name"
-)
-@discord.option("alias", description="Enter the alias you'd like to use")
-@discord.option(
-    "player_name", description="Enter the player name you'd like the alias to map to"
-)
-async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str):
-    alias = alias.lower()
-    name = player_name.lower()
-
-    leaderboardBot.addAlias(alias, name)
-    leaderboardBot.updateAlias()
-    if alias in leaderboardBot.alias.keys() and leaderboardBot.alias[alias] == name:
-        await ctx.respond(f"{alias} is now an alias for {name}")
-    else:
-        await ctx.respond(f"failed to set alias {alias} to name {name}")
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId], description="Remove an alias"
-)
-@discord.option("alias", description="Enter the alias you'd like to use")
-async def deletealias(ctx: discord.ApplicationContext, alias: str):
-    alias = alias.lower()
-
-    leaderboardBot.deleteAlias(alias)
-    leaderboardBot.updateAlias()
-
-    await ctx.respond(f"{alias} alias was deleted")
-
-
-@bot.slash_command(guild_ids=[liiDiscordId, compHSDiscordId], description="Add Channel")
-@discord.option(
-    "channel_name", description="Enter the channel you'd like to add wall_lii to"
-)
-@discord.option(
-    "player_name",
-    description="Enter the player name of the streamer if it's different to the twitch name",
-    default="",
-)
-async def addchannel(ctx, channel_name: str, player_name: str):
-    channel_name = channel_name.lower()
-    player_name = player_name.lower() if player_name != "" else channel_name
-
-    leaderboardBot.addChannel(channel_name, player_name)
-
-    await ctx.respond(
-        f"{channel_name} will have wall_lii added to it with the default name of {player_name}"
-    )
-
-
-# @bot.slash_command(
-#     guild_ids=[liiDiscordId, compHSDiscordId], description="Remove wall_lii from a twitch channel"
-# )
-# @discord.option(
-#     "channel_name", description="Enter the channel you'd like to delete wall_lii from"
-# )
-# async def deletechannel(ctx, channel_name: str):
-#     channel = channel_name.lower()
-
-#     leaderboardBot.deleteChannel(channel)
-
-#     await ctx.respond(f"{channel} will have wall_lii removed")
-
-
-@aiocron.crontab("59 6 * * *")
-async def sendDailyRecap():
-    climbers = leaderboardBot.getMostMMRChanged(5, True)
-    losers = leaderboardBot.getMostMMRChanged(5, False)
-    hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
-    highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
-    leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
-    top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
-
-    climbersText = "**The top 5 climbers were:** \n"
-    losersText = "**The top 5 unluckiest were:** \n"
-    hardcore_gamersText = "**The top 5 grinders were:** \n"
-    highestText = "**The top 5 highest rated active players were:** \n"
-    threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
-    top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
-
-    for index, climber in enumerate(climbers):
-        climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
-
-    for index, loser in enumerate(losers):
-        losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
-
-    for index, hardcore_gamer in enumerate(hardcore_gamers):
-        hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
-
-    for index, highest in enumerate(highest_active):
-        highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
-
-    for region, rating in leaderboard_threshold.items():
-        threshholdText += f"{rating} in the {region} region \n"
-
-    for region, rating in top16_threshold.items():
-        top16Text += f"{rating} in the {region} region \n"
-
-    text = (
-        climbersText
-        + "\n"
-        + losersText
-        + "\n"
-        + hardcore_gamersText
-        + "\n"
-        + highestText
-        + "\n"
-        + threshholdText
-        + "\n"
-        + top16Text
-    )
-
-    embed = discord.Embed(
-        title=f"Daily Liiderboards for {get_pst_time()}", description=text
-    )
-
-    dedicated_channel_id = channelIds["wall_lii"]
-    await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
-    await bot.get_channel(int(compHSDiscordChannelId)).send(embed=embed)
-
-
-# @aiocron.crontab("59 7 * * *")
-# async def send_top16_daily_recap():
-#     embed = generateTop16Embed()
-#     dedicated_channel_id = channelIds["wall_lii"]
-#     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
-
-
-@aiocron.crontab("10 * * * *")  ## Every hour check for new buddies
-async def check_for_new_buddies():
-    global buddyDict
-    temp_dict = get_buddy_dict()
-    if temp_dict and len(temp_dict.keys()) > 0:
-        buddyDict = temp_dict
-
-
-@aiocron.crontab("10 * * * *")  ## Every hour check for new trinkets
-async def check_for_new_trinkets():
-    global trinketDict
-    temp_dict = get_trinkets_dict()
-    if temp_dict and len(temp_dict.keys()) > 0:
-        trinketDict = temp_dict
-
-
-@aiocron.crontab("* * * * *")
-async def update_front_page():
-    frontpage_channel = bot.get_channel(frontpage_channel_id)
-    frontpage_message = await frontpage_channel.fetch_message(frontpage_message_id)
-    await frontpage_message.edit(embed=generateTopXEmbed(25))
-
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get the top 16 players from all regions",
-)
-async def top16(ctx):
-    embed = generateTopXEmbed(16)
-    await ctx.respond(embed=embed)
-
-
-# @bot.slash_command(
-#     guild_ids=[liiDiscordId, compHSDiscordId],
-#     description="Secret test command for lii",
-# )
-# async def test(ctx):
-
-#     climbers = leaderboardBot.getMostMMRChanged(5, True)
-#     losers = leaderboardBot.getMostMMRChanged(5, False)
-#     hardcore_gamers = leaderboardBot.getHardcoreGamers(5)
-#     highest_active = leaderboardBot.getHighestRatingAndActivePlayers(5)
-#     leaderboard_threshold = leaderboardBot.getLeaderboardThreshold()
-#     top16_threshold = leaderboardBot.getLeaderboardThreshold(16)
-
-#     climbersText = "**The top 5 climbers were:** \n"
-#     losersText = "**The top 5 unluckiest were:** \n"
-#     hardcore_gamersText = "**The top 5 grinders were:** \n"
-#     highestText = "**The top 5 highest rated active players were:** \n"
-#     threshholdText = "**The minimum rating to be on the leaderboards was: ** \n"
-#     top16Text = "**The minimum rating to be top 16 on the leaderboards was: ** \n"
-
-#     for index, climber in enumerate(climbers):
-#         climbersText += f"{index+1}. **{climber['Tag']}** climbed a total of **{climber['Change']}** from {climber['Start']} to {climber['End']} in the {climber['Region']} region \n"
-
-#     for index, loser in enumerate(losers):
-#         losersText += f"{index+1}. **{loser['Tag']}** lost a total of **{abs(loser['Change'])}** from {loser['Start']} to {loser['End']} in the {loser['Region']} region \n"
-
-#     for index, hardcore_gamer in enumerate(hardcore_gamers):
-#         hardcore_gamersText += f"{index+1}. **{hardcore_gamer['Tag']}** played a total of **{hardcore_gamer['Gamecount']}** games in the {hardcore_gamer['Region']} region \n"
-
-#     for index, highest in enumerate(highest_active):
-#         highestText += f"{index+1}. **{highest['Tag']}** went from **{highest['Start']}** to **{highest['End']}** in the {highest['Region']} region \n"
-
-#     for region, rating in leaderboard_threshold.items():
-#         threshholdText += f"{rating} in the {region} region \n"
-
-#     for region, rating in top16_threshold.items():
-#         top16Text += f"{rating} in the {region} region \n"
-
-#     text = (
-#         climbersText
-#         + "\n"
-#         + losersText
-#         + "\n"
-#         + hardcore_gamersText
-#         + "\n"
-#         + highestText
-#         + "\n"
-#         + threshholdText
-#         + "\n"
-#         + top16Text
-#     )
-
-#     embed = discord.Embed(
-#         title=f"Daily Liiderboards for {get_pst_time()}", description=text
-#     )
-
-#     dedicated_channel_id = channelIds["test"]
-#     await bot.get_channel(int(dedicated_channel_id)).send(embed=embed)
-
-
-def get_pst_time():
-    date_format = "%m-%d %H:%M %Z"
-    date = datetime.now(tz=utc)
-    date = date.astimezone(timezone("US/Pacific"))
-    ptDateTime = date.strftime(date_format)
-    return ptDateTime
-
-
-def generateTopXEmbed(num):
-    topX_players_in_each_region = leaderboardBot.get_leaderboard_range(1, num)
-
-    embed = discord.Embed(
-        title=f"Top {num} Leaderboard for {get_pst_time()}",
-    )
-
-    for region in sorted(topX_players_in_each_region.keys(), reverse=True):
-        valueString = ""
-        for rank, rating, player, delta in topX_players_in_each_region[region]:
-            if delta != 0:
-                deltaString = f"(+{delta})" if delta > 0 else f"({delta})"
+        # If a region is specified
+        if region:
+            response = db.format_player_stats(player_name, region, game_mode)
+            await responder(response)
+        else:
+            # Handle case where no region is provided
+            if player_name.isdigit():
+                servers = ["NA", "EU", "AP"]
+                responses = []
+                for srv in servers:
+                    response = db.format_player_stats(player_name, srv, game_mode)
+                    if "No player found" not in response:
+                        responses.append(response)
+                if responses:
+                    await responder(" | ".join(responses))
+                else:
+                    await responder("No player found across all regions.")
             else:
-                deltaString = ""
-            valueString += f"{rank}. **{player}**: **{rating}** {deltaString}\n"
+                await responder("Invalid input. Please provide a valid player name or rank.")
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_bgrank: {e}")
 
-        embed.add_field(name=region, value=valueString, inline=True)
+async def process_bgdaily(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    player_name,
+    region=None,
+    game_mode="0"
+):
+    try:
+        # If a region is specified
+        if player_name.isdigit() and region is None:
+            await responder("Server needs to be specified with rank lookups.")
+        else:
+            response = db.format_daily_stats(player_name, region, game_mode)
+            await responder(response)
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_bgdaily: {e}")
 
-    return embed
+async def process_bgweekly(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    player_name,
+    region=None,
+    game_mode="0"
+):
+    try:
+        # If a region is specified
+        if player_name.isdigit() and region is None:
+            await responder("Server needs to be specified with rank lookups.")
+        else:
+            response = db.format_weekly_stats(player_name, region, game_mode)
+            await responder(response)
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_bgweekly: {e}")
 
+async def process_peak(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    player_name,
+    region=None,
+    game_mode="0"
+):
+    try:
+        # If a region is specified
+        if player_name.isdigit() and region is None:
+            await responder("Server needs to be specified with rank lookups.")
+        else:
+            response = db.format_peak_stats(player_name, region, game_mode)
+            await responder(response)
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_peak: {e}")
+
+async def process_stats(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    server=None,
+    game_mode="0"
+):
+    try:
+        if server is None or server == "":
+            servers = ["NA", "EU", "AP"]
+            responses = []
+            for srv in servers:
+                response = db.format_region_stats(srv, game_mode)
+                if "No stats available" not in response:
+                    # Omit the maximum MMR part
+                    response = response.split(". The highest rating is")[0]
+                    responses.append(response)
+            await responder(" | ".join(responses))
+        else:
+            response = db.format_region_stats(server, game_mode)
+            await responder(response)
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_stats: {e}")
+
+async def process_top(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    server=None,
+    game_mode="0"
+):
+    try:
+        if server is None or server == "":
+            players = db.get_top_players_global(game_mode)
+            if not players:
+                await responder("No players found globally")
+                return
+
+            # Format each player as "name (rating) from server"
+            formatted = [
+                f"{i+1}. {p['PlayerName']}: {p['LatestRating']} ({p['Server']})"
+                for i, p in enumerate(players)
+            ]
+
+            await responder(f"Top 10 globally: {', '.join(formatted)}")
+        else:
+            response = db.format_top_players(server, game_mode)
+            await responder(response)
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_top: {e}")
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    if message.content.startswith("!bgrank") or message.content.startswith("!rank") or message.content.startswith("!duorank"):
+        args = message.content.split()
+        if len(args) > 1:
+            player_name = args[1]
+            region = args[2] if len(args) > 2 else None
+            game_mode = "1" if message.content.startswith("!duorank") else "0"
+            await process_bgrank(message.channel.send, player_name, region, game_mode)
+        else:
+            await message.channel.send("Usage: !bgrank <player_name or rank> [region]")
+
+    if message.content.startswith("!bgdaily") or message.content.startswith("!daily") or message.content.startswith("!day") or message.content.startswith("!duodaily") or message.content.startswith("!duoday"):
+        args = message.content.split()
+        if len(args) > 1:
+            player_name = args[1]
+            region = args[2] if len(args) > 2 else None
+            game_mode = "1" if message.content.startswith("!duodaily" or message.content.startswith("!duoday")) else "0"
+            await process_bgdaily(message.channel.send, player_name, region, game_mode)
+        else:
+            await message.channel.send("Usage: !daily <player_name or rank> [region]")
+
+    if message.content.startswith("!bgweekly") or message.content.startswith("!weekly") or message.content.startswith("!week") or message.content.startswith("!duoweek") or message.content.startswith("!duoweekly"):
+        args = message.content.split()
+        if len(args) > 1:
+            player_name = args[1]
+            region = args[2] if len(args) > 2 else None
+            game_mode = "1" if message.content.startswith("!duoweekly" or message.content.startswith("!duoweek")) else "0"
+            await process_bgweekly(message.channel.send, player_name, region, game_mode)
+        else:
+            await message.channel.send("Usage: !weekly <player_name or rank> [region]")
+
+    if message.content.startswith("!peak") or message.content.startswith("!duopeak"):
+        args = message.content.split()
+        if len(args) > 1:
+            player_name = args[1]
+            region = args[2] if len(args) > 2 else None
+            game_mode = "1" if message.content.startswith("!duopeak") else "0"
+            await process_peak(message.channel.send, player_name, region, game_mode)
+        else:
+            await message.channel.send("Usage: !peak <player_name or rank> [region]")
+
+    if message.content.startswith("!stats") or message.content.startswith("!bgstats") or message.content.startswith("!duostats"):
+        args = message.content.split()
+        region = args[1] if len(args) > 1 else None
+        game_mode = "1" if message.content.startswith("!duostats") else "0"
+        await process_stats(message.channel.send, region, game_mode)
+
+    if message.content.startswith("!top") or message.content.startswith("!bgtop") or message.content.startswith("!duotop"):
+        args = message.content.split()
+        region = args[1] if len(args) > 1 else None
+        game_mode = "1" if message.content.startswith("!duotop") else "0"
+        await process_top(message.channel.send, region, game_mode)
+
+    if message.content.startswith("!help"):
+        await message.channel.send("Available commands: !bgrank, !bgdaily, !bgweekly, !peak, !stats, !top, !duorank, !duodaily, !duoweekly, !duopeak, !duostats, !duotop")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's rank"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgrank(ctx.respond, player_name, region, game_mode="0")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's duo rank"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def duorank(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgrank(ctx.respond, player_name, region, game_mode="1")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's daily stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def daily(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgdaily(ctx.respond, player_name, region, game_mode="0")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's duo daily stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def duodaily(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgdaily(ctx.respond, player_name, region, game_mode="1")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's weekly stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def weekly(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgweekly(ctx.respond, player_name, region, game_mode="0")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's duo weekly stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def duoweekly(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgweekly(ctx.respond, player_name, region, game_mode="1")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's peak stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def peak(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_peak(ctx.respond, player_name, region, game_mode="0")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's duo peak stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def duopeak(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_peak(ctx.respond, player_name, region, game_mode="1")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a region's stats"
+)
+@discord.option("server", description="Enter the server", default=None)
+async def stats(ctx: discord.ApplicationContext, server: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_stats(ctx.respond, server, game_mode="0")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get wall_lii commands"
+)
+async def help(ctx: discord.ApplicationContext):
+    await ctx.respond(
+        "Available commands with ! or /:\n"
+        "!bgrank <player_name or rank> [region]\n"
+        "!daily <player_name or rank> [region]\n"
+        "!weekly <player_name or rank> [region]\n"
+        "!peak <player_name or rank> [region]\n"
+        "!stats [region]\n"
+        "!top [region]\n")
 
 if __name__ == "__main__":
-    leaderboardBot = LeaderBoardBot()
-    buddyDict = get_buddy_dict()
-    trinketDict = get_trinkets_dict()
-    bot.run(os.environ["DISCORD_TOKEN"])
+  db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
+  bot.run(os.environ["DISCORD_TOKEN"])
