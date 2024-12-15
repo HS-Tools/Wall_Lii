@@ -107,41 +107,34 @@ def lambda_handler(event, context):
                 game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
                 game_mode_server = f"{game_mode}#{server}"
 
-                # Get existing item
-                response = table.query(
-                    KeyConditionExpression="GameModeServerPlayer = :gmsp",
-                    ExpressionAttributeValues={":gmsp": game_mode_server_player},
+                # Step 1: Fetch only CurrentRank and LatestRating
+                response = table.get_item(
+                    Key={
+                        "GameModeServerPlayer": game_mode_server_player,
+                        "GameModeServer": game_mode_server,
+                    },
+                    ProjectionExpression="CurrentRank, LatestRating"
                 )
 
-                # Get existing history or start new
-                if response.get("Items"):
-                    item = response["Items"][0]
-                    rating_history = item.get("RatingHistory", [])
-                    current_rating = rating_history[-1][0] if rating_history else None
-                    current_rank = item.get("CurrentRank")
-                else:
-                    rating_history = []
-                    current_rating = None
-                    current_rank = None
+                # Extract current values or create new entry
+                item = response.get("Item", None)
+                current_rating = item.get("LatestRating") if item else None
+                current_rank = item.get("CurrentRank") if item else None
 
-                # Add new rating if changed
+                # Step 2: Determine if an update is needed
                 current_time = int(datetime.now(timezone.utc).timestamp())
                 rating_decimal = Decimal(str(rating))
                 rank_decimal = Decimal(str(rank))
 
-                # Determine if an update is needed
                 should_update = (
-                    not rating_history or
-                    (current_rating != rating_decimal and not any(h[0] == rating_decimal for h in rating_history[-3:]) and
-                     (not rating_history or current_time - rating_history[-1][1] >= 60)) or
-                    (current_rank != rank_decimal)
+                    not current_rating or
+                    current_rating != rating_decimal or
+                    current_rank != rank_decimal
                 )
 
-                if should_update:
-                    if current_rating != rating_decimal:
-                        rating_history.append([rating_decimal, current_time])
-
-                    item = {
+                if not item:
+                    # Create new player entry
+                    new_item = {
                         "GameModeServerPlayer": game_mode_server_player,
                         "GameModeServer": game_mode_server,
                         "PlayerName": player_name.lower(),
@@ -149,19 +142,34 @@ def lambda_handler(event, context):
                         "Server": server,
                         "CurrentRank": rank_decimal,
                         "LatestRating": rating_decimal,
-                        "RatingHistory": rating_history,
+                        "RatingHistory": [[rating_decimal, current_time]],
+                    }
+                    table.put_item(Item=new_item)
+                    logger.info(f"New player added: {player_name} with rating {rating} and rank {rank}")
+                elif should_update:
+                    # Update existing player entry
+                    update_expression = "SET CurrentRank = :new_rank, LatestRating = :new_rating"
+                    expression_attribute_values = {
+                        ":new_rank": rank_decimal,
+                        ":new_rating": rating_decimal,
                     }
 
-                    table.put_item(Item=item)
+                    if current_rating != rating_decimal:
+                        update_expression += ", RatingHistory = list_append(if_not_exists(RatingHistory, :empty_list), :new_history)"
+                        expression_attribute_values.update({
+                            ":empty_list": [],
+                            ":new_history": [[rating_decimal, current_time]],
+                        })
 
-                    # Log significant rating changes (>301 MMR)
-                    old_rating = rating_history[-2][0] if len(rating_history) > 1 else None
-                    if old_rating:
-                        change = rating - old_rating
-                        if abs(change) > 301:
-                            logger.info(
-                                f"Significant rating change for {player_name}: {old_rating} → {rating} ({'+' if change > 0 else ''}{change}) in {server}"
-                            )
+                    table.update_item(
+                        Key={
+                            "GameModeServerPlayer": game_mode_server_player,
+                            "GameModeServer": game_mode_server,
+                        },
+                        UpdateExpression=update_expression,
+                        ExpressionAttributeValues=expression_attribute_values,
+                    )
+                    logger.info(f"Updated player {player_name}: {rating} (rank {rank})")
 
                 # Check milestones for rank 1 player regardless of update
                 if rank == 1:
@@ -170,10 +178,10 @@ def lambda_handler(event, context):
                     )
                     check_milestones(player_name, rating, game_mode, server, table)
 
-                return should_update
+                return should_update or not item
 
             except Exception as e:
-                logger.error(f"Error updating {player_name}: {str(e)}")
+                logger.error(f"Error updating player {player_name}: {e}")
                 return False
 
         # Process updates for each game mode
