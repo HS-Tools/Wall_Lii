@@ -373,7 +373,7 @@ class LeaderboardDB:
         stats = self.get_daily_stats(resolved_name, server, game_mode)
 
         if not stats["found"]:
-            return f"{resolved_name} is not on any BG leaderboards"
+            return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
 
         if not stats["has_games"]:
             # Use PlayerName from stats for rank lookups
@@ -415,7 +415,7 @@ class LeaderboardDB:
             )
             items = response.get("Items", [])
             if not items:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             best = max(items, key=lambda x: x["LatestRating"])
             server = best["Server"]
 
@@ -442,7 +442,7 @@ class LeaderboardDB:
             # Direct server lookup
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}"
 
         # Find best rating across servers
@@ -456,7 +456,7 @@ class LeaderboardDB:
 
         items = response.get("Items", [])
         if not items:
-            return f"{resolved_name} is not on any BG leaderboards"
+            return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
 
         # Get best rating and other servers
         best = max(items, key=lambda x: x["LatestRating"])
@@ -550,7 +550,7 @@ class LeaderboardDB:
                 })
             items = response.get("Items", [])
             if not items:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             best = max(items, key=lambda x: x["LatestRating"])
             server = best["Server"]
 
@@ -561,7 +561,7 @@ class LeaderboardDB:
         if not history:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
 
         # A player has games only if they have 2 or more entries
