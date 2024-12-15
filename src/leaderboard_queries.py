@@ -1,9 +1,12 @@
 import os
+import aiocron
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.conditions import Key
+import requests
+from discord import channel
 import pytz
 
 from logger import setup_logger
@@ -42,6 +45,9 @@ class LeaderboardDB:
             aws_dynamodb = boto3.resource("dynamodb", **aws_kwargs)
             self.alias_table = aws_dynamodb.Table("player-alias-table")
 
+            # Channel table always uses AWS connection
+            self.channel_table = aws_dynamodb.Table("channel-table")
+
             # Test alias table connection
             try:
                 self.alias_table.table_status
@@ -49,9 +55,25 @@ class LeaderboardDB:
             except Exception as e:
                 logger.error(f"Failed to connect to alias table: {e}")
 
+            # Test channel table connection
+            try:
+                self.channel_table.table_status
+                logger.info("Successfully connected to channel table")
+            except Exception as e:
+                logger.error(f"Failed to connect to channel table: {e}")
+
         # Load aliases
         self.aliases = self._load_aliases()
+        self.patch_link = "Currently fetching patch link..."
         logger.info(f"Initialized with {len(self.aliases)} aliases")
+        
+        # Set up cron job to update aliases every minute
+        self.cron = aiocron.crontab("*/1 * * * *", func=self.update_aliases)
+        self.fetch_patch_link_cron = aiocron.crontab('* * * * *', func=self.fetchPatchLink)
+
+    async def update_aliases(self):
+        """Update aliases from DynamoDB table"""
+        self.aliases = self._load_aliases()
 
     def _load_aliases(self):
         """Load aliases from DynamoDB table"""
@@ -373,7 +395,7 @@ class LeaderboardDB:
         stats = self.get_daily_stats(resolved_name, server, game_mode)
 
         if not stats["found"]:
-            return f"{resolved_name} is not on any BG leaderboards"
+            return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
 
         if not stats["has_games"]:
             # Use PlayerName from stats for rank lookups
@@ -415,7 +437,7 @@ class LeaderboardDB:
             )
             items = response.get("Items", [])
             if not items:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             best = max(items, key=lambda x: x["LatestRating"])
             server = best["Server"]
 
@@ -442,7 +464,7 @@ class LeaderboardDB:
             # Direct server lookup
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}"
 
         # Find best rating across servers
@@ -456,7 +478,7 @@ class LeaderboardDB:
 
         items = response.get("Items", [])
         if not items:
-            return f"{resolved_name} is not on any BG leaderboards"
+            return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
 
         # Get best rating and other servers
         best = max(items, key=lambda x: x["LatestRating"])
@@ -550,7 +572,7 @@ class LeaderboardDB:
                 })
             items = response.get("Items", [])
             if not items:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             best = max(items, key=lambda x: x["LatestRating"])
             server = best["Server"]
 
@@ -561,7 +583,7 @@ class LeaderboardDB:
         if not history:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on any BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
 
         # A player has games only if they have 2 or more entries
@@ -727,3 +749,76 @@ class LeaderboardDB:
         except Exception as e:
             logger.error(f"Error getting top players globally: {str(e)}")
             return []
+
+    def add_alias(self, alias, player_name):
+        """Add an alias for a player"""
+        try:
+            self.alias_table.put_item(
+                Item={"Alias": alias, "PlayerName": player_name}
+            )
+            return f"Alias {alias} added for {player_name}"
+        except Exception as e:
+            logger.error(f"Error adding alias: {str(e)}")
+            return f"Error adding alias: {str(e)}"
+
+    def delete_alias(self, alias):
+        """Delete an alias"""
+        try:
+            self.alias_table.delete_item(Key={"Alias": alias})
+            return f"Alias {alias} deleted successfully"
+        except Exception as e:
+            logger.error(f"Error deleting alias: {str(e)}")
+            return f"Error deleting alias: {str(e)}"
+
+    def add_channel(self, channel, player_name=channel):
+        """Add a channel to the channel table"""
+        try:
+            self.channel_table.put_item(Item={"ChannelName": channel, "PlayerName": player_name})
+            return f"Channel {channel} added successfully with the player_name:{player_name}"
+        except Exception as e:
+            logger.error(f"Error adding channel: {str(e)}")
+            return f"Error adding channel: {str(e)}"
+
+    def delete_channel(self, channel):
+        """Delete a channel from the channel table"""
+        try:
+            self.channel_table.delete_item(Key={"ChannelName": channel})
+            return f"Channel {channel} deleted successfully"
+        except Exception as e:
+            logger.error(f"Error deleting channel: {str(e)}")
+            return f"Error deleting channel: {str(e)}"
+
+    def get_patch_link(self):
+        try:
+            return self.patch_link
+        except Exception as e:
+            logger.error(f"Error getting patch link: {str(e)}")
+            return f"Error getting patch link: {str(e)}"
+
+    async def fetchPatchLink(self):
+        # URL of the API
+        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+
+        # Send a request to fetch the JSON data from the API
+        response = requests.get(api_url)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            data = response.json()
+
+            # Loop through each article in the data
+            for article in data:
+                content = article.get("content", "")  # Extract the content field
+                # Check if 'battlegrounds' is mentioned in the content
+                if "battlegrounds" in content.lower():
+                    # Extract and print the article's 'defaultUrl'
+                    article_url = article.get("defaultUrl")
+                    title = article.get("title")
+                    self.patch_link = f"{title}: {article_url}"
+                    print(f"{title}: {article_url}")
+                    return
+            else:
+                print("No article containing 'battlegrounds' found.")
+        else:
+            print(f"Failed to retrieve data. Status code: {response.status_code}")
