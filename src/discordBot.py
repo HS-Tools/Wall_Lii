@@ -1,4 +1,5 @@
 # import asyncio
+from dis import disco
 import os
 from datetime import datetime
 
@@ -7,6 +8,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from pytz import timezone, utc
+import default_alias
 from leaderboard_queries import LeaderboardDB
 
 load_dotenv()
@@ -60,7 +62,11 @@ async def process_bgrank(
                 else:
                     await responder("No player found across all regions.")
             else:
-                await responder("Invalid input. Please provide a valid player name or rank.")
+                response = db.format_player_stats(player_name, "", game_mode)
+                if "No player found" not in response:
+                    await responder(response)
+                else:
+                    await responder("Invalid input. Please provide a valid player name or rank.")
     except Exception as e:
         await responder("An error occurred while processing the command.")
         print(f"Error in process_bgrank: {e}")
@@ -222,6 +228,9 @@ async def on_message(message):
         game_mode = "1" if message.content.startswith("!duotop") else "0"
         await process_top(message.channel.send, region, game_mode)
 
+    if message.content.startswith("!patch"):
+        await message.channel.send(db.get_patch_link())
+
     if message.content.startswith("!help"):
         await message.channel.send("Available commands: !bgrank, !bgdaily, !bgweekly, !peak, !stats, !top, !duorank, !duodaily, !duoweekly, !duopeak, !duostats, !duotop")
 
@@ -315,6 +324,39 @@ async def stats(ctx: discord.ApplicationContext, server: str):
     await process_stats(ctx.respond, server, game_mode="0")
 
 @bot.slash_command(
+    guild_ids=[liiDiscordId],
+    description="Add alias"
+)
+@discord.option("alias", description="The alias for the player name")
+async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str):
+    await ctx.respond(db.add_alias(alias, player_name))
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId],
+    description="Delete alias"
+)
+@discord.option("alias", description="The alias for the player name")
+async def deletealias(ctx: discord.ApplicationContext, alias: str):
+    await ctx.respond(db.delete_alias(alias))
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId],
+    description="Add channel"
+)
+@discord.option("channel", description="The channel name")
+@discord.option("player_name", description="The channel's player name", default=None)
+async def addchannel(ctx: discord.ApplicationContext, channel: str, player_name: str):
+    await ctx.respond(db.add_channel(channel, player_name))
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId],
+    description="Delete channel"
+)
+@discord.option("channel", description="The channel name")
+async def deletechannel(ctx: discord.ApplicationContext, channel: str):
+    await ctx.respond(db.delete_channel(channel))
+
+@bot.slash_command(
     guild_ids=[liiDiscordId, compHSDiscordId],
     description="Get wall_lii commands"
 )
@@ -327,6 +369,14 @@ async def help(ctx: discord.ApplicationContext):
         "!peak <player_name or rank> [region]\n"
         "!stats [region]\n"
         "!top [region]\n")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get the latest battlegrounds patch notes link"
+)
+async def patch(ctx: discord.ApplicationContext):
+    patch_link = db.get_patch_link()
+    await ctx.respond(patch_link)
 
 if __name__ == "__main__":
   db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")

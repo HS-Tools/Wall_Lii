@@ -1,6 +1,10 @@
 import argparse
 import os
 import aiocron
+import boto3
+import asyncio
+import aiohttp
+from typing import List, Set
 
 from dotenv import load_dotenv
 import requests
@@ -34,59 +38,152 @@ def clean_input(user_input):
 class LeaderboardBot(commands.Bot):
     def __init__(self, token, prefix, initial_channels):
         # Initialize bot with environment variables
+        self.db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
+        
+        # Configure AWS client for channel table
+        aws_kwargs = {
+            "region_name": "us-east-1",
+            "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+            "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        }
+        
+        # Initialize DynamoDB resource
+        self.dynamodb = boto3.resource("dynamodb", **aws_kwargs)
+        self.channel_table = self.dynamodb.Table("channel-table")
+        
+        # Track all known channels and currently joined channels
+        self.all_channels = set()
+        self.joined_channels = set()
+        self.priority_channels = {"liihs"}  # These channels are always joined
+        self._load_channels()
+        
+        # Check if we have necessary Twitch API credentials
+        if not os.environ.get("CLIENT_ID") or not os.environ.get("TMI_TOKEN"):
+            logger.error("Missing Twitch API credentials. Please set CLIENT_ID and TMI_TOKEN in .env")
+            raise ValueError("Missing Twitch API credentials")
+        
+        # Initialize bot with priority channels
         super().__init__(
             token=token,
             irc_token=token,
             client_id=os.environ["CLIENT_ID"],
             nick=os.environ["BOT_NICK"],
             prefix=prefix,
-            initial_channels=[
-                "liihs",
-                # "jeefhs",
-                # "rdulive",
-                # "dogdog",
-                # "xqn_thesad",
-                # "matsuri_hs",
-                # "zorgo_hs",
-                # "sunbaconrelaxer",
-                # "shadybunny",
-                # "hapabear",
-                # "sjow",
-                # "bofur_hs",
-                # "ixxdeee",
-                # "wobbleweezy",
-                # "awedragon",
-                # "benice92",
-                # "sevel07",
-                # "zavadahs",
-                # "pockyplays",
-                # "terry_tsang_gaming",
-                # "dreads",
-                # "sunglitters",
-                # "fasteddiehs",
-                # "fritterus",
-                # "bixentehs",
-                # "beterbabbit",
-                # "asmodaitv",
-                # "jkirek_",
-                # "harain",
-                # "missbowers",
-                # "educated_collins",
-                # "gospodarlive",
-                # "neflida",
-                # "babofat",
-                # "tume111",
-                # "doudzo",
-                # "slyders_hs",
-                # "saphirexx"
-            ],
+            initial_channels=list(self.priority_channels)
         )
-        # Initialize DB connection
-        self.db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
-        self.patch_link = "Currently fetching patch link..."
+        
+        # Set up cron job to update channels every minute
+        self.channel_cron = aiocron.crontab("*/1 * * * *", func=self.update_live_channels)
+
+    def _load_channels(self):
+        """Load channels from DynamoDB table"""
+        try:
+            response = self.channel_table.scan()
+            self.all_channels = {item["ChannelName"].lower() for item in response.get("Items", [])}
+        except Exception as e:
+            logger.error(f"Failed to load channels from DynamoDB: {e}")
+            self.all_channels = {"liihs"}
+
+    async def _get_live_channels(self, channels: Set[str]) -> Set[str]:
+        """Get list of currently live channels"""
+        if not channels:
+            return set()
+
+        # Twitch API requires user IDs, so first get user IDs for all channels
+        headers = {
+            'Client-ID': os.environ["TWITCH_CLIENT_ID"],
+            'Authorization': f'Bearer {os.environ["TWITCH_TOKEN"]}'
+        }
+
+        async with aiohttp.ClientSession() as session:
+            live_channels = set()
+            channel_list = list(channels)
+            
+            # Process in smaller batches of 50 to be safer
+            for i in range(0, len(channel_list), 50):
+                batch = channel_list[i:i + 50]
+                query_params = "&".join([f"user_login={channel}" for channel in batch])
+                url = f'https://api.twitch.tv/helix/streams?{query_params}'
+                
+                try:
+                    async with session.get(url, headers=headers) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            live_channels.update(stream['user_login'].lower() for stream in data['data'])
+                        else:
+                            error_text = await response.text()
+                            logger.error(f"API request failed with status {response.status}: {error_text}")
+                            # If we get an error, try one by one for this batch
+                            for channel in batch:
+                                try:
+                                    single_url = f'https://api.twitch.tv/helix/streams?user_login={channel}'
+                                    async with session.get(single_url, headers=headers) as single_response:
+                                        if single_response.status == 200:
+                                            data = await single_response.json()
+                                            if data['data']:  # If stream is live
+                                                live_channels.add(channel.lower())
+                                except Exception as e:
+                                    logger.error(f"Error checking single channel {channel}: {e}")
+                except Exception as e:
+                    logger.error(f"Error checking batch of channels: {e}")
+                
+                # Add a small delay between batches to avoid rate limits
+                await asyncio.sleep(0.1)
+
+        logger.info(f"Found {len(live_channels)} live channels: {live_channels}")
+        return live_channels
+
+    async def update_live_channels(self):
+        """Update which channels we're joined to based on live status"""
+        try:
+            # Refresh channel list from DynamoDB
+            self._load_channels()
+            
+            # Get currently live channels
+            live_channels = await self._get_live_channels(self.all_channels)
+            
+            # Add priority channels to live channels
+            channels_to_monitor = live_channels.union(self.priority_channels)
+            logger.info(f"Channels to monitor: {channels_to_monitor}")
+            
+            # Determine which channels to join/leave
+            channels_to_join = channels_to_monitor - self.joined_channels
+            channels_to_leave = self.joined_channels - channels_to_monitor
+            
+            logger.info(f"Channels to join: {channels_to_join}")
+            logger.info(f"Channels to leave: {channels_to_leave}")
+            
+            # Join new live channels
+            if channels_to_join:
+                try:
+                    await super().join_channels(list(channels_to_join))
+                    self.joined_channels.update(channels_to_join)
+                except Exception as e:
+                    logger.error(f"Error joining channels: {e}")
+            
+            # Leave offline channels (except priority channels)
+            if channels_to_leave:
+                try:
+                    await super().part_channels(list(channels_to_leave))
+                    self.joined_channels.difference_update(channels_to_leave)
+                except Exception as e:
+                    logger.error(f"Error leaving channels: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Error in update_live_channels: {e}")
+
+    async def join_channels(self, channels, rate_limit=20, interval=30):
+        """Join channels in batches to respect rate limits"""
+        for i in range(0, len(channels), rate_limit):
+            batch = channels[i:i + rate_limit]
+            print(f"Joining channels: {batch}")
+            await super().join_channels(batch)
+            await asyncio.sleep(interval)  # Throttle to avoid rate limit
 
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
+        # Initial channel update
+        await self.update_live_channels()
 
     @commands.command(name="rank", aliases=["bgrank", "duorank"])
     async def rank_command(self, ctx, player_or_rank=None, server=None):
@@ -384,45 +481,11 @@ class LeaderboardBot(commands.Bot):
     @commands.command(name="patch", aliases=["bgpatch"])
     async def patch(self, ctx):
         """Fetch the latest patch notes link"""
-        await ctx.send(f"{self.patch_link}")
+        await ctx.send(f"{self.db.get_patch_link()}")
 
     @commands.command(name="origin")
     async def origin(self, ctx):
         await ctx.send("LiiHS is my daddy. My code is here: https://github.com/HS-Tools/Wall_Lii")
-
-    async def fetchPatchLink(self):
-        # URL of the API
-        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
-
-        # Send a request to fetch the JSON data from the API
-        response = requests.get(api_url)
-
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Parse the JSON response
-            data = response.json()
-
-            # Loop through each article in the data
-            for article in data:
-                content = article.get("content", "")  # Extract the content field
-                # Check if 'battlegrounds' is mentioned in the content
-                if "battlegrounds" in content.lower():
-                    # Extract and print the article's 'defaultUrl'
-                    article_url = article.get("defaultUrl")
-                    title = article.get("title")
-                    return f"{title}: {article_url}"
-            else:
-                print("No article containing 'battlegrounds' found.")
-        else:
-            print(f"Failed to retrieve data. Status code: {response.status_code}")
-
-@aiocron.crontab('* * * * *')  # Runs every minute
-async def fetch_patch_link_cron():
-    if bot is None:
-        return
-    bot.patch_link = await bot.fetchPatchLink()
-    print(bot.patch_link)
-
 
 def main():
     global bot
