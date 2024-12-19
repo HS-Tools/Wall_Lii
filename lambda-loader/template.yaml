@@ -11,8 +11,8 @@ Resources:
       TableName: HearthstoneLeaderboardV2
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 22
-        WriteCapacityUnits: 22
+        ReadCapacityUnits: 19
+        WriteCapacityUnits: 19
       AttributeDefinitions:
         - AttributeName: GameModeServerPlayer
           AttributeType: S
@@ -38,6 +38,9 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
         - IndexName: PlayerLookupIndex
           KeySchema:
             - AttributeName: PlayerName
@@ -46,6 +49,9 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
 
   MilestoneTable:
     Type: AWS::DynamoDB::Table
