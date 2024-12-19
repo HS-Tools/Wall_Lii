@@ -232,7 +232,7 @@ async def on_message(message):
         await message.channel.send(db.get_patch_link())
 
     if message.content.startswith("!help"):
-        await message.channel.send("Available commands: !bgrank, !bgdaily, !bgweekly, !peak, !stats, !top, !duorank, !duodaily, !duoweekly, !duopeak, !duostats, !duotop")
+        await message.channel.send("Available commands: !bgrank, !bgdaily, !bgweekly, !peak, !stats, !top, !duorank, !duodaily, !duoweekly, !duopeak, !duostats, !duotop, !patch")
 
 @bot.slash_command(
     guild_ids=[liiDiscordId, compHSDiscordId],
@@ -368,7 +368,8 @@ async def help(ctx: discord.ApplicationContext):
         "!weekly <player_name or rank> [region]\n"
         "!peak <player_name or rank> [region]\n"
         "!stats [region]\n"
-        "!top [region]\n")
+        "!top [region]\n"
+        "!patch\n")
 
 @bot.slash_command(
     guild_ids=[liiDiscordId, compHSDiscordId],
