@@ -9,7 +9,10 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       TableName: HearthstoneLeaderboardV2
-      BillingMode: PAY_PER_REQUEST
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 22
+        WriteCapacityUnits: 22
       AttributeDefinitions:
         - AttributeName: GameModeServerPlayer
           AttributeType: S
@@ -50,7 +53,7 @@ Resources:
       TableName: MilestoneTracking
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
+        ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       AttributeDefinitions:
         - AttributeName: SeasonGameModeServer
