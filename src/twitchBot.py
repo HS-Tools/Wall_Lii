@@ -54,7 +54,7 @@ class LeaderboardBot(commands.Bot):
         # Track all known channels and currently joined channels
         self.all_channels = set()
         self.joined_channels = set()
-        self.priority_channels = {"liihs"}  # These channels are always joined
+        self.priority_channels = {"liihs", "jeefhs", "beterbabbit", "dogdog", "rdulive"}  # These channels are always joined
         self._load_channels()
         
         # Check if we have necessary Twitch API credentials
