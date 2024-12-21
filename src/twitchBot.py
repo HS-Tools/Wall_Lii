@@ -54,7 +54,7 @@ class LeaderboardBot(commands.Bot):
         # Track all known channels and currently joined channels
         self.all_channels = set()
         self.joined_channels = set()
-        self.priority_channels = {"liihs"}  # These channels are always joined
+        self.priority_channels = {"liihs", "jeefhs", "beterbabbit", "dogdog", "rdulive"}  # These channels are always joined
         self._load_channels()
         
         # Check if we have necessary Twitch API credentials
@@ -324,8 +324,9 @@ class LeaderboardBot(commands.Bot):
         if clean_input(command_name) is None or clean_input(command_name) == "":
             # Base help message
             help_message = (
-                "Available commands: !rank, !day, !week, !peak, !stats, !top. "
+                "Available commands: !rank, !day, !week, !peak, !stats, !top, !origin"
                 "Use `!help <command>` for detailed information on a specific command."
+                "A day resets at 00:00 PST. A week resets on Monday at 00:00 PST."
             )
             await ctx.send(help_message)
         else:
