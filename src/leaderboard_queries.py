@@ -462,71 +462,23 @@ class LeaderboardDB:
         )
 
     def format_daily_stats(self, player_or_rank, server=None, game_mode="0"):
-        player_or_rank = "".join(c for c in player_or_rank if c.isprintable()).strip()
-
-        resolved_name = self._resolve_name(player_name)
+        """
+        Get stats for today for a given player, server, and game mode.
+        """
+        # Get today's midnight timestamp in LA timezone
         midnight_timestamp = get_la_midnight_today()
-        yesterday_timestamp = midnight_timestamp - 24 * 60 * 60
-        history = self.get_player_history(resolved_name, server, game_mode, start_time=yesterday_timestamp)
+        now_timestamp = int(datetime.now().timestamp())
 
-        if not history:
-            stats = self.get_player_stats(resolved_name, server, game_mode)
+        # Resolve server if not provided
+        if not server:
+            stats = self.get_player_stats(player_or_rank, game_mode=game_mode)
             if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
-            return self._format_no_games_response(resolved_name, stats)
+                return f"{player_or_rank} is not on any BG leaderboards."
+            server = stats["Server"]
 
-        la_tz = pytz.timezone("America/Los_Angeles")
-
-        # Initialize starting_rating
-        starting_rating = None
-
-        # Sort history by timestamp
-        history = sorted(history, key=lambda x: int(float(x[1])))
-
-        # Look for the most recent entry before the cutoff
-        for entry in history:
-            rating, timestamp = int(entry[0]), int(float(entry[1]))
-            entry_time = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
-
-            if entry_time < datetime.fromtimestamp(midnight_timestamp, la_tz):
-                starting_rating = rating
-            else:
-                # Stop searching once we hit entries on or after the cutoff
-                break
-
-        # Default to the earliest recorded rating today if no entry exists before cutoff
-        if starting_rating is None:
-            starting_rating = int(history[0][0])
-
-        # Extract progression for today
-        progression = [int(entry[0]) for entry in history if int(float(entry[1])) >= midnight_timestamp]
-
-        # Calculate deltas and other details
-        deltas = [progression[i] - (progression[i - 1] if i > 0 else starting_rating) for i in range(len(progression))]
-        total_change = progression[-1] - starting_rating if progression else 0
-
-        logger.info(f"Starting rating timestamp: {history[0][1]}, LA time: {datetime.fromtimestamp(int(float(history[0][1])), la_tz)}")
-        logger.info(f"Ending rating timestamp: {history[-1][1]}, LA time: {datetime.fromtimestamp(int(float(history[-1][1])), la_tz)}")
-
-        # Build the response
-        games_played = len(progression)
-        total_change_str = f" ({'+' if total_change > 0 else ''}{total_change})"
-        changes_str = ", ".join(f"{'+' if c > 0 else ''}{c}" for c in deltas)
-
-        # Get current stats for rank info
-        stats = self.get_player_stats(resolved_name, server, game_mode)
-        if not stats:
-            stats = {
-                "CurrentRank": 0,
-                "LatestRating": progression[-1] if progression else starting_rating,
-                "Server": server or "Unknown",
-                "PlayerName": resolved_name,
-            }
-
-        return (
-            f"{resolved_name} {'climbed' if total_change > 0 else 'fell'} from {starting_rating} to "
-            f"{progression[-1]}{total_change_str} in {stats['Server']} over {games_played} games: [{changes_str}] "
-            f"{'liiHappyCat' if total_change > 0 else 'liiCat'}"
+        # Fetch the player's stats for the given range
+        return self._format_stats_in_range(
+            player_or_rank, server, game_mode, midnight_timestamp, now_timestamp
         )
 
     def format_peak_stats(self, player_or_rank, server=None, game_mode="0"):
