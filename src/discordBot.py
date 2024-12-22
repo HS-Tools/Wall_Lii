@@ -88,6 +88,23 @@ async def process_bgdaily(
         await responder("An error occurred while processing the command.")
         print(f"Error in process_bgdaily: {e}")
 
+async def process_bgyday(
+    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
+    player_name,
+    region=None,
+    game_mode="0"
+):
+    try:
+        # If a region is specified
+        if player_name.isdigit() and region is None:
+            await responder("Server needs to be specified with rank lookups.")
+        else:
+            response = db.format_yesterday_stats(player_name, region, game_mode)
+            await responder(response)
+    except Exception as e:
+        await responder("An error occurred while processing the command.")
+        print(f"Error in process_bgyday: {e}")
+
 async def process_bgweekly(
     responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
     player_name,
@@ -196,6 +213,16 @@ async def on_message(message):
         else:
             await message.channel.send("Usage: !daily <player_name or rank> [region]")
 
+    if message.content.startswith("!yday") or message.content.startswith("!yesterday") or message.content.startswith("!duoyday") or message.content.startswith("!duoyesterday"):
+        args = message.content.split()
+        if len(args) > 1:
+            player_name = args[1]
+            region = args[2] if len(args) > 2 else None
+            game_mode = "1" if message.content.startswith("!duoyday" or message.content.startswith("!duoyesterday")) else "0"
+            await process_bgyday(message.channel.send, player_name, region, game_mode)
+        else:
+            await message.channel.send("Usage: !yesterday <player_name or rank> [region]")
+
     if message.content.startswith("!bgweekly") or message.content.startswith("!weekly") or message.content.startswith("!week") or message.content.startswith("!duoweek") or message.content.startswith("!duoweekly"):
         args = message.content.split()
         if len(args) > 1:
@@ -263,6 +290,16 @@ async def duorank(ctx: discord.ApplicationContext, player_name: str, region: str
 async def daily(ctx: discord.ApplicationContext, player_name: str, region: str):
     await ctx.defer()  # Optional, if processing might take longer than 3 seconds
     await process_bgdaily(ctx.respond, player_name, region, game_mode="0")
+
+@bot.slash_command(
+    guild_ids=[liiDiscordId, compHSDiscordId],
+    description="Get a player's yesterday stats"
+)
+@discord.option("player_name", description="Enter the player's name or rank")
+@discord.option("region", description="Enter the player's region", default=None)
+async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: str):
+    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
+    await process_bgyday(ctx.respond, player_name, region, game_mode="0")
 
 @bot.slash_command(
     guild_ids=[liiDiscordId, compHSDiscordId],
