@@ -482,37 +482,38 @@ class LeaderboardDB:
         )
 
     def format_peak_stats(self, player_or_rank, server=None, game_mode="0"):
-        """Format peak stats for a player in chat-ready format"""
-        player_name, server, error = self._handle_rank_or_name(
-            player_or_rank, server, game_mode
-        )
+        """
+        Format peak stats for a player in chat-ready format.
+        """
+        # Resolve rank or name and determine server
+        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
 
-        # Resolve alias before lookup
+        # Resolve alias for player name
         resolved_name = self._resolve_name(player_name)
+        if not resolved_name:
+            return f"{player_or_rank} could not be resolved to a valid player."
 
+        # If no server provided, find the server with the highest peak
         if not server:
-            # Find server with highest rating
-            response = self.table.scan(
-                FilterExpression="PlayerName = :name AND GameMode = :mode",
-                ExpressionAttributeValues={
-                    ":name": resolved_name.lower(),
-                    ":mode": game_mode,
-                },
-            )
-            items = response.get("Items", [])
-            if not items:
-                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
-            best = max(items, key=lambda x: x["LatestRating"])
-            server = best["Server"]
+            stats = self.get_player_stats(resolved_name, game_mode=game_mode)
+            if not stats:
+                return f"{resolved_name} is not on any BG leaderboards."
+            server = stats.get("Server", "Unknown")
 
-        peak = self.get_player_peak(resolved_name, server, game_mode, hours=None)
+        # Fetch the peak stats for the resolved player and server
+        peak = self.get_player_peak(resolved_name, server, game_mode)
         if not peak:
-            return f"{resolved_name} has no rating history"
+            return f"{resolved_name} has no rating history in {server}."
 
+        # Convert timestamp to integer for datetime.fromtimestamp
+        peak_timestamp = int(peak['timestamp'])
+
+        # Format and return the peak stats
         return (
-            f"{resolved_name}'s peak rating in {server} this season: {peak['rating']}"
+            f"{resolved_name}'s peak rating in {server} this season: {peak['rating']} "
+            f"on {datetime.fromtimestamp(peak_timestamp).strftime('%b %d, %Y')}"
         )
 
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
