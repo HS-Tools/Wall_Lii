@@ -315,75 +315,11 @@ class LeaderboardDB:
 
         return normalized
 
-    def get_daily_stats(self, player_name, server=None, game_mode="0"):
-        """Get a player's daily stats including games played and MMR changes"""
-        server = self._parse_server(server)
-        if server and not self._is_valid_server(server):
-            return server  # Return error message
-
-        # Handle rank lookup first
-        try:
-            rank = int(player_name)
-            if server:
-                player = self.get_rank_player(rank, server, game_mode)
-                if player:
-                    player_name = player["PlayerName"]
-        except ValueError:
-            # Not a rank lookup, resolve alias
-            player_name = self._resolve_name(player_name)
-
-        history = self.get_player_history(player_name, server, game_mode, hours=24)
-        if not history:
-            # Try to get current stats to distinguish between "not found" and "no games"
-            stats = self.get_player_stats(player_name, server, game_mode)
-            if not stats:
-                return {"found": False}
-
-            return {
-                "found": True,
-                "has_games": False,
-                "CurrentRank": stats.get("CurrentRank", 0),
-                "LatestRating": stats.get("LatestRating", 0),
-                "Server": stats.get("Server", server or "Unknown"),
-                "PlayerName": player_name,
-            }
-
-        # A player has games only if they have 2 or more entries
-        has_games = len(history) >= 2
-
-        # Get current stats for rank info
-        stats = self.get_player_stats(player_name, server, game_mode)
-        if not stats:
-            stats = {
-                "CurrentRank": 0,
-                "LatestRating": 0,
-                "Server": server or "Unknown",
-                "PlayerName": player_name,
-            }
-
-        # Calculate changes only if they have games
-        changes = []
-        if has_games:
-            for i in range(1, len(history)):
-                change = int(history[i][0]) - int(history[i - 1][0])
-                changes.append(change)
-
-        return {
-            "found": True,
-            "has_games": has_games,
-            "CurrentRank": stats.get("CurrentRank", 0),
-            "LatestRating": stats.get("LatestRating", 0),
-            "Server": stats.get("Server", server or "Unknown"),
-            "PlayerName": player_name,
-            "start_rating": int(history[0][0]),
-            "current_rating": int(history[-1][0]),
-            "games_played": len(changes),
-            "rating_changes": changes,
-        }
-
     def _format_no_games_response(self, player_name, stats, timeframe=""):
         """Format consistent response for when a player has no games played"""
         # Use the actual player name from stats if available (for rank lookups)
+        if not stats:
+            stats = self.get_player_stats(player_name)
         display_name = stats.get("PlayerName", player_name)
         return (
             f"{display_name} is rank {stats['CurrentRank']} in {stats['Server']} "
@@ -392,93 +328,194 @@ class LeaderboardDB:
 
     def format_yesterday_stats(self, player_or_rank, server=None, game_mode="0"):
         """
-        Get stats for yesterday for a given player, server, and game mode.
+        Format stats for yesterday for a given player, server, and game mode.
         """
-        from datetime import datetime, timedelta
-        import pytz
+        # Parse inputs and resolve name
+        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+        if error:
+            return error
 
-        # Get current time in Los Angeles timezone
-        la_tz = pytz.timezone("America/Los_Angeles")
-        now = datetime.now(la_tz)
-        server=self._parse_server(server)
+        resolved_name = self._resolve_name(player_name)
 
-        # Calculate timestamps for the start and end of yesterday
-        start_of_yesterday = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-        end_of_yesterday = start_of_yesterday + timedelta(hours=23, minutes=59, seconds=59)
+        # Calculate yesterday's time range
+        midnight_timestamp = get_la_midnight_today()
+        start_timestamp = midnight_timestamp - (24 * 60 * 60)
+        end_timestamp = midnight_timestamp - 1
 
-        # Convert to UTC timestamps
-        start_timestamp = int(start_of_yesterday.timestamp())
-        end_timestamp = int(end_of_yesterday.timestamp())
+        # Fetch history
+        history = self.get_player_history(resolved_name, server, game_mode)
+        if not history:
+            return self._format_no_games_response(resolved_name, None, " yesterday")
 
-        # Resolve server if not provided
-        if not server:
-            # Use the most recent server from the player's stats
-            stats = self.get_player_stats(player_or_rank, game_mode=game_mode)
-            if not stats:
-                return f"{player_or_rank} is not on any BG leaderboards."
-            server = stats["Server"]
+        # Determine starting rating
+        starting_rating, filtered_history = self.get_starting_rating(history, start_timestamp)
 
-        # Fetch the player's stats for the given range
-        return self._format_stats_in_range(
-            player_or_rank, server, game_mode, start_timestamp, end_timestamp
-        )
+        if not filtered_history:
+            return self._format_no_games_response(resolved_name, None, " yesterday")
+
+        # Use _format_stats_in_range to calculate deltas and format the response
+        return self._format_stats_in_range(resolved_name, server, game_mode, start_timestamp, end_timestamp)
 
     def _format_stats_in_range(self, player_or_rank, server, game_mode, start_timestamp, end_timestamp):
         """
         Fetch and format stats for a player in the given time range.
         """
-        history = self.get_player_history(player_or_rank, server, game_mode)
+        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+        if error:
+            return error
+
+        history = self.get_player_history(player_name, server, game_mode)
 
         if not history:
-            return f"{player_or_rank} has no games played during this period."
+            return self._format_no_games_response(player_name, None, f" in {server}")
 
-        # Filter history for the given range
-        filtered_history = [
-            entry for entry in history if start_timestamp <= int(float(entry[1])) <= end_timestamp
-        ]
+        # Sort history by timestamp (if not already sorted)
+        history = sorted(history, key=lambda x: int(float(x[1])))
+
+        # Initialize variables
+        last_entry_before_range = None
+        filtered_history = []  # Properly initialize the list
+
+        # Determine the last entry before the range and filter the history
+        for entry in history:
+            timestamp = int(float(entry[1]))
+            if timestamp < start_timestamp:
+                last_entry_before_range = entry  # Keep track of the last entry before the range
+            elif start_timestamp <= timestamp <= end_timestamp:
+                filtered_history.append(entry)
 
         if not filtered_history:
-            return f"{player_or_rank} has no games played during this period."
+            return self._format_no_games_response(player_name, None, f" in {server}")
 
-        # Calculate progression and deltas
-        starting_rating = int(filtered_history[0][0])
-        ending_rating = int(filtered_history[-1][0])
-        deltas = [
-            int(filtered_history[i][0]) - int(filtered_history[i - 1][0])
-            for i in range(1, len(filtered_history))
-        ]
+        # Determine starting_rating
+        starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
 
-        total_change = ending_rating - starting_rating
-        progression = f"{'climbed' if total_change > 0 else 'fell'} from {starting_rating} to {ending_rating} ({total_change:+})"
+        # Avoid duplicate starting_rating causing a `0` delta
+        if last_entry_before_range and last_entry_before_range[0] == filtered_history[0][0]:
+            filtered_history = filtered_history[1:]  # Skip duplicate first entry
+
+        # Calculate deltas
+        deltas = []
+        for i, entry in enumerate(filtered_history):
+            rating = int(entry[0])
+            if i == 0:
+                # First delta uses starting_rating if set, else compares with the same value
+                delta = rating - (starting_rating if starting_rating is not None else rating)
+            else:
+                delta = rating - int(filtered_history[i - 1][0])
+            deltas.append(delta)
+
+        # Calculate total change
+        total_change = int(filtered_history[-1][0]) - starting_rating
+
+        # Format response
         games_played = len(filtered_history)
-
         changes_str = ", ".join(f"{'+' if delta > 0 else ''}{delta}" for delta in deltas)
+        progression = f"{'climbed' if total_change > 0 else 'fell'} from {starting_rating} to {filtered_history[-1][0]} ({total_change:+})"
+        if not server:
+            # Use the server from the player's stats if available
+            stats = self.get_player_stats(player_name, game_mode=game_mode)
+            server = stats["Server"] if stats else "Unknown"
+        else:
+            server = server.upper()
 
-        # Handle None server gracefully
-        server = server.upper() if server else "Unknown"
+        # Debugging logs
+        logger.info(f"Last entry before range: {last_entry_before_range}")
+        logger.info(f"Filtered history (first and last): {filtered_history[0]} to {filtered_history[-1]}")
+        logger.info(f"Starting rating determined as: {starting_rating}")
 
         return (
-            f"{player_or_rank} {progression} in {server} over {games_played} games: {changes_str}"
+            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}"
         )
+
+    def get_starting_rating(self, player_history, start_timestamp):
+        """
+        Determine the starting rating for a given time range.
+        - Uses the last entry before the range if available.
+        - Otherwise, defaults to the first entry in the range.
+
+        Args:
+            player_history: List of history entries (rating, timestamp).
+            start_timestamp: Start of the time range.
+
+        Returns:
+            starting_rating, adjusted_history: The determined starting rating and the filtered history.
+        """
+        last_entry_before_range = None
+        filtered_history = []
+
+        for entry in player_history:
+            rating, timestamp = int(entry[0]), int(float(entry[1]))
+            if timestamp < start_timestamp:
+                last_entry_before_range = entry
+            elif timestamp >= start_timestamp:
+                filtered_history.append(entry)
+
+        if last_entry_before_range:
+            starting_rating = int(last_entry_before_range[0])
+        elif filtered_history:
+            starting_rating = int(filtered_history[0][0])
+        else:
+            # No valid entries at all; return None or appropriate defaults
+            return None, []
+
+        # Ensure the first delta isn't zero by skipping duplicates
+        if last_entry_before_range and filtered_history and last_entry_before_range[0] == filtered_history[0][0]:
+            filtered_history = filtered_history[1:]
+
+        return starting_rating, filtered_history
 
     def format_daily_stats(self, player_or_rank, server=None, game_mode="0"):
         """
         Get stats for today for a given player, server, and game mode.
         """
-        # Get today's midnight timestamp in LA timezone
+        # Parse inputs and resolve name
+        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+        if error:
+            return error
+
+        resolved_name = self._resolve_name(player_name)
+
+        # Calculate time range
         midnight_timestamp = get_la_midnight_today()
         now_timestamp = int(datetime.now().timestamp())
 
-        # Resolve server if not provided
-        if not server:
-            stats = self.get_player_stats(player_or_rank, game_mode=game_mode)
-            if not stats:
-                return f"{player_or_rank} is not on any BG leaderboards."
-            server = stats["Server"]
+        # Fetch history
+        history = self.get_player_history(resolved_name, server, game_mode)
+        if not history:
+            return self._format_no_games_response(resolved_name, None, " today")
 
-        # Fetch the player's stats for the given range
-        return self._format_stats_in_range(
-            player_or_rank, server, game_mode, midnight_timestamp, now_timestamp
+        # Determine starting rating
+        starting_rating, filtered_history = self.get_starting_rating(history, midnight_timestamp)
+
+        if not filtered_history:
+            return self._format_no_games_response(resolved_name, None, " today")
+
+        # Calculate deltas and statistics
+        deltas = []
+        for i, entry in enumerate(filtered_history):
+            rating = int(entry[0])
+            if i == 0:
+                delta = rating - starting_rating
+            else:
+                delta = rating - int(filtered_history[i - 1][0])
+            deltas.append(delta)
+
+        total_change = int(filtered_history[-1][0]) - starting_rating
+        games_played = len(filtered_history)
+
+        # Format response
+        changes_str = ", ".join(f"{'+' if delta > 0 else ''}{delta}" for delta in deltas)
+        progression = f"{'climbed' if total_change >= 0 else 'fell'} from {starting_rating} to {filtered_history[-1][0]} ({total_change:+})"
+        if not server:
+            # Use the most recent server from the player's stats
+            stats = self.get_player_stats(resolved_name, game_mode=game_mode)
+            server = stats["Server"] if stats else "Unknown"
+        else:
+            server = server.upper()
+
+        return (
+            f"{resolved_name} {progression} in {server} over {games_played} games: {changes_str}"
         )
 
     def format_peak_stats(self, player_or_rank, server=None, game_mode="0"):
@@ -618,76 +655,70 @@ class LeaderboardDB:
             return player_name, server, None
 
     def format_weekly_stats(self, player_or_rank, server=None, game_mode="0"):
-        """Format weekly stats for a player in chat-ready format"""
+        """Format weekly stats for a player in chat-ready format."""
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
 
         resolved_name = self._resolve_name(player_name)
+        monday_midnight_timestamp = get_la_monday_midnight()
+        sunday_midnight_timestamp = monday_midnight_timestamp + (7 * 24 * 60 * 60)  # End of Sunday
 
-        # Get Monday 00:00 LA time and the first game's timestamp before the week starts
-        monday_timestamp = get_la_monday_midnight()
-        pre_monday_timestamp = monday_timestamp - 24 * 60 * 60  # One day before Monday
-        history = self.get_player_history(resolved_name, server, game_mode, start_time=pre_monday_timestamp)
+        # Fetch entire weekly history
+        history = self.get_player_history(resolved_name, server, game_mode, start_time=monday_midnight_timestamp - (24 * 60 * 60))
 
         if not history:
-            # Handle case where player data is missing
+            # No games played during the week
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
 
-        # Initialize weekly data
-        la_tz = pytz.timezone("America/Los_Angeles")
-        monday_midnight = datetime.fromtimestamp(monday_timestamp, la_tz)
-        daily_deltas = [0] * 7
-        total_change = 0
-        games_played = 0
+        # Calculate stats for the week
         starting_rating = None
-        current_rating = None
-
-        # Group entries by day of the week
+        weekly_deltas = []
+        total_change = 0
+        daily_deltas = [0] * 7
         daily_entries = [[] for _ in range(7)]
+        la_tz = pytz.timezone("America/Los_Angeles")
+        monday_midnight = datetime.fromtimestamp(monday_midnight_timestamp, la_tz)
 
+        # Determine starting rating and daily entries
         for entry in history:
             rating, timestamp = int(entry[0]), int(float(entry[1]))
             entry_time = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
             days_since_monday = (entry_time - monday_midnight).days
 
-            if days_since_monday < 0:  # Game before the week starts
-                starting_rating = rating
+            if days_since_monday < 0:
+                starting_rating = rating  # Last rating before Monday
             elif 0 <= days_since_monday < 7:
                 daily_entries[days_since_monday].append(rating)
 
-        if not starting_rating:
-            return f"Error: Unable to determine starting rating for {resolved_name}."
+        if starting_rating is None:
+            # If no game exists before Monday, use the first game's rating
+            starting_rating = int(history[0][0])
 
-        # Calculate daily deltas and total change
+        # Calculate daily deltas
         for day, entries in enumerate(daily_entries):
             if entries:
-                # Add first delta for the day
-                # Safely handle empty previous day entries
+                # Calculate deltas for each day
                 previous_day_last_rating = starting_rating if day == 0 else (daily_entries[day - 1][-1] if daily_entries[day - 1] else starting_rating)
-                first_game_delta = entries[0] - previous_day_last_rating
-                daily_deltas[day] += first_game_delta
+                first_delta = entries[0] - previous_day_last_rating
+                daily_deltas[day] += first_delta
 
-                # Add deltas within the day
                 for i in range(1, len(entries)):
                     daily_deltas[day] += entries[i] - entries[i - 1]
 
-                # Update total games played and total change
-                games_played += len(entries)
-                total_change += daily_deltas[day]
+        # Sum up total games played and changes
+        games_played = sum(len(entries) for entries in daily_entries)
+        total_change = sum(daily_deltas)
 
-        # Last rating of the week
+        # Current rating at the end of the week
         current_rating = daily_entries[-1][-1] if daily_entries[-1] else starting_rating + total_change
 
-        # Debug logs
-        logger.info(f"First game of the week: {starting_rating} at timestamp {history[0][1]}")
-        logger.info(f"Last game of the week: {current_rating} at timestamp {history[-1][1]}")
-
-        # Format daily changes
-        changes_str = ", ".join(f"{'+' if c > 0 else ''}{c}" for c in daily_deltas)
+        # Format daily deltas as a string
+        day_names = ["M", "T", "W", "Th", "F", "Sa", "Su"]
+        changes_str = ", ".join(f"{day}: {'+' if delta > 0 else ''}{delta}" for day, delta in zip(day_names, daily_deltas))
 
         # Stats fallback if missing
         stats = self.get_player_stats(resolved_name, server, game_mode)
@@ -702,10 +733,6 @@ class LeaderboardDB:
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
         emote = "liiHappyCat" if total_change > 0 else "liiCat"
-
-        # Format daily changes with shortened day names
-        day_names = ["M", "T", "W", "Th", "F", "Sa", "Su"]
-        changes_str = ", ".join(f"{day}: {'+' if delta > 0 else ''}{delta}" for day, delta in zip(day_names, daily_deltas))
 
         # Build the response
         return (
