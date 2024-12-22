@@ -230,6 +230,24 @@ class LeaderboardBot(commands.Bot):
         response = self.db.format_daily_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
+    @commands.command(name="yesterday", aliases=["bgyesterday", "duoyesterday", "yday", "duoyday"])
+    async def yesterday_command(self, ctx, player_or_rank=None, server=None):
+        """Get player's stats for yesterday for both regular and duo modes"""
+        player_or_rank = clean_input(player_or_rank)
+
+        if player_or_rank is None or player_or_rank == "":
+            player_or_rank = ctx.channel.name
+
+        server = clean_input(server)
+        
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!')
+        game_mode = "1" if command_used == "duoyesterday" else "0"
+
+        # Get response from database
+        response = self.db.format_yesterday_stats(player_or_rank, server, game_mode)
+        await ctx.send(response)
+
     @commands.command(name="week", aliases=["bgweekly", "duoweek", "duoweekly"])
     async def week_command(self, ctx, player_or_rank=None, server=None):
         """Get player's weekly stats for both regular and duo modes"""
@@ -324,7 +342,7 @@ class LeaderboardBot(commands.Bot):
         if clean_input(command_name) is None or clean_input(command_name) == "":
             # Base help message
             help_message = (
-                "Available commands: !rank, !day, !week, !peak, !stats, !top, !origin"
+                "Available commands: !rank, !day, !week, !peak, !stats, !top, !origin, !yday"
                 "Use `!help <command>` for detailed information on a specific command."
                 "A day resets at 00:00 PST. A week resets on Monday at 00:00 PST."
             )
@@ -368,6 +386,12 @@ class LeaderboardBot(commands.Bot):
                     "Use the optional 'duo' prefix for duos. "
                     "If no server is specified, top players globally are shown. "
                     "Example: !top NA or !duotop NA"
+                ),
+                "yday": (
+                    "!yday [player] [server]: Get yesterday's stats for a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !yday lii NA or !duoyday lii NA"
                 ),
             }
 
