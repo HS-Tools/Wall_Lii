@@ -463,9 +463,6 @@ class LeaderboardDB:
 
     def format_daily_stats(self, player_or_rank, server=None, game_mode="0"):
         player_or_rank = "".join(c for c in player_or_rank if c.isprintable()).strip()
-        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
-        if error:
-            return error
 
         resolved_name = self._resolve_name(player_name)
         midnight_timestamp = get_la_midnight_today()
