@@ -655,65 +655,75 @@ class LeaderboardDB:
             return player_name, server, None
 
     def format_weekly_stats(self, player_or_rank, server=None, game_mode="0"):
-        """Format weekly stats for a player in chat-ready format."""
+        """
+        Format weekly stats for a player in chat-ready format.
+        """
+        # Resolve rank or name and determine server
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
 
         resolved_name = self._resolve_name(player_name)
         monday_midnight_timestamp = get_la_monday_midnight()
-        sunday_midnight_timestamp = monday_midnight_timestamp + (7 * 24 * 60 * 60)  # End of Sunday
 
         # Fetch entire weekly history
-        history = self.get_player_history(resolved_name, server, game_mode, start_time=monday_midnight_timestamp - (24 * 60 * 60))
+        history = self.get_player_history(
+            resolved_name, server, game_mode, start_time=monday_midnight_timestamp - (24 * 60 * 60)
+        )
 
         if not history:
-            # No games played during the week
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
 
-        # Calculate stats for the week
+        # Initialize variables
         starting_rating = None
-        weekly_deltas = []
-        total_change = 0
         daily_deltas = [0] * 7
         daily_entries = [[] for _ in range(7)]
         la_tz = pytz.timezone("America/Los_Angeles")
         monday_midnight = datetime.fromtimestamp(monday_midnight_timestamp, la_tz)
 
+        for i in range(7):
+            daily_entries[i].append(self.get_starting_rating(history, monday_midnight_timestamp + (i * 24 * 60 * 60))[0])
+
         # Determine starting rating and daily entries
+        last_valid_rating = None
         for entry in history:
             rating, timestamp = int(entry[0]), int(float(entry[1]))
             entry_time = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
             days_since_monday = (entry_time - monday_midnight).days
 
             if days_since_monday < 0:
-                starting_rating = rating  # Last rating before Monday
+                last_valid_rating = rating  # Update the last rating before Monday
             elif 0 <= days_since_monday < 7:
                 daily_entries[days_since_monday].append(rating)
 
-        if starting_rating is None:
-            # If no game exists before Monday, use the first game's rating
-            starting_rating = int(history[0][0])
+        logger.info(f"Daily entries grouped by day: {daily_entries}")
 
-        # Calculate daily deltas
+        # Set the starting rating
+        starting_rating = last_valid_rating if last_valid_rating is not None else int(history[0][0])
+        logger.info(f"Starting rating: {starting_rating}")
+
+        # Calculate daily deltas with proper carry-over for starting ratings
         for day, entries in enumerate(daily_entries):
+            previous_day_last_rating = (
+                starting_rating if day == 0 else (daily_entries[day - 1][-1] if daily_entries[day - 1] else starting_rating)
+            )
+            logger.debug(f"Day {day}: Previous day last rating: {previous_day_last_rating}")
+
             if entries:
-                # Calculate deltas for each day
-                previous_day_last_rating = starting_rating if day == 0 else (daily_entries[day - 1][-1] if daily_entries[day - 1] else starting_rating)
-                first_delta = entries[0] - previous_day_last_rating
-                daily_deltas[day] += first_delta
+                daily_deltas[day] = entries[-1] - previous_day_last_rating
+            else:
+                daily_deltas[day] = 0  # No games played that day
 
-                for i in range(1, len(entries)):
-                    daily_deltas[day] += entries[i] - entries[i - 1]
+        logger.info(f"Daily deltas: {daily_deltas}")
 
-        # Sum up total games played and changes
+        # Calculate total games played and total change
         games_played = sum(len(entries) for entries in daily_entries)
         total_change = sum(daily_deltas)
 
-        # Current rating at the end of the week
+        # Determine the current rating at the end of the week
         current_rating = daily_entries[-1][-1] if daily_entries[-1] else starting_rating + total_change
 
         # Format daily deltas as a string
@@ -732,7 +742,7 @@ class LeaderboardDB:
 
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
-        emote = "liiHappyCat" if total_change > 0 else "liiCat"
+        emote = "liiHappyCat"
 
         # Build the response
         return (
