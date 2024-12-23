@@ -341,19 +341,12 @@ class LeaderboardDB:
 
         # Calculate time range for yesterday
         midnight_timestamp = get_la_midnight_today()
-        start_timestamp = midnight_timestamp - (24 * 60 * 60)
-        end_timestamp = midnight_timestamp - 1
+        starting_timestamp = midnight_timestamp - (24 * 60 * 60)  # Start of yesterday
+        ending_timestamp = midnight_timestamp - 1  # End of yesterday
 
-        # Retrieve filtered history
-        starting_rating, filtered_history = self.get_filtered_history(
-            resolved_name, server, game_mode, start_timestamp, end_timestamp
+        return self._format_stats_in_range(
+            resolved_name, server, game_mode, starting_timestamp, ending_timestamp
         )
-
-        if not filtered_history:
-            return self._format_no_games_response(resolved_name, None, " yesterday")
-
-        # Use `_format_stats_in_range` to calculate stats
-        return self._format_stats_in_range(resolved_name, server, game_mode, start_timestamp, end_timestamp)
 
     def _format_stats_in_range(self, player_or_rank, server, game_mode, start_timestamp, end_timestamp):
         """
@@ -363,7 +356,7 @@ class LeaderboardDB:
         if error:
             return error
 
-        history = self.get_player_history(player_name, server, game_mode)
+        history = self.get_player_history(player_name, server, game_mode, hours=24, start_time=start_timestamp)
 
         if not history:
             return self._format_no_games_response(player_name, None, f" in {server}")
@@ -390,8 +383,8 @@ class LeaderboardDB:
         starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
 
         # Avoid duplicate starting_rating causing a `0` delta
-        if last_entry_before_range and last_entry_before_range[0] == filtered_history[0][0]:
-            filtered_history = filtered_history[1:]  # Skip duplicate first entry
+        # if last_entry_before_range and last_entry_before_range[0] == filtered_history[0][0]:
+        #     filtered_history = filtered_history[1:]  # Skip duplicate first entry
 
         # Calculate deltas
         deltas = []
@@ -424,7 +417,7 @@ class LeaderboardDB:
         logger.info(f"Starting rating determined as: {starting_rating}")
 
         return (
-            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}"
+            f"{player_name} {progression} in {server} over {games_played} games: {changes_str} asdfdsaf"
         )
 
     def get_starting_rating(self, player_history, start_timestamp):
@@ -481,25 +474,8 @@ class LeaderboardDB:
         midnight_timestamp = get_la_midnight_today()
         now_timestamp = int(datetime.now().timestamp())
 
-        # Retrieve filtered history
-        starting_rating, filtered_history = self.get_filtered_history(
+        return self._format_stats_in_range(
             resolved_name, server, game_mode, midnight_timestamp, now_timestamp
-        )
-
-        if not filtered_history:
-            return self._format_no_games_response(resolved_name, None, " today")
-
-        # Calculate stats and format response
-        deltas = [int(filtered_history[i][0]) - (starting_rating if i == 0 else int(filtered_history[i - 1][0]))
-                for i in range(len(filtered_history))]
-        total_change = int(filtered_history[-1][0]) - starting_rating
-        games_played = len(filtered_history)
-        changes_str = ", ".join(f"{'+' if delta > 0 else ''}{delta}" for delta in deltas)
-        progression = f"{'climbed' if total_change >= 0 else 'fell'} from {starting_rating} to {filtered_history[-1][0]} ({total_change:+})"
-        server = server.upper()
-
-        return (
-            f"{resolved_name} {progression} in {server} over {games_played} games: {changes_str}"
         )
 
     def get_most_recent_server(self, player_name, game_mode="0"):
@@ -515,26 +491,6 @@ class LeaderboardDB:
         if recent_activity:
             return max(recent_activity, key=recent_activity.get)  # Server with the most recent activity
         return None  # No activity found
-
-
-    def get_filtered_history(self, player_name, server, game_mode, start_timestamp, end_timestamp):
-        """
-        Retrieve and filter the player's history for a specific time range.
-        Includes determining the starting rating.
-
-        Returns:
-            starting_rating (int): The rating at the start of the range.
-            filtered_history (list): List of entries within the range.
-        """
-        history = self.get_player_history(player_name, server, game_mode)
-        if not history:
-            return None, []
-
-        # Determine starting rating and filter history
-        starting_rating, filtered_history = self.get_starting_rating(history, start_timestamp)
-        filtered_history = [entry for entry in filtered_history if start_timestamp <= int(float(entry[1])) <= end_timestamp]
-
-        return starting_rating, filtered_history
 
     def format_peak_stats(self, player_or_rank, server=None, game_mode="0"):
         """
@@ -978,22 +934,37 @@ class LeaderboardDB:
             print(f"Failed to retrieve data. Status code: {response.status_code}")
 
 def get_la_midnight_today():
-    """Get timestamp for today's midnight in LA time"""
-    la_tz = pytz.timezone('America/Los_Angeles')
-    la_now = datetime.now(la_tz)
-    naive_midnight = la_now.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
-    la_midnight = la_tz.localize(naive_midnight)
-    print(f"\n=== Debug Info (get_la_midnight_today) ===")
-    print(f"LA now: {la_now}")
-    print(f"LA midnight: {la_midnight}")
-    print(f"LA midnight timestamp: {int(la_midnight.timestamp())}")
-    return int(la_midnight.timestamp())
+    # Set timezone to Los Angeles (Pacific Time)
+    los_angeles_tz = pytz.timezone('America/Los_Angeles')
+    
+    # Get today's date
+    today = datetime.today()
+    
+    # Set time to midnight (00:00)
+    midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Localize midnight to Los Angeles timezone
+    midnight_la = los_angeles_tz.localize(midnight)
+    
+    # Return timestamp
+    return int(midnight_la.timestamp()) if midnight_la else None
 
 def get_la_monday_midnight():
-    """Get timestamp for most recent Monday midnight in LA time"""
-    la_tz = pytz.timezone('America/Los_Angeles')
-    la_now = datetime.now(la_tz)
-    days_since_monday = la_now.weekday()
-    naive_monday = (la_now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
-    la_monday_midnight = la_tz.localize(naive_monday)
-    return int(la_monday_midnight.timestamp())
+    """
+    Get the Unix timestamp for the most recent Monday's midnight in Los Angeles time (PST/PDT).
+    """
+    try:
+        la_tz = pytz.timezone("America/Los_Angeles")
+        now_la = datetime.now(la_tz)
+        days_since_monday = now_la.weekday()  # Monday = 0, Sunday = 6
+        most_recent_monday = now_la - timedelta(days=days_since_monday)
+        monday_midnight = most_recent_monday.replace(hour=0, minute=0, second=0, microsecond=0)
+        monday_midnight_timestamp = int(monday_midnight.timestamp())
+
+        # Debugging output
+        print(f"LA now: {now_la}, Most recent Monday: {monday_midnight}, Timestamp: {monday_midnight_timestamp}")
+
+        return monday_midnight_timestamp
+    except Exception as e:
+        print(f"Error calculating LA Monday midnight: {e}")
+        raise
