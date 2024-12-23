@@ -154,40 +154,57 @@ class LeaderboardDB:
     def get_player_history(self, player_name, server=None, game_mode="0", hours=24, start_time=None):
         """Get a player's rating history with the most recent entry before the cutoff."""
         player_name = self._resolve_name(player_name)
+        logger.info(f"Resolved player name: {player_name}")
 
         if not server:
             stats = self.get_player_stats(player_name, game_mode=game_mode)
             if not stats:
+                logger.warning(f"No stats found for {player_name}")
                 return None
             server = stats["Server"]
+            logger.info(f"Inferred server: {server}")
 
         game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
+        logger.info(f"GameModeServerPlayer: {game_mode_server_player}")
+
         response = self.table.query(
             KeyConditionExpression="GameModeServerPlayer = :gmsp",
             ExpressionAttributeValues={":gmsp": game_mode_server_player},
         )
+        logger.info(f"DynamoDB query response: {response}")
 
         if not response.get("Items"):
+            logger.warning(f"No history found for {game_mode_server_player}")
             return None
 
         history = response["Items"][0].get("RatingHistory", [])
+        logger.info(f"Full rating history retrieved: {history}")
+
         cutoff = start_time or int((datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp())
+        logger.info(f"Cutoff timestamp: {cutoff}")
+
         la_tz = pytz.timezone("America/Los_Angeles")
         recent_history = []
-
         last_entry_before_cutoff = None
+
+        logger.info("Filtering history...")
         for h in history:
             timestamp = int(float(h[1]))
             entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
+            logger.info(f"History entry: Rating={h[0]}, Timestamp={timestamp}, LA Time={entry_time_la}")
 
-            if entry_time_la < datetime.fromtimestamp(cutoff, la_tz):
-                last_entry_before_cutoff = h  # Keep track of the last entry before cutoff
+            if timestamp < cutoff:
+                last_entry_before_cutoff = h
+                logger.debug(f"Last entry before cutoff: {last_entry_before_cutoff}")
             else:
                 recent_history.append(h)
+                logger.debug(f"Added to recent history: {h}")
 
         if last_entry_before_cutoff:
-            recent_history.insert(0, last_entry_before_cutoff)  # Ensure we include the last entry before cutoff
+            logger.info(f"Last entry before cutoff: {last_entry_before_cutoff}")
+            recent_history.insert(0, last_entry_before_cutoff)
 
+        logger.info(f"Filtered history: {recent_history}")
         return recent_history
 
     def get_top_players(self, server, game_mode="0", limit=10):
