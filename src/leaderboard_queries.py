@@ -417,7 +417,7 @@ class LeaderboardDB:
         logger.info(f"Starting rating determined as: {starting_rating}")
 
         return (
-            f"{player_name} {progression} in {server} over {games_played} games: {changes_str} asdfdsaf"
+            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}"
         )
 
     def get_starting_rating(self, player_history, start_timestamp):
