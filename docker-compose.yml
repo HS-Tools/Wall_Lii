@@ -7,6 +7,11 @@ services:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb"
     working_dir: /home/dynamodblocal
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
 
   updater:
     build: .
@@ -14,3 +19,8 @@ services:
       - dynamodb-local
     restart: always
     command: python scripts/run_local_updater.py
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
