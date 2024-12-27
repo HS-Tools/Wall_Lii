@@ -350,6 +350,9 @@ class LeaderboardDB:
 
         resolved_name = self._resolve_name(player_name)
 
+        if not resolved_name:
+            return f"{resolved_name} is not on any BG leaderboards."
+
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
@@ -480,6 +483,9 @@ class LeaderboardDB:
             return error
 
         resolved_name = self._resolve_name(player_name)
+
+        if not resolved_name:
+            return f"{resolved_name} is not on any BG leaderboards."
 
         # Infer the server if not provided
         if not server:
@@ -654,13 +660,17 @@ class LeaderboardDB:
         if error:
             return error
 
+        resolved_name = self._resolve_name(player_name)
+
+        if not resolved_name:
+            return f"{resolved_name} is not on any BG leaderboards."
+
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
                 return f"{resolved_name} is not on any BG leaderboards."
 
-        resolved_name = self._resolve_name(player_name)
         monday_midnight_timestamp = get_la_monday_midnight()
 
         # Fetch entire weekly history
@@ -670,6 +680,8 @@ class LeaderboardDB:
 
         if not history:
             stats = self.get_player_stats(resolved_name, server, game_mode)
+            print(history)
+            print(stats)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
