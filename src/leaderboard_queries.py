@@ -354,7 +354,7 @@ class LeaderboardDB:
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
             if not server:
-                return f"{resolved_name} has no recent activity in any server."
+                return f"{resolved_name} is not on any BG leaderboards."
 
         # Calculate time range for yesterday
         midnight_timestamp = get_la_midnight_today()
@@ -485,7 +485,7 @@ class LeaderboardDB:
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
             if not server:
-                return f"{resolved_name} has no recent activity in any server."
+                return f"{resolved_name} is not on any BG leaderboards."
 
         # Calculate time range
         midnight_timestamp = get_la_midnight_today()
@@ -658,7 +658,7 @@ class LeaderboardDB:
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
-                return f"{player_name} has no recent activity in any server."
+                return f"{resolved_name} is not on any BG leaderboards."
 
         resolved_name = self._resolve_name(player_name)
         monday_midnight_timestamp = get_la_monday_midnight()
