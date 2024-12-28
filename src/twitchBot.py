@@ -213,7 +213,7 @@ class LeaderboardBot(commands.Bot):
             response = self.db.format_player_stats(player_or_rank, server, game_mode)
             await ctx.send(response)
 
-    @commands.command(name="day", aliases=["bgdaily", "daily" "duoday", "duodaily"])
+    @commands.command(name="day", aliases=["bgdaily", "daily", "duoday", "duodaily"])
     async def day_command(self, ctx, player_or_rank=None, server=None):
         """Get player's daily stats for both regular and duo modes"""
         player_or_rank = clean_input(player_or_rank)
@@ -242,7 +242,7 @@ class LeaderboardBot(commands.Bot):
         
         # Determine game mode based on command used
         command_used = ctx.message.content.split()[0].lstrip('!')
-        game_mode = "1" if command_used == "duoyesterday" else "0"
+        game_mode = "1" if command_used == "duoyesterday" or command_used == "duoyday" else "0"
 
         # Get response from database
         response = self.db.format_yesterday_stats(player_or_rank, server, game_mode)

@@ -171,40 +171,31 @@ class LeaderboardDB:
             KeyConditionExpression="GameModeServerPlayer = :gmsp",
             ExpressionAttributeValues={":gmsp": game_mode_server_player},
         )
-        logger.info(f"DynamoDB query response: {response}")
 
         if not response.get("Items"):
             logger.warning(f"No history found for {game_mode_server_player}")
             return None
 
         history = response["Items"][0].get("RatingHistory", [])
-        logger.info(f"Full rating history retrieved: {history}")
 
         cutoff = start_time or int((datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp())
-        logger.info(f"Cutoff timestamp: {cutoff}")
 
         la_tz = pytz.timezone("America/Los_Angeles")
         recent_history = []
         last_entry_before_cutoff = None
 
-        logger.info("Filtering history...")
         for h in history:
             timestamp = int(float(h[1]))
             entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
-            logger.info(f"History entry: Rating={h[0]}, Timestamp={timestamp}, LA Time={entry_time_la}")
 
             if timestamp < cutoff:
                 last_entry_before_cutoff = h
-                logger.debug(f"Last entry before cutoff: {last_entry_before_cutoff}")
             else:
                 recent_history.append(h)
-                logger.debug(f"Added to recent history: {h}")
 
         if last_entry_before_cutoff:
-            logger.info(f"Last entry before cutoff: {last_entry_before_cutoff}")
             recent_history.insert(0, last_entry_before_cutoff)
 
-        logger.info(f"Filtered history: {recent_history}")
         return recent_history
 
     def get_top_players(self, server, game_mode="0", limit=10):
@@ -352,13 +343,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any BG leaderboards."
+            return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG leaderboards."
+                return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Calculate time range for yesterday
         midnight_timestamp = get_la_midnight_today()
@@ -373,15 +364,16 @@ class LeaderboardDB:
         """
         Fetch and format stats for a player in the given time range.
         """
+        print(game_mode)
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
 
         history = self.get_player_history(player_name, server, game_mode, hours=24, start_time=start_timestamp)
-        stats = self.get_player_stats(player_name)
+        stats = self.get_player_stats(player_name, server, game_mode)
 
         if not stats:
-            return f"{player_name} is not on {server if server else 'any'} BG leaderboards."
+            return f"{player_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         if not history:
             return self._format_no_games_response(player_name, stats, f" in {server}")
@@ -436,11 +428,6 @@ class LeaderboardDB:
         else:
             server = server.upper()
 
-        # Debugging logs
-        logger.info(f"Last entry before range: {last_entry_before_range}")
-        logger.info(f"Filtered history (first and last): {filtered_history[0]} to {filtered_history[-1]}")
-        logger.info(f"Starting rating determined as: {starting_rating}")
-
         return (
             f"{player_name} {progression} in {server} over {games_played} games: {changes_str}"
         )
@@ -490,13 +477,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any BG leaderboards."
+            return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG leaderboards."
+                return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Calculate time range
         midnight_timestamp = get_la_midnight_today()
@@ -538,7 +525,7 @@ class LeaderboardDB:
         if not server:
             stats = self.get_player_stats(resolved_name, game_mode=game_mode)
             if not stats:
-                return f"{resolved_name} is not on any BG leaderboards."
+                return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
             server = stats.get("Server", "Unknown")
 
         # Fetch the peak stats for the resolved player and server
@@ -570,7 +557,7 @@ class LeaderboardDB:
             # Direct server lookup
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
             return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}"
 
         # Find best rating across servers
@@ -584,7 +571,7 @@ class LeaderboardDB:
 
         items = response.get("Items", [])
         if not items:
-            return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
+            return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
 
         # Get best rating and other servers
         best = max(items, key=lambda x: x["LatestRating"])
@@ -645,7 +632,7 @@ class LeaderboardDB:
 
             player = self.get_rank_player(rank, server, game_mode)
             if not player:
-                return None, None, f"No player found at rank {rank} in {server}"
+                return None, None, f"No player found at rank {rank} in {server} {'duo' if game_mode == '1' else ''} BG"
 
             return player["PlayerName"], server, None
 
@@ -668,13 +655,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any BG leaderboards."
+            return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG leaderboards."
+                return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
 
         monday_midnight_timestamp = get_la_monday_midnight()
 
@@ -686,7 +673,7 @@ class LeaderboardDB:
         if not history:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
 
         # Initialize variables
@@ -711,25 +698,19 @@ class LeaderboardDB:
             elif 0 <= days_since_monday < 7:
                 daily_entries[days_since_monday].append(rating)
 
-        logger.info(f"Daily entries grouped by day: {daily_entries}")
-
         # Set the starting rating
         starting_rating = last_valid_rating if last_valid_rating is not None else int(history[0][0])
-        logger.info(f"Starting rating: {starting_rating}")
 
         # Calculate daily deltas with proper carry-over for starting ratings
         for day, entries in enumerate(daily_entries):
             previous_day_last_rating = (
                 starting_rating if day == 0 else (daily_entries[day - 1][-1] if daily_entries[day - 1] else starting_rating)
             )
-            logger.debug(f"Day {day}: Previous day last rating: {previous_day_last_rating}")
 
             if entries:
                 daily_deltas[day] = entries[-1] - previous_day_last_rating
             else:
                 daily_deltas[day] = 0  # No games played that day
-
-        logger.info(f"Daily deltas: {daily_deltas}")
 
         # Calculate total games played and total change
         games_played = sum(len(entries) for entries in daily_entries)
