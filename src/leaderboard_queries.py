@@ -337,6 +337,7 @@ class LeaderboardDB:
         # Use the actual player name from stats if available (for rank lookups)
         if not stats:
             stats = self.get_player_stats(player_name)
+
         display_name = stats.get("PlayerName", player_name)
         return (
             f"{display_name} is rank {stats['CurrentRank']} in {stats['Server']} "
@@ -377,9 +378,13 @@ class LeaderboardDB:
             return error
 
         history = self.get_player_history(player_name, server, game_mode, hours=24, start_time=start_timestamp)
+        stats = self.get_player_stats(player_name)
+
+        if not stats:
+            return f"{player_name} is not on {server if server else 'any'} BG leaderboards."
 
         if not history:
-            return self._format_no_games_response(player_name, None, f" in {server}")
+            return self._format_no_games_response(player_name, stats, f" in {server}")
 
         # Sort history by timestamp (if not already sorted)
         history = sorted(history, key=lambda x: int(float(x[1])))
@@ -680,8 +685,6 @@ class LeaderboardDB:
 
         if not history:
             stats = self.get_player_stats(resolved_name, server, game_mode)
-            print(history)
-            print(stats)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
