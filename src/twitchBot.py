@@ -185,18 +185,36 @@ class LeaderboardBot(commands.Bot):
         # Initial channel update
         await self.update_live_channels()
 
-    @commands.command(name="rank", aliases=["bgrank", "duorank"])
-    async def rank_command(self, ctx, player_or_rank=None, server=None):
-        """Get player rank, defaulting to channel name if no player specified"""
-        player_or_rank = clean_input(player_or_rank)
-
-        if player_or_rank is None or player_or_rank == "":
-            player_or_rank = ctx.channel.name
-
-        server = clean_input(server)
+    def _parse_rank_and_server(self, arg1, arg2):
+        """
+        Parse rank and server from command arguments, supporting both formats:
+        !command rank server and !command server rank
+        """
+        servers = {"na", "eu", "ap"}
+        arg1 = clean_input(arg1)
+        arg2 = clean_input(arg2)
         
+        if not arg1:
+            return None, None
+            
+        # Check if arg1 is a server
+        if arg1.lower() in servers:
+            # Format: !command server rank
+            return arg2, arg1
+        else:
+            # Format: !command rank server
+            return arg1, arg2
+
+    @commands.command(name="rank", aliases=["bgrank", "duorank"])
+    async def rank_command(self, ctx, arg1=None, arg2=None):
+        """Get player rank, defaulting to channel name if no player specified"""
+        player_or_rank, server = self._parse_rank_and_server(arg1, arg2)
+        
+        if player_or_rank is None:
+            player_or_rank = ctx.channel.name
+            
         # Determine game mode based on command used
-        command_used = ctx.message.content.split()[0].lstrip('!');
+        command_used = ctx.message.content.split()[0].lstrip('!')
         game_mode = "1" if command_used == "duorank" else "0"
         
         if player_or_rank.isdigit() and (server is None or server == ""):
@@ -214,52 +232,45 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(response)
 
     @commands.command(name="day", aliases=["bgdaily", "daily", "duoday", "duodaily"])
-    async def day_command(self, ctx, player_or_rank=None, server=None):
+    async def day_command(self, ctx, arg1=None, arg2=None):
         """Get player's daily stats for both regular and duo modes"""
-        player_or_rank = clean_input(player_or_rank)
-
-        if player_or_rank is None or player_or_rank == "":
-            player_or_rank = ctx.channel.name
-
-        server = clean_input(server)
+        player_or_rank, server = self._parse_rank_and_server(arg1, arg2)
         
+        if player_or_rank is None:
+            player_or_rank = ctx.channel.name
+            
         # Determine game mode based on command used
-        command_used = ctx.message.content.split()[0].lstrip('!');
+        command_used = ctx.message.content.split()[0].lstrip('!')
         game_mode = "1" if command_used == "duodaily" or command_used == "duoday" else "0"
         
         response = self.db.format_daily_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
     @commands.command(name="yesterday", aliases=["bgyesterday", "duoyesterday", "yday", "duoyday"])
-    async def yesterday_command(self, ctx, player_or_rank=None, server=None):
+    async def yesterday_command(self, ctx, arg1=None, arg2=None):
         """Get player's stats for yesterday for both regular and duo modes"""
-        player_or_rank = clean_input(player_or_rank)
-
-        if player_or_rank is None or player_or_rank == "":
-            player_or_rank = ctx.channel.name
-
-        server = clean_input(server)
+        player_or_rank, server = self._parse_rank_and_server(arg1, arg2)
         
+        if player_or_rank is None:
+            player_or_rank = ctx.channel.name
+            
         # Determine game mode based on command used
         command_used = ctx.message.content.split()[0].lstrip('!')
         game_mode = "1" if command_used == "duoyesterday" or command_used == "duoyday" else "0"
-
-        # Get response from database
+        
         response = self.db.format_yesterday_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
     @commands.command(name="week", aliases=["bgweekly", "duoweek", "duoweekly"])
-    async def week_command(self, ctx, player_or_rank=None, server=None):
+    async def week_command(self, ctx, arg1=None, arg2=None):
         """Get player's weekly stats for both regular and duo modes"""
-        player_or_rank = clean_input(player_or_rank)
-
-        if player_or_rank is None or player_or_rank == "":
-            player_or_rank = ctx.channel.name
-
-        server = clean_input(server)
+        player_or_rank, server = self._parse_rank_and_server(arg1, arg2)
         
+        if player_or_rank is None:
+            player_or_rank = ctx.channel.name
+            
         # Determine game mode based on command used
-        command_used = ctx.message.content.split()[0].lstrip('!');
+        command_used = ctx.message.content.split()[0].lstrip('!')
         game_mode = "1" if command_used == "duoweek" or command_used == "duoweekly" else "0"
         
         response = self.db.format_weekly_stats(player_or_rank, server, game_mode)
@@ -501,6 +512,12 @@ class LeaderboardBot(commands.Bot):
     async def bgdailii(self, ctx):
         """Show daily stats for liihs"""
         response = self.db.format_daily_stats("liihs", "NA", "0")
+        await ctx.send(response)
+
+    @commands.command(name="weeklii")
+    async def weeklii(self, ctx):
+        """Show weekly stats for liihs"""
+        response = self.db.format_weekly_stats("liihs", "NA", "0")
         await ctx.send(response)
 
     @commands.command(name="patch", aliases=["bgpatch"])
