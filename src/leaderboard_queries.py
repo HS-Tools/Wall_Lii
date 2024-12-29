@@ -399,10 +399,6 @@ class LeaderboardDB:
         # Determine starting_rating
         starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
 
-        # Avoid duplicate starting_rating causing a `0` delta
-        # if last_entry_before_range and last_entry_before_range[0] == filtered_history[0][0]:
-        #     filtered_history = filtered_history[1:]  # Skip duplicate first entry
-
         # Calculate deltas
         deltas = []
         for i, entry in enumerate(filtered_history):
@@ -428,8 +424,12 @@ class LeaderboardDB:
         else:
             server = server.upper()
 
+        # Check for duplicate names
+        dup_count = self.get_duplicate_names_count(player_name, game_mode)
+        dup_msg = self._format_duplicate_names_message(player_name, dup_count, game_mode)
+
         return (
-            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}"
+            f"{player_name} {progression} in {server} over {games_played} games: {changes_str} {dup_msg}"
         )
 
     def get_starting_rating(self, player_history, start_timestamp):
@@ -542,6 +542,42 @@ class LeaderboardDB:
             f"on {datetime.fromtimestamp(peak_timestamp).strftime('%b %d, %Y')}"
         )
 
+    def get_duplicate_names_count(self, base_name, game_mode="0"):
+        """
+        Check for duplicate names (e.g., mia2, mia3, etc.) and return the count of duplicates.
+        Returns 0 if no duplicates exist.
+        """
+        count = 1  # Start at 1 since we're checking for mia2, mia3, etc.
+        while True:
+            # Check if the next numbered name exists
+            next_name = f"{base_name}{count + 1}"
+            response = self.table.query(
+                IndexName="PlayerLookupIndex",
+                KeyConditionExpression="PlayerName = :name AND GameMode = :mode",
+                ExpressionAttributeValues={
+                    ":name": next_name.lower(),
+                    ":mode": game_mode,
+                },
+            )
+            
+            if not response.get("Items"):
+                # No more duplicates found
+                break
+            count += 1
+            
+        return count if count > 1 else 0
+
+    def _format_duplicate_names_message(self, base_name, count, game_mode="0"):
+        """Format a message about duplicate names if they exist"""
+        if count == 0:
+            return ""
+            
+        duplicates = [f"{base_name}{i}" for i in range(2, count + 1)]
+        if game_mode == "1":
+            duplicates = [f"{name} (duo)" for name in duplicates]
+            
+        return f" (Note: {', '.join(duplicates)} also exist)"
+
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
         """Format player stats in chat-ready format"""
         player_name, server, error = self._handle_rank_or_name(
@@ -558,7 +594,12 @@ class LeaderboardDB:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
-            return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}"
+                
+            # Check for duplicate names
+            dup_count = self.get_duplicate_names_count(resolved_name, game_mode)
+            dup_msg = self._format_duplicate_names_message(resolved_name, dup_count, game_mode)
+            
+            return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']} {dup_msg}"
 
         # Find best rating across servers
         response = self.table.query(
@@ -577,14 +618,18 @@ class LeaderboardDB:
         best = max(items, key=lambda x: x["LatestRating"])
         others = [i for i in items if i["Server"] != best["Server"]]
 
+        # Check for duplicate names
+        dup_count = self.get_duplicate_names_count(resolved_name, game_mode)
+        dup_msg = self._format_duplicate_names_message(resolved_name, dup_count, game_mode)
+
         if others:
             other = max(others, key=lambda x: x["LatestRating"])
             return (
                 f"{resolved_name} is rank {best['CurrentRank']} in {best['Server']} at {best['LatestRating']} "
-                f"(also rank {other['CurrentRank']} {other['Server']} at {other['LatestRating']})"
+                f"(also rank {other['CurrentRank']} {other['Server']} at {other['LatestRating']}) {dup_msg}"
             )
 
-        return f"{resolved_name} is rank {best['CurrentRank']} in {best['Server']} at {best['LatestRating']}"
+        return f"{resolved_name} is rank {best['CurrentRank']} in {best['Server']} at {best['LatestRating']} {dup_msg}"
 
     def format_region_stats(self, server, game_mode="0"):
         """Format region stats in chat-ready format"""
