@@ -817,6 +817,111 @@ class LeaderboardDB:
             f"over {games_played} games: {changes_str} {emote}"
         )
 
+    def format_last_week_stats(self, player_or_rank, server=None, game_mode="0"):
+        """
+        Format stats for the previous week for a player in chat-ready format.
+        """
+        # Resolve rank or name and determine server
+        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+        if error:
+            return error
+
+        resolved_name = self._resolve_name(player_name)
+
+        if not resolved_name:
+            return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
+
+        # Infer the server if not provided
+        if not server:
+            server = self.get_most_recent_server(player_name, game_mode)
+            if not server:
+                return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
+
+        # Get timestamps for last week's Monday and this week's Monday
+        this_monday_midnight = get_la_monday_midnight()
+        last_monday_midnight = this_monday_midnight - (7 * 24 * 60 * 60)  # 7 days before
+
+        # Fetch history starting from Sunday before last week (to get starting rating)
+        history = self.get_player_history(
+            resolved_name, server, game_mode, start_time=last_monday_midnight - (24 * 60 * 60)
+        )
+
+        if not history:
+            stats = self.get_player_stats(resolved_name, server, game_mode)
+            if not stats:
+                return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
+            return self._format_no_games_response(resolved_name, stats, " last week")
+
+        # Initialize variables
+        daily_deltas = [0] * 7
+        daily_entries = [[] for _ in range(7)]
+        la_tz = pytz.timezone("America/Los_Angeles")
+        last_monday = datetime.fromtimestamp(last_monday_midnight, la_tz)
+
+        logger.info("Calculating daily starting ratings for last week...")
+        for i in range(7):
+            day_start = last_monday_midnight + (i * 24 * 60 * 60)
+            start_rating = self.get_starting_rating(history, day_start)[0]
+            daily_entries[i].append(start_rating)
+            logger.info(f"Last week Day {i} starting rating: {start_rating}")
+
+        # Determine starting rating and daily entries
+        last_valid_rating = None
+        logger.info("Processing last week's history entries...")
+        for entry in history:
+            rating, timestamp = int(entry[0]), int(float(entry[1]))
+            entry_time = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
+            days_since_monday = (entry_time - last_monday).days
+            
+            logger.info(f"Entry: rating={rating}, timestamp={timestamp}, days_since_monday={days_since_monday}")
+
+            if days_since_monday < 0:
+                last_valid_rating = rating
+                logger.info(f"Found pre-Monday rating: {rating}")
+            elif 0 <= days_since_monday < 7:
+                daily_entries[days_since_monday].append(rating)
+                logger.info(f"Added rating {rating} to day {days_since_monday}")
+
+        # Set the starting rating
+        starting_rating = last_valid_rating if last_valid_rating is not None else int(history[0][0])
+        logger.info(f"Final starting rating for last week: {starting_rating}")
+
+        # Calculate daily deltas with proper carry-over for starting ratings
+        logger.info("Calculating last week's daily deltas...")
+        for day, entries in enumerate(daily_entries):
+            previous_day_last_rating = (
+                starting_rating if day == 0 else (daily_entries[day - 1][-1] if daily_entries[day - 1] else starting_rating)
+            )
+            
+            if entries:
+                daily_deltas[day] = entries[-1] - previous_day_last_rating
+                logger.info(f"Day {day}: prev_rating={previous_day_last_rating}, last_rating={entries[-1]}, delta={daily_deltas[day]}")
+            else:
+                daily_deltas[day] = 0
+                logger.info(f"Day {day}: No games played")
+
+        # Calculate total games played and total change
+        games_played = sum(len(entries[1:]) for entries in daily_entries)  # Skip the starting rating for each day
+        total_change = sum(daily_deltas)
+
+        # Determine the final rating at the end of last week
+        final_rating = daily_entries[-1][-1] if daily_entries[-1] else starting_rating + total_change
+
+        # Format daily deltas as a string
+        day_names = ["M", "T", "W", "Th", "F", "Sa", "Su"]
+        changes_str = ", ".join(f"{day}: {'+' if delta > 0 else ''}{delta}" for day, delta in zip(day_names, daily_deltas))
+
+        # Determine climb or fall wording and emote
+        action = "climbed" if total_change > 0 else "fell"
+        emote = "liiHappyCat"
+
+        # Build the response
+        return (
+            f"{resolved_name} {action} from {starting_rating} to {final_rating} "
+            f"({'+' if total_change > 0 else ''}{total_change}) in {server} "
+            f"over {games_played} games last week: {changes_str} {emote}"
+        )
+
     def format_milestone_stats(self, rating_threshold, server=None, game_mode="0"):
         """Format milestone stats for chat"""
         try:

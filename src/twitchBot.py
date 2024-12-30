@@ -282,6 +282,21 @@ class LeaderboardBot(commands.Bot):
         response = self.db.format_weekly_stats(player_or_rank, server, game_mode)
         await ctx.send(response)
 
+    @commands.command(name="lastweek", aliases=["bglastweek", "duolastweek", "lweek", "duolweek"])
+    async def lastweek_command(self, ctx, arg1=None, arg2=None):
+        """Get player's stats for last week for both regular and duo modes"""
+        player_or_rank, server = self._parse_rank_and_server(arg1, arg2)
+        
+        if player_or_rank is None:
+            player_or_rank = ctx.channel.name
+            
+        # Determine game mode based on command used
+        command_used = ctx.message.content.split()[0].lstrip('!')
+        game_mode = "1" if command_used.startswith("duo") else "0"
+        
+        response = self.db.format_last_week_stats(player_or_rank, server, game_mode)
+        await ctx.send(response)
+
     @commands.command(name="peak", aliases=["duopeak"])
     async def peak_command(self, ctx, player_or_rank=None, server=None):
         """Get player's peak rating for both regular and duo modes"""
@@ -359,8 +374,8 @@ class LeaderboardBot(commands.Bot):
         if clean_input(command_name) is None or clean_input(command_name) == "":
             # Base help message
             help_message = (
-                "Available commands: !rank, !day, !week, !peak, !stats, !top, !origin, !yday"
-                "Use `!help <command>` for detailed information on a specific command."
+                "Available commands: !rank, !day, !week, !lastweek, !peak, !stats, !top, !origin, !yday "
+                "Use `!help <command>` for detailed information on a specific command. "
                 "A day resets at 00:00 PST. A week resets on Monday at 00:00 PST."
             )
             await ctx.send(help_message)
@@ -386,6 +401,18 @@ class LeaderboardBot(commands.Bot):
                     "Defaults to the channel name if no player is specified. "
                     "Example: !week lii NA or !duoweek lii NA"
                 ),
+                "lastweek": (
+                    "!lastweek [player] [server]: Get stats from the previous week for a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !lastweek lii NA or !duolastweek lii NA"
+                ),
+                "yday": (
+                    "!yday [player] [server]: Get yesterday's stats for a player. "
+                    "Use the optional 'duo' prefix for duos. "
+                    "Defaults to the channel name if no player is specified. "
+                    "Example: !yday lii NA or !duoyday lii NA"
+                ),
                 "peak": (
                     "!peak [player] [server]: Get the peak rating of a player. "
                     "Use the optional 'duo' prefix for duos. "
@@ -403,12 +430,6 @@ class LeaderboardBot(commands.Bot):
                     "Use the optional 'duo' prefix for duos. "
                     "If no server is specified, top players globally are shown. "
                     "Example: !top NA or !duotop NA"
-                ),
-                "yday": (
-                    "!yday [player] [server]: Get yesterday's stats for a player. "
-                    "Use the optional 'duo' prefix for duos. "
-                    "Defaults to the channel name if no player is specified. "
-                    "Example: !yday lii NA or !duoyday lii NA"
                 ),
             }
 
