@@ -732,6 +732,9 @@ class LeaderboardDB:
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
+        logger.info(f"Weekly stats for {resolved_name} in {server}:")
+        logger.info(f"Monday midnight timestamp: {monday_midnight_timestamp}")
+        logger.info(f"History entries count: {len(history) if history else 0}")
 
         # Initialize variables
         starting_rating = None
@@ -740,37 +743,50 @@ class LeaderboardDB:
         la_tz = pytz.timezone("America/Los_Angeles")
         monday_midnight = datetime.fromtimestamp(monday_midnight_timestamp, la_tz)
 
+        logger.info("Calculating daily starting ratings...")
         for i in range(7):
-            daily_entries[i].append(self.get_starting_rating(history, monday_midnight_timestamp + (i * 24 * 60 * 60))[0])
+            day_start = monday_midnight_timestamp + (i * 24 * 60 * 60)
+            start_rating = self.get_starting_rating(history, day_start)[0]
+            daily_entries[i].append(start_rating)
+            logger.info(f"Day {i} starting rating: {start_rating}")
 
         # Determine starting rating and daily entries
         last_valid_rating = None
+        logger.info("Processing history entries...")
         for entry in history:
             rating, timestamp = int(entry[0]), int(float(entry[1]))
             entry_time = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
             days_since_monday = (entry_time - monday_midnight).days
+            
+            logger.info(f"Entry: rating={rating}, timestamp={timestamp}, days_since_monday={days_since_monday}")
 
             if days_since_monday < 0:
-                last_valid_rating = rating  # Update the last rating before Monday
+                last_valid_rating = rating
+                logger.info(f"Found pre-Monday rating: {rating}")
             elif 0 <= days_since_monday < 7:
                 daily_entries[days_since_monday].append(rating)
+                logger.info(f"Added rating {rating} to day {days_since_monday}")
 
         # Set the starting rating
         starting_rating = last_valid_rating if last_valid_rating is not None else int(history[0][0])
+        logger.info(f"Final starting rating: {starting_rating}")
 
         # Calculate daily deltas with proper carry-over for starting ratings
+        logger.info("Calculating daily deltas...")
         for day, entries in enumerate(daily_entries):
             previous_day_last_rating = (
                 starting_rating if day == 0 else (daily_entries[day - 1][-1] if daily_entries[day - 1] else starting_rating)
             )
-
+            
             if entries:
                 daily_deltas[day] = entries[-1] - previous_day_last_rating
+                logger.info(f"Day {day}: prev_rating={previous_day_last_rating}, last_rating={entries[-1]}, delta={daily_deltas[day]}")
             else:
-                daily_deltas[day] = 0  # No games played that day
+                daily_deltas[day] = 0
+                logger.info(f"Day {day}: No games played")
 
         # Calculate total games played and total change
-        games_played = sum(len(entries) for entries in daily_entries)
+        games_played = sum(len(entries[1:]) for entries in daily_entries)  # Skip the starting rating for each day
         total_change = sum(daily_deltas)
 
         # Determine the current rating at the end of the week
