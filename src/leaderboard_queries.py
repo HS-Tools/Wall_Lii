@@ -18,13 +18,26 @@ VALID_SERVERS = {"NA", "EU", "AP"}
 
 
 class LeaderboardDB:
-    def __init__(self, test_db=None, table_name="HearthstoneLeaderboard"):
-        """Initialize DB connection"""
-        if test_db:
-            self.dynamodb = test_db
-            self.table = test_db
-            self.alias_table = test_db  # For testing
-            logger.info("Using test DB for all tables")
+    def __init__(self, use_local=False, table_name="HearthstoneLeaderboard"):
+        """Initialize DB connection
+        
+        Args:
+            use_local (bool): If True, uses local DynamoDB tables. If False, uses AWS tables.
+            table_name (str): Name of the leaderboard table
+        """
+        if use_local:
+            # Configure local DynamoDB client
+            local_kwargs = {
+                "endpoint_url": "http://localhost:8000",
+                "region_name": "local",
+                "aws_access_key_id": "dummy",
+                "aws_secret_access_key": "dummy"
+            }
+            logger.info("Using local DynamoDB tables")
+            self.dynamodb = boto3.resource("dynamodb", **local_kwargs)
+            self.table = self.dynamodb.Table("leaderboard")
+            self.alias_table = self.dynamodb.Table("alias")
+            self.channel_table = self.dynamodb.Table("channel-table")
         else:
             # Configure AWS client for alias table (always use AWS)
             aws_kwargs = {
@@ -364,7 +377,6 @@ class LeaderboardDB:
         """
         Fetch and format stats for a player in the given time range.
         """
-        print(game_mode)
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
@@ -984,12 +996,11 @@ class LeaderboardDB:
                     article_url = article.get("defaultUrl")
                     title = article.get("title")
                     self.patch_link = f"{title}: {article_url}"
-                    print(f"{title}: {article_url}")
                     return
             else:
-                print("No article containing 'battlegrounds' found.")
+               logger.error("Patch link not found")
         else:
-            print(f"Failed to retrieve data. Status code: {response.status_code}")
+            logger.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
 def get_la_midnight_today():
     # Set timezone to Los Angeles (Pacific Time)
@@ -1019,10 +1030,7 @@ def get_la_monday_midnight():
         monday_midnight = most_recent_monday.replace(hour=0, minute=0, second=0, microsecond=0)
         monday_midnight_timestamp = int(monday_midnight.timestamp())
 
-        # Debugging output
-        print(f"LA now: {now_la}, Most recent Monday: {monday_midnight}, Timestamp: {monday_midnight_timestamp}")
-
         return monday_midnight_timestamp
     except Exception as e:
-        print(f"Error calculating LA Monday midnight: {e}")
+        logger.error(f"Error calculating LA Monday midnight: {e}")
         raise

@@ -49,17 +49,9 @@ env/
 env_name/
 .env
 
-# Local development files
-*.json
-t.txt
-output.txt
-
 # IDE specific files
 .vscode/
 .idea/
-
-# Test files
-test_*.py
 
 # DynamoDB local
 .dynamodb/
