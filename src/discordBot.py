@@ -8,7 +8,6 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from pytz import timezone, utc
-import default_alias
 from leaderboard_queries import LeaderboardDB
 
 load_dotenv()

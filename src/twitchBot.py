@@ -12,6 +12,8 @@ from twitchio.ext import commands
 
 from leaderboard_queries import LeaderboardDB
 from logger import setup_logger
+from buddies import easter_egg_buddies_dict
+from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
 
 logger = setup_logger("twitchBot")
 
@@ -71,6 +73,10 @@ class LeaderboardBot(commands.Bot):
             prefix=prefix,
             initial_channels=list(self.priority_channels)
         )
+        
+        # Initialize buddy and trinket dictionaries
+        self.buddy_dict = get_buddy_dict()
+        self.trinket_dict = get_trinkets_dict()
         
         # Set up cron job to update channels every minute
         self.channel_cron = aiocron.crontab("*/1 * * * *", func=self.update_live_channels)
@@ -527,7 +533,129 @@ class LeaderboardBot(commands.Bot):
 
     @commands.command(name="origin")
     async def origin(self, ctx):
-        await ctx.send("LiiHS is my daddy. My code is here: https://github.com/HS-Tools/Wall_Lii")
+        await ctx.send("I was created by twitch.tv/liihs to help track BG leaderboard stats. My code is here: https://github.com/HS-Tools/Wall_Lii")
+
+    @commands.command(name="buddy")
+    async def buddy(self, ctx):
+        """Get buddy information for a hero"""
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            return
+
+        buddy_name = args[1].lower()
+        results = parse_buddy(buddy_name, self.buddy_dict, easter_egg_buddies_dict)
+
+        if results:
+            await ctx.send(results[1])  # Send regular buddy text
+
+    @commands.command(name="goldenbuddy")
+    async def goldenbuddy(self, ctx):
+        """Get golden buddy information for a hero"""
+        if ctx.channel.name == "dogdog":  # Skip command in certain channels
+            return
+
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            return
+
+        buddy_name = args[1].lower()
+        results = parse_buddy(buddy_name, self.buddy_dict, easter_egg_buddies_dict)
+
+        if results:
+            await ctx.send(results[2])  # Send golden buddy text
+
+    @commands.command(name="trinket")
+    async def trinket(self, ctx):
+        """Get trinket information"""
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            return
+
+        trinket_name = " ".join(args[1:]).lower()
+        results = parse_trinket(trinket_name, self.trinket_dict)
+
+        if results:
+            await ctx.send(results)
+
+    @commands.command(name="buddygold")
+    async def buddygold(self, ctx):
+        """Show gold cost for buddy tiers"""
+        tiers = {
+            1: [11, 13],
+            2: [13, 15],
+            3: [15, 17],
+            4: [17, 19],
+            5: [19, 21],
+            6: [21, 23],
+        }
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            await ctx.send("Add a tier between 1 and 6 like !buddygold 3")
+            return
+
+        buddy_tier = args[1]
+        if str.isdigit(buddy_tier) and 1 <= int(buddy_tier) <= 6:
+            tier = int(buddy_tier)
+            await ctx.send(
+                f"A tier {tier} buddy has an initial cost of {tiers[tier][0]} "
+                f"and a reset cost of {tiers[tier][1]}"
+            )
+        else:
+            await ctx.send("Invalid tier, try a number between 1 and 6 like !buddygold 3")
+
+    @commands.command(name="curves")
+    async def curves(self, ctx):
+        """Link to BG curve sheet"""
+        await ctx.send("Check out www.BGcurvesheet.com for information about heroes and curves")
+
+    @commands.command(name="shush", aliases=["Shush"])
+    async def shush(self, ctx):
+        """Shush command"""
+        await ctx.send("Shush")
+
+    @commands.command(name="frog", aliases=["Frog"])
+    async def frog(self, ctx):
+        """Frog command"""
+        await ctx.send("liiPers liiPers liiPers")
+
+    @commands.command(name="gold")
+    async def gold(self, ctx):
+        """Calculate the turn when a quest requiring X gold will be completed"""
+        incorrect_use_text = "Use this command with the number of gold your quest requires: !gold 55"
+        
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            await ctx.send(incorrect_use_text)
+            return
+
+        try:
+            gold_amount = int(args[1])
+        except ValueError:
+            await ctx.send(incorrect_use_text)
+            return
+
+        # Calculate turn quest will be completed based on startingTurn and goldAmount
+        starting_turn = 1
+        max_gold = 10
+        current_gold = starting_turn + 2
+        turn = starting_turn
+
+        # Cap current gold at max
+        if current_gold > max_gold:
+            current_gold = max_gold
+
+        while gold_amount > current_gold:
+            gold_amount -= current_gold
+            turn += 1
+            if current_gold < max_gold:
+                current_gold += 1
+
+        if turn > starting_turn:
+            await ctx.send(
+                f"{int(args[1])} gold will be spent by Turn {turn}, or Turn {turn - 1} if {gold_amount} extra gold is spent. Assuming quest is started on Turn {starting_turn}."
+            )
+        else:
+            await ctx.send(f"{int(args[1])} gold will be spent by Turn {turn} if quest is started on Turn {starting_turn}.")
 
 def main():
     global bot
