@@ -345,7 +345,7 @@ class LeaderboardDB:
         display_name = stats.get("PlayerName", player_name)
         return (
             f"{display_name} is rank {stats['CurrentRank']} in {stats['Server']} "
-            f"at {stats['LatestRating']} with 0 games played{timeframe}"
+            f"at {stats['LatestRating']} with no games played{timeframe}"
         )
 
     def format_yesterday_stats(self, player_or_rank, server=None, game_mode="0"):
@@ -388,7 +388,7 @@ class LeaderboardDB:
             return f"{player_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         if not history:
-            return self._format_no_games_response(player_name, stats, f" in {server}")
+            return self._format_no_games_response(player_name, stats)
 
         # Sort history by timestamp (if not already sorted)
         history = sorted(history, key=lambda x: int(float(x[1])))
@@ -406,7 +406,7 @@ class LeaderboardDB:
                 filtered_history.append(entry)
 
         if not filtered_history:
-            return self._format_no_games_response(player_name, None, f" in {server}")
+            return self._format_no_games_response(player_name, None)
 
         # Determine starting_rating
         starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
@@ -588,7 +588,7 @@ class LeaderboardDB:
         if game_mode == "1":
             duplicates = [f"{name} (duo)" for name in duplicates]
             
-        return f" (Note: {', '.join(duplicates)} also exist)"
+        return f" (Note: {', '.join(duplicates)} also exist{'s' if len(duplicates) == 1 else ''})"
 
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
         """Format player stats in chat-ready format"""
@@ -727,7 +727,7 @@ class LeaderboardDB:
             resolved_name, server, game_mode, start_time=monday_midnight_timestamp - (24 * 60 * 60)
         )
 
-        if not history:
+        if not history or len(history) == 1:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
@@ -808,7 +808,7 @@ class LeaderboardDB:
 
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
-        emote = "liiHappyCat"
+        emote = "liiHappyCat" if total_change > 0 else "liiCat"
 
         # Build the response
         return (
@@ -846,7 +846,7 @@ class LeaderboardDB:
             resolved_name, server, game_mode, start_time=last_monday_midnight - (24 * 60 * 60)
         )
 
-        if not history:
+        if not history or len(history) == 1:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
@@ -913,7 +913,7 @@ class LeaderboardDB:
 
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
-        emote = "liiHappyCat"
+        emote = "liiHappyCat" if total_change > 0 else "liiCat"
 
         # Build the response
         return (
@@ -1119,7 +1119,7 @@ class LeaderboardDB:
                     self.patch_link = f"{title}: {article_url}"
                     return
             else:
-               logger.error("Patch link not found")
+                logger.error("Patch link not found")
         else:
             logger.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
