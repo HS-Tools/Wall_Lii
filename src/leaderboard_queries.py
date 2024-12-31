@@ -332,7 +332,7 @@ class LeaderboardDB:
         display_name = stats.get("PlayerName", player_name)
         return (
             f"{display_name} is rank {stats['CurrentRank']} in {stats['Server']} "
-            f"at {stats['LatestRating']} with 0 games played{timeframe}"
+            f"at {stats['LatestRating']} with no games played{timeframe}"
         )
 
     def format_yesterday_stats(self, player_or_rank, server=None, game_mode="0"):
@@ -376,7 +376,7 @@ class LeaderboardDB:
             return f"{player_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards."
 
         if not history:
-            return self._format_no_games_response(player_name, stats, f" in {server}")
+            return self._format_no_games_response(player_name, stats)
 
         # Sort history by timestamp (if not already sorted)
         history = sorted(history, key=lambda x: int(float(x[1])))
@@ -394,7 +394,7 @@ class LeaderboardDB:
                 filtered_history.append(entry)
 
         if not filtered_history:
-            return self._format_no_games_response(player_name, None, f" in {server}")
+            return self._format_no_games_response(player_name, None)
 
         # Determine starting_rating
         starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
@@ -715,7 +715,7 @@ class LeaderboardDB:
             resolved_name, server, game_mode, start_time=monday_midnight_timestamp - (24 * 60 * 60)
         )
 
-        if not history:
+        if not history or len(history) == 1:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
@@ -834,7 +834,7 @@ class LeaderboardDB:
             resolved_name, server, game_mode, start_time=last_monday_midnight - (24 * 60 * 60)
         )
 
-        if not history:
+        if not history or len(history) == 1:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
                 return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
