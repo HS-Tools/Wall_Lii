@@ -364,7 +364,6 @@ class LeaderboardDB:
         """
         Fetch and format stats for a player in the given time range.
         """
-        print(game_mode)
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
@@ -796,7 +795,7 @@ class LeaderboardDB:
 
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
-        emote = "liiHappyCat"
+        emote = "liiHappyCat" if total_change > 0 else "liiCat"
 
         # Build the response
         return (
@@ -901,7 +900,7 @@ class LeaderboardDB:
 
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
-        emote = "liiHappyCat"
+        emote = "liiHappyCat" if total_change > 0 else "liiCat"
 
         # Build the response
         return (
@@ -1105,12 +1104,11 @@ class LeaderboardDB:
                     article_url = article.get("defaultUrl")
                     title = article.get("title")
                     self.patch_link = f"{title}: {article_url}"
-                    print(f"{title}: {article_url}")
                     return
             else:
-                print("No article containing 'battlegrounds' found.")
+                logger.error("No patch link found")
         else:
-            print(f"Failed to retrieve data. Status code: {response.status_code}")
+            logger.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
 def get_la_midnight_today():
     # Set timezone to Los Angeles (Pacific Time)
@@ -1140,10 +1138,7 @@ def get_la_monday_midnight():
         monday_midnight = most_recent_monday.replace(hour=0, minute=0, second=0, microsecond=0)
         monday_midnight_timestamp = int(monday_midnight.timestamp())
 
-        # Debugging output
-        print(f"LA now: {now_la}, Most recent Monday: {monday_midnight}, Timestamp: {monday_midnight_timestamp}")
-
         return monday_midnight_timestamp
     except Exception as e:
-        print(f"Error calculating LA Monday midnight: {e}")
+        logger.error(f"Error calculating LA Monday midnight: {e}")
         raise
