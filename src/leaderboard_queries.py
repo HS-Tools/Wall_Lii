@@ -89,8 +89,17 @@ class LeaderboardDB:
             logger.error(f"Could not load aliases: {e}")
             return {}
 
-    def _resolve_name(self, player_name):
-        """Resolve player name through alias table"""
+    def _resolve_name(self, player_name, server=None, game_mode="0"):
+        """Resolve player name through alias table and check if they exist in database
+        
+        Args:
+            player_name: Name to resolve
+            server: Optional server to check (if None, checks all servers)
+            game_mode: Game mode to check (defaults to "0" for regular BG)
+            
+        Returns:
+            str: Resolved name if player exists, None otherwise
+        """
         if not player_name:
             return None
 
@@ -99,6 +108,28 @@ class LeaderboardDB:
         resolved = self.aliases.get(lookup_name, lookup_name)
         if resolved != lookup_name:
             logger.info(f"Resolved alias: {lookup_name} -> {resolved}")
+            
+        # If the player name is already existing in the database, do not resolve as an alias
+        if server:
+            # Direct query if server is known
+            game_mode_server_player = f"{game_mode}#{server}#{lookup_name.lower()}"
+            response = self.table.query(
+                KeyConditionExpression="GameModeServerPlayer = :gmsp",
+                ExpressionAttributeValues={":gmsp": game_mode_server_player},
+            )
+            if response.get("Items"):
+                return lookup_name
+        else:
+            # Use PlayerLookupIndex instead of scan
+            for check_server in VALID_SERVERS:
+                game_mode_server_player = f"{game_mode}#{check_server}#{lookup_name.lower()}"
+                response = self.table.query(
+                    KeyConditionExpression="GameModeServerPlayer = :gmsp",
+                    ExpressionAttributeValues={":gmsp": game_mode_server_player},
+                )
+                if response.get("Items"):
+                    return lookup_name
+
         return resolved
 
     def _parse_server(self, server):
@@ -123,7 +154,7 @@ class LeaderboardDB:
     def get_player_stats(self, player_name, server=None, game_mode="0"):
         """Get a player's current stats"""
         # Resolve alias first
-        player_name = self._resolve_name(player_name)
+        player_name = self._resolve_name(player_name, server, game_mode)
         if not player_name:
             return None
 
@@ -153,7 +184,7 @@ class LeaderboardDB:
 
     def get_player_history(self, player_name, server=None, game_mode="0", hours=24, start_time=None):
         """Get a player's rating history with the most recent entry before the cutoff."""
-        player_name = self._resolve_name(player_name)
+        player_name = self._resolve_name(player_name, server, game_mode)
         logger.info(f"Resolved player name: {player_name}")
 
         if not server:
@@ -246,7 +277,7 @@ class LeaderboardDB:
 
     def get_player_peak(self, player_name, server=None, game_mode="0", hours=None):
         """Get player's peak rating within time window. If hours is None, get all-time peak"""
-        player_name = self._resolve_name(player_name)
+        player_name = self._resolve_name(player_name, server, game_mode)
         # First get current stats to find server if not provided
         if not server:
             stats = self.get_player_stats(player_name, game_mode=game_mode)
@@ -340,7 +371,7 @@ class LeaderboardDB:
         if error:
             return error
 
-        resolved_name = self._resolve_name(player_name)
+        resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
             return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
@@ -473,7 +504,7 @@ class LeaderboardDB:
         if error:
             return error
 
-        resolved_name = self._resolve_name(player_name)
+        resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
             return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
@@ -516,7 +547,7 @@ class LeaderboardDB:
             return error
 
         # Resolve alias for player name
-        resolved_name = self._resolve_name(player_name)
+        resolved_name = self._resolve_name(player_name, server, game_mode)
         if not resolved_name:
             return f"{player_or_rank} could not be resolved to a valid player."
 
@@ -586,7 +617,7 @@ class LeaderboardDB:
             return error
 
         # Resolve alias before lookup
-        resolved_name = self._resolve_name(player_name)
+        resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if server:
             # Direct server lookup
@@ -696,7 +727,7 @@ class LeaderboardDB:
         if error:
             return error
 
-        resolved_name = self._resolve_name(player_name)
+        resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
             return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
@@ -813,7 +844,7 @@ class LeaderboardDB:
         if error:
             return error
 
-        resolved_name = self._resolve_name(player_name)
+        resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
             return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
