@@ -91,7 +91,7 @@ Contributors can start by reviewing the bot’s functionality and suggesting or 
 
 ## How to Run
 
-Running the twitch and discord bots require private credentials which you would have to set up on your own twitch/discord accounts. Most of the logic is in the `leaderboard_queries.py` file which can be run locally with the `test_leaderboard_queries.py` script.
+Running the twitch and discord bots require private credentials which you would have to set up with your own twitch/discord accounts and put them in a `.env` file. Most of the logic is in the `leaderboard_queries.py` file which can be run locally with the `test_leaderboard_queries.py` script.
 
 ## Testing
 
