@@ -130,6 +130,24 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
 
         self._run_test_cases(test_cases, lambda command: self.queries.format_weekly_stats(*self.parse_command(command)))
 
+    def test_lastweek(self):
+        """Test !lastweek command with local data"""
+        test_cases = [
+            # Basic cases
+            ("!lastweek dogdog NA", "Expected last week's stats for dogdog in NA"),
+            ("!lastweek xqn EU", "Expected last week's stats for xqn in EU"),
+            ("!lastweek kripp AP", "Expected last week's stats for kripp in AP"),
+            
+            # Server inference
+            ("!lastweek dogdog", "Expected last week's stats for dogdog in their most active server"),
+            
+            # Error cases
+            ("!lastweek nonexistent NA", "nonexistent is not on NA BG leaderboards."),
+            ("!lastweek 1 XX", "Invalid server: XX. Valid servers are: NA, EU, AP"),
+        ]
+
+        self._run_test_cases(test_cases, lambda command: self.queries.format_last_week_stats(*self.parse_command(command)))
+
     def parse_command(self, command):
         """Parse command into player_name, server, and game_mode"""
         parts = command.split()
