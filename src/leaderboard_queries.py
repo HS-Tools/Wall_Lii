@@ -576,7 +576,7 @@ class LeaderboardDB:
         if game_mode == "1":
             duplicates = [f"{name} (duo)" for name in duplicates]
             
-        return f" (Note: {', '.join(duplicates)} also exist)"
+        return f" (Note: {', '.join(duplicates)} also exist{'s' if len(duplicates) == 1 else ''})"
 
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
         """Format player stats in chat-ready format"""
