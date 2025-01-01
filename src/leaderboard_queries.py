@@ -592,6 +592,11 @@ class LeaderboardDB:
 
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
         """Format player stats in chat-ready format"""
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
         player_name, server, error = self._handle_rank_or_name(
             player_or_rank, server, game_mode
         )
@@ -662,7 +667,7 @@ class LeaderboardDB:
 
         server = self._parse_server(server)
         if not self._is_valid_server(server):
-            return "Invalid server. Valid servers are: NA, EU, AP"
+            return server  # Return error message
 
         players = self.get_top_players(server, game_mode)
         if not players:
@@ -706,7 +711,11 @@ class LeaderboardDB:
         """
         Format weekly stats for a player in chat-ready format.
         """
-        # Resolve rank or name and determine server
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
@@ -823,7 +832,11 @@ class LeaderboardDB:
         """
         Format stats for the previous week for a player in chat-ready format.
         """
-        # Resolve rank or name and determine server
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
@@ -926,68 +939,62 @@ class LeaderboardDB:
 
     def format_milestone_stats(self, rating_threshold, server=None, game_mode="0"):
         """Format milestone stats for chat"""
-        try:
-            # Validate server first if provided
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
+        # Get both regular and duo milestones
+        regular = self._get_milestone(rating_threshold, server, "0")
+        duo = self._get_milestone(rating_threshold, server, "1")
+
+        # Format responses
+        k_rating = rating_threshold // 1000
+
+        if not regular and not duo:
             if server:
-                server = parseServer(server)
-                if not server:
-                    return "Invalid server. Valid servers are: NA, EU, AP"
+                return f"No one has reached {k_rating}k in {server} yet!"
+            return f"No one has reached {k_rating}k in any server yet!"
 
-            # Get both regular and duo milestones
-            regular = self._get_milestone(rating_threshold, server, "0")
-            duo = self._get_milestone(rating_threshold, server, "1")
+        # Build combined response
+        response = []
 
-            # Format responses
-            k_rating = rating_threshold // 1000
+        # Add regular milestone if exists
+        if regular:
+            # Convert UTC to NY time
+            ny_tz = pytz.timezone("America/New_York")
+            utc_time = datetime.fromtimestamp(
+                int(float(regular["Timestamp"])), pytz.UTC
+            )
+            ny_time = utc_time.astimezone(ny_tz)
+            date = ny_time.strftime(
+                "%B %d %I:%M %p ET"
+            )  # e.g., "December 03 3:45 PM ET"
 
-            if not regular and not duo:
-                if server:
-                    return f"No one has reached {k_rating}k in {server} yet!"
-                return f"No one has reached {k_rating}k in any server yet!"
+            server_str = (
+                server if server else regular["SeasonGameModeServer"].split("-")[2]
+            )
+            response.append(
+                f"{regular['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
+            )
 
-            # Build combined response
-            response = []
+        # Add duo milestone if exists
+        if duo:
+            ny_tz = pytz.timezone("America/New_York")
+            utc_time = datetime.fromtimestamp(
+                int(float(duo["Timestamp"])), pytz.UTC
+            )
+            ny_time = utc_time.astimezone(ny_tz)
+            date = ny_time.strftime("%B %d %I:%M %p ET")
 
-            # Add regular milestone if exists
-            if regular:
-                # Convert UTC to NY time
-                ny_tz = pytz.timezone("America/New_York")
-                utc_time = datetime.fromtimestamp(
-                    int(float(regular["Timestamp"])), pytz.UTC
-                )
-                ny_time = utc_time.astimezone(ny_tz)
-                date = ny_time.strftime(
-                    "%B %d %I:%M %p ET"
-                )  # e.g., "December 03 3:45 PM ET"
+            server_str = (
+                server if server else duo["SeasonGameModeServer"].split("-")[2]
+            )
+            response.append(
+                f"In Duos: {duo['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
+            )
 
-                server_str = (
-                    server if server else regular["SeasonGameModeServer"].split("-")[2]
-                )
-                response.append(
-                    f"{regular['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
-                )
-
-            # Add duo milestone if exists
-            if duo:
-                ny_tz = pytz.timezone("America/New_York")
-                utc_time = datetime.fromtimestamp(
-                    int(float(duo["Timestamp"])), pytz.UTC
-                )
-                ny_time = utc_time.astimezone(ny_tz)
-                date = ny_time.strftime("%B %d %I:%M %p ET")
-
-                server_str = (
-                    server if server else duo["SeasonGameModeServer"].split("-")[2]
-                )
-                response.append(
-                    f"In Duos: {duo['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
-                )
-
-            return " | ".join(response)
-
-        except Exception as e:
-            logger.error(f"Error getting milestone stats: {str(e)}")
-            return "Error getting milestone stats"
+        return " | ".join(response)
 
     def _get_milestone(self, rating_threshold, server=None, game_mode="0"):
         """Helper to get milestone data for a specific mode"""
