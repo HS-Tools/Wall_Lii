@@ -349,18 +349,8 @@ class LeaderboardBot(commands.Bot):
         server = clean_input(server)
         if server is None or server == "":
             # No server specified, get top players globally
-            players = self.db.get_top_players_global(game_mode)
-            if not players:
-                await ctx.send("No players found globally")
-                return
-
-            # Format each player as "name (rating) from server"
-            formatted = [
-                f"{i+1}. {p['PlayerName']}: {p['LatestRating']} ({p['Server']})"
-                for i, p in enumerate(players)
-            ]
-
-            await ctx.send(f"Top 10 globally: {', '.join(formatted)}")
+            response = self.db.format_top_players_global(game_mode)
+            await ctx.send(response)
         else:
             # Server specified, get top players for that server
             server = clean_input(server)

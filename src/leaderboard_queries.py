@@ -657,15 +657,17 @@ class LeaderboardDB:
 
     def format_top_players(self, server, game_mode="0"):
         """Format top 10 players in chat-ready format"""
+        if not server:
+            return self.format_top_players_global(game_mode)
+
         server = self._parse_server(server)
         if not self._is_valid_server(server):
-            return server  # Return error message
+            return "Invalid server. Valid servers are: NA, EU, AP"
 
-        players = self.get_top_players(server, game_mode, limit=10)
+        players = self.get_top_players(server, game_mode)
         if not players:
             return f"No players found in {server}"
 
-        # Format each player as "name (rating)"
         formatted = [
             f"{i+1}. {p['PlayerName']}: {p['LatestRating']}"
             for i, p in enumerate(players)
@@ -1050,6 +1052,20 @@ class LeaderboardDB:
         except Exception as e:
             logger.error(f"Error getting top players globally: {str(e)}")
             return []
+
+    def format_top_players_global(self, game_mode="0"):
+        """Format global top 10 players in chat-ready format"""
+        players = self.get_top_players_global(game_mode)
+        if not players:
+            return "No players found globally"
+
+        # Format each player as "name (rating) from server"
+        formatted = [
+            f"{i+1}. {p['PlayerName']}: {p['LatestRating']} ({p['Server']})"
+            for i, p in enumerate(players)
+        ]
+
+        return f"Top 10 globally: {', '.join(formatted)}"
 
     def add_alias(self, alias, player_name):
         """Add an alias for a player"""
