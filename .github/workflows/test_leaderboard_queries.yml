@@ -1,0 +1,40 @@
+name: Run Tests on Commit
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local
+        ports:
+          - 8000:8000
+        options: >-
+          --env AWS_ACCESS_KEY_ID=local
+          --env AWS_SECRET_ACCESS_KEY=local
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          pip install boto3 pytest
+          pip install -r requirements.txt || echo "No requirements file found"
+
+      - name: Run setup script
+        run: python scripts/setup_local_dynamodb.py
+
+      - name: Run tests
+        run: pytest scripts/test_leaderboard_queries.py

@@ -2,6 +2,7 @@ import os
 import aiocron
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+import time
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -18,13 +19,26 @@ VALID_SERVERS = {"NA", "EU", "AP"}
 
 
 class LeaderboardDB:
-    def __init__(self, test_db=None, table_name="HearthstoneLeaderboard"):
-        """Initialize DB connection"""
-        if test_db:
-            self.dynamodb = test_db
-            self.table = test_db
-            self.alias_table = test_db  # For testing
-            logger.info("Using test DB for all tables")
+    def __init__(self, use_local=False, table_name="HearthstoneLeaderboard"):
+        """Initialize DB connection
+        
+        Args:
+            use_local (bool): If True, uses local DynamoDB tables. If False, uses AWS tables.
+            table_name (str): Name of the leaderboard table
+        """
+        if use_local:
+            # Configure local DynamoDB client
+            local_kwargs = {
+                "endpoint_url": "http://localhost:8000",
+                "region_name": "local",
+                "aws_access_key_id": "dummy",
+                "aws_secret_access_key": "dummy"
+            }
+            logger.info("Using local DynamoDB tables")
+            self.dynamodb = boto3.resource("dynamodb", **local_kwargs)
+            self.table = self.dynamodb.Table("leaderboard")
+            self.alias_table = self.dynamodb.Table("alias")
+            self.channel_table = self.dynamodb.Table("channel-table")
         else:
             # Configure AWS client for alias table (always use AWS)
             aws_kwargs = {
@@ -374,13 +388,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
+            return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
+                return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Calculate time range for yesterday
         midnight_timestamp = get_la_midnight_today()
@@ -403,7 +417,7 @@ class LeaderboardDB:
         stats = self.get_player_stats(player_name, server, game_mode)
 
         if not stats:
-            return f"{player_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards."
+            return f"{player_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         if not history:
             return self._format_no_games_response(player_name, stats)
@@ -459,7 +473,7 @@ class LeaderboardDB:
         dup_msg = self._format_duplicate_names_message(player_name, dup_count, game_mode)
 
         return (
-            f"{player_name} {progression} in {server} over {games_played} games: {changes_str} {dup_msg}"
+            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}{dup_msg}"
         )
 
     def get_starting_rating(self, player_history, start_timestamp):
@@ -507,13 +521,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
+            return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(resolved_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
+                return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Calculate time range
         midnight_timestamp = get_la_midnight_today()
@@ -555,7 +569,7 @@ class LeaderboardDB:
         if not server:
             stats = self.get_player_stats(resolved_name, game_mode=game_mode)
             if not stats:
-                return f"{resolved_name} is not on any {'duo' if game_mode == '1' else ''} BG leaderboards."
+                return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
             server = stats.get("Server", "Unknown")
 
         # Fetch the peak stats for the resolved player and server
@@ -569,7 +583,7 @@ class LeaderboardDB:
         # Format and return the peak stats
         return (
             f"{resolved_name}'s peak rating in {server} this season: {peak['rating']} "
-            f"on {datetime.fromtimestamp(peak_timestamp).strftime('%b %d, %Y')}"
+            f"on {format_la_time(peak_timestamp)}"
         )
 
     def get_duplicate_names_count(self, base_name, game_mode="0"):
@@ -610,6 +624,11 @@ class LeaderboardDB:
 
     def format_player_stats(self, player_or_rank, server=None, game_mode="0"):
         """Format player stats in chat-ready format"""
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
         player_name, server, error = self._handle_rank_or_name(
             player_or_rank, server, game_mode
         )
@@ -623,13 +642,13 @@ class LeaderboardDB:
             # Direct server lookup
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
                 
             # Check for duplicate names
             dup_count = self.get_duplicate_names_count(resolved_name, game_mode)
             dup_msg = self._format_duplicate_names_message(resolved_name, dup_count, game_mode)
             
-            return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']} {dup_msg}"
+            return f"{resolved_name} is rank {stats['CurrentRank']} in {stats['Server']} at {stats['LatestRating']}{dup_msg}"
 
         # Find best rating across servers
         response = self.table.query(
@@ -642,7 +661,7 @@ class LeaderboardDB:
 
         items = response.get("Items", [])
         if not items:
-            return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
+            return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
 
         # Get best rating and other servers
         best = max(items, key=lambda x: x["LatestRating"])
@@ -675,15 +694,17 @@ class LeaderboardDB:
 
     def format_top_players(self, server, game_mode="0"):
         """Format top 10 players in chat-ready format"""
+        if not server:
+            return self.format_top_players_global(game_mode)
+
         server = self._parse_server(server)
         if not self._is_valid_server(server):
             return server  # Return error message
 
-        players = self.get_top_players(server, game_mode, limit=10)
+        players = self.get_top_players(server, game_mode)
         if not players:
             return f"No players found in {server}"
 
-        # Format each player as "name (rating)"
         formatted = [
             f"{i+1}. {p['PlayerName']}: {p['LatestRating']}"
             for i, p in enumerate(players)
@@ -707,7 +728,7 @@ class LeaderboardDB:
 
             player = self.get_rank_player(rank, server, game_mode)
             if not player:
-                return None, None, f"No player found at rank {rank} in {server} {'duo' if game_mode == '1' else ''} BG"
+                return None, None, f"No player found at rank {rank} in {server}{' duo' if game_mode == '1' else ''} BG"
 
             return player["PlayerName"], server, None
 
@@ -722,7 +743,11 @@ class LeaderboardDB:
         """
         Format weekly stats for a player in chat-ready format.
         """
-        # Resolve rank or name and determine server
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
@@ -730,13 +755,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
+            return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
+                return f"{resolved_name} is not on any BG {' duo' if game_mode == '1' else ''} leaderboards."
 
         monday_midnight_timestamp = get_la_monday_midnight()
 
@@ -748,7 +773,7 @@ class LeaderboardDB:
         if not history or len(history) == 1:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
         logger.info(f"Weekly stats for {resolved_name} in {server}:")
         logger.info(f"Monday midnight timestamp: {monday_midnight_timestamp}")
@@ -839,7 +864,11 @@ class LeaderboardDB:
         """
         Format stats for the previous week for a player in chat-ready format.
         """
-        # Resolve rank or name and determine server
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
         if error:
             return error
@@ -847,13 +876,13 @@ class LeaderboardDB:
         resolved_name = self._resolve_name(player_name, server, game_mode)
 
         if not resolved_name:
-            return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
+            return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG {'duo' if game_mode == '1' else ''} leaderboards."
+                return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
 
         # Get timestamps for last week's Monday and this week's Monday
         this_monday_midnight = get_la_monday_midnight()
@@ -867,7 +896,7 @@ class LeaderboardDB:
         if not history or len(history) == 1:
             stats = self.get_player_stats(resolved_name, server, game_mode)
             if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'} {'duo' if game_mode == '1' else ''} BG leaderboards"
+                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " last week")
 
         # Initialize variables
@@ -942,68 +971,62 @@ class LeaderboardDB:
 
     def format_milestone_stats(self, rating_threshold, server=None, game_mode="0"):
         """Format milestone stats for chat"""
-        try:
-            # Validate server first if provided
+        if server:
+            server = self._parse_server(server)
+            if not self._is_valid_server(server):
+                return server  # Return error message
+
+        # Get both regular and duo milestones
+        regular = self._get_milestone(rating_threshold, server, "0")
+        duo = self._get_milestone(rating_threshold, server, "1")
+
+        # Format responses
+        k_rating = rating_threshold // 1000
+
+        if not regular and not duo:
             if server:
-                server = parseServer(server)
-                if not server:
-                    return "Invalid server. Valid servers are: NA, EU, AP"
+                return f"No one has reached {k_rating}k in {server} yet!"
+            return f"No one has reached {k_rating}k in any server yet!"
 
-            # Get both regular and duo milestones
-            regular = self._get_milestone(rating_threshold, server, "0")
-            duo = self._get_milestone(rating_threshold, server, "1")
+        # Build combined response
+        response = []
 
-            # Format responses
-            k_rating = rating_threshold // 1000
+        # Add regular milestone if exists
+        if regular:
+            # Convert UTC to NY time
+            ny_tz = pytz.timezone("America/New_York")
+            utc_time = datetime.fromtimestamp(
+                int(float(regular["Timestamp"])), pytz.UTC
+            )
+            ny_time = utc_time.astimezone(ny_tz)
+            date = ny_time.strftime(
+                "%B %d %I:%M %p ET"
+            )  # e.g., "December 03 3:45 PM ET"
 
-            if not regular and not duo:
-                if server:
-                    return f"No one has reached {k_rating}k in {server} yet!"
-                return f"No one has reached {k_rating}k in any server yet!"
+            server_str = (
+                server if server else regular["SeasonGameModeServer"].split("-")[2]
+            )
+            response.append(
+                f"{regular['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
+            )
 
-            # Build combined response
-            response = []
+        # Add duo milestone if exists
+        if duo:
+            ny_tz = pytz.timezone("America/New_York")
+            utc_time = datetime.fromtimestamp(
+                int(float(duo["Timestamp"])), pytz.UTC
+            )
+            ny_time = utc_time.astimezone(ny_tz)
+            date = ny_time.strftime("%B %d %I:%M %p ET")
 
-            # Add regular milestone if exists
-            if regular:
-                # Convert UTC to NY time
-                ny_tz = pytz.timezone("America/New_York")
-                utc_time = datetime.fromtimestamp(
-                    int(float(regular["Timestamp"])), pytz.UTC
-                )
-                ny_time = utc_time.astimezone(ny_tz)
-                date = ny_time.strftime(
-                    "%B %d %I:%M %p ET"
-                )  # e.g., "December 03 3:45 PM ET"
+            server_str = (
+                server if server else duo["SeasonGameModeServer"].split("-")[2]
+            )
+            response.append(
+                f"In Duos: {duo['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
+            )
 
-                server_str = (
-                    server if server else regular["SeasonGameModeServer"].split("-")[2]
-                )
-                response.append(
-                    f"{regular['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
-                )
-
-            # Add duo milestone if exists
-            if duo:
-                ny_tz = pytz.timezone("America/New_York")
-                utc_time = datetime.fromtimestamp(
-                    int(float(duo["Timestamp"])), pytz.UTC
-                )
-                ny_time = utc_time.astimezone(ny_tz)
-                date = ny_time.strftime("%B %d %I:%M %p ET")
-
-                server_str = (
-                    server if server else duo["SeasonGameModeServer"].split("-")[2]
-                )
-                response.append(
-                    f"In Duos: {duo['PlayerName']} was the first to reach {k_rating}k in {server_str} on {date}"
-                )
-
-            return " | ".join(response)
-
-        except Exception as e:
-            logger.error(f"Error getting milestone stats: {str(e)}")
-            return "Error getting milestone stats"
+        return " | ".join(response)
 
     def _get_milestone(self, rating_threshold, server=None, game_mode="0"):
         """Helper to get milestone data for a specific mode"""
@@ -1068,6 +1091,20 @@ class LeaderboardDB:
         except Exception as e:
             logger.error(f"Error getting top players globally: {str(e)}")
             return []
+
+    def format_top_players_global(self, game_mode="0"):
+        """Format global top 10 players in chat-ready format"""
+        players = self.get_top_players_global(game_mode)
+        if not players:
+            return "No players found globally"
+
+        # Format each player as "name (rating) from server"
+        formatted = [
+            f"{i+1}. {p['PlayerName']}: {p['LatestRating']} ({p['Server']})"
+            for i, p in enumerate(players)
+        ]
+
+        return f"Top 10 globally: {', '.join(formatted)}"
 
     def add_alias(self, alias, player_name):
         """Add an alias for a player"""
@@ -1137,39 +1174,31 @@ class LeaderboardDB:
                     self.patch_link = f"{title}: {article_url}"
                     return
             else:
-                logger.error("No patch link found")
+                logger.error("Patch link not found")
         else:
             logger.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
 def get_la_midnight_today():
-    # Set timezone to Los Angeles (Pacific Time)
-    los_angeles_tz = pytz.timezone('America/Los_Angeles')
-    
-    # Get today's date
-    today = datetime.today()
-    
-    # Set time to midnight (00:00)
-    midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    # Localize midnight to Los Angeles timezone
-    midnight_la = los_angeles_tz.localize(midnight)
-    
-    # Return timestamp
-    return int(midnight_la.timestamp()) if midnight_la else None
+    """Get UTC timestamp for LA midnight today"""
+    la_tz = pytz.timezone("America/Los_Angeles")
+    utc_now = datetime.fromtimestamp(time.time(), pytz.UTC)
+    la_now = utc_now.astimezone(la_tz)
+    la_midnight = la_now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(la_midnight.astimezone(pytz.UTC).timestamp())
 
 def get_la_monday_midnight():
-    """
-    Get the Unix timestamp for the most recent Monday's midnight in Los Angeles time (PST/PDT).
-    """
-    try:
-        la_tz = pytz.timezone("America/Los_Angeles")
-        now_la = datetime.now(la_tz)
-        days_since_monday = now_la.weekday()  # Monday = 0, Sunday = 6
-        most_recent_monday = now_la - timedelta(days=days_since_monday)
-        monday_midnight = most_recent_monday.replace(hour=0, minute=0, second=0, microsecond=0)
-        monday_midnight_timestamp = int(monday_midnight.timestamp())
+    """Get UTC timestamp for LA midnight of current week's Monday"""
+    la_tz = pytz.timezone("America/Los_Angeles")
+    utc_now = datetime.fromtimestamp(time.time(), pytz.UTC)
+    la_now = utc_now.astimezone(la_tz)
+    days_since_monday = la_now.weekday()  # Monday = 0, Sunday = 6
+    la_monday = la_now - timedelta(days=days_since_monday)
+    la_monday_midnight = la_monday.replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(la_monday_midnight.astimezone(pytz.UTC).timestamp())
 
-        return monday_midnight_timestamp
-    except Exception as e:
-        logger.error(f"Error calculating LA Monday midnight: {e}")
-        raise
+def format_la_time(timestamp):
+    """Format UTC timestamp to LA time string"""
+    la_tz = pytz.timezone("America/Los_Angeles")
+    utc_time = datetime.fromtimestamp(timestamp, pytz.UTC)
+    la_time = utc_time.astimezone(la_tz)
+    return la_time.strftime("%b %d, %Y")
