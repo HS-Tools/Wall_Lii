@@ -2,6 +2,7 @@ import os
 import aiocron
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+import time
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -551,7 +552,7 @@ class LeaderboardDB:
         # Format and return the peak stats
         return (
             f"{resolved_name}'s peak rating in {server} this season: {peak['rating']} "
-            f"on {datetime.fromtimestamp(peak_timestamp).strftime('%b %d, %Y')}"
+            f"on {format_la_time(peak_timestamp)}"
         )
 
     def get_duplicate_names_count(self, base_name, game_mode="0"):
@@ -1147,34 +1148,26 @@ class LeaderboardDB:
             logger.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
 def get_la_midnight_today():
-    # Set timezone to Los Angeles (Pacific Time)
-    los_angeles_tz = pytz.timezone('America/Los_Angeles')
-    
-    # Get today's date
-    today = datetime.today()
-    
-    # Set time to midnight (00:00)
-    midnight = today.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    # Localize midnight to Los Angeles timezone
-    midnight_la = los_angeles_tz.localize(midnight)
-    
-    # Return timestamp
-    return int(midnight_la.timestamp()) if midnight_la else None
+    """Get UTC timestamp for LA midnight today"""
+    la_tz = pytz.timezone("America/Los_Angeles")
+    utc_now = datetime.fromtimestamp(time.time(), pytz.UTC)
+    la_now = utc_now.astimezone(la_tz)
+    la_midnight = la_now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(la_midnight.astimezone(pytz.UTC).timestamp())
 
 def get_la_monday_midnight():
-    """
-    Get the Unix timestamp for the most recent Monday's midnight in Los Angeles time (PST/PDT).
-    """
-    try:
-        la_tz = pytz.timezone("America/Los_Angeles")
-        now_la = datetime.now(la_tz)
-        days_since_monday = now_la.weekday()  # Monday = 0, Sunday = 6
-        most_recent_monday = now_la - timedelta(days=days_since_monday)
-        monday_midnight = most_recent_monday.replace(hour=0, minute=0, second=0, microsecond=0)
-        monday_midnight_timestamp = int(monday_midnight.timestamp())
+    """Get UTC timestamp for LA midnight of current week's Monday"""
+    la_tz = pytz.timezone("America/Los_Angeles")
+    utc_now = datetime.fromtimestamp(time.time(), pytz.UTC)
+    la_now = utc_now.astimezone(la_tz)
+    days_since_monday = la_now.weekday()  # Monday = 0, Sunday = 6
+    la_monday = la_now - timedelta(days=days_since_monday)
+    la_monday_midnight = la_monday.replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(la_monday_midnight.astimezone(pytz.UTC).timestamp())
 
-        return monday_midnight_timestamp
-    except Exception as e:
-        logger.error(f"Error calculating LA Monday midnight: {e}")
-        raise
+def format_la_time(timestamp):
+    """Format UTC timestamp to LA time string"""
+    la_tz = pytz.timezone("America/Los_Angeles")
+    utc_time = datetime.fromtimestamp(timestamp, pytz.UTC)
+    la_time = utc_time.astimezone(la_tz)
+    return la_time.strftime("%b %d, %Y")
