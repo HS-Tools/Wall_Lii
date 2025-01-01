@@ -168,18 +168,8 @@ async def process_top(
 ):
     try:
         if server is None or server == "":
-            players = db.get_top_players_global(game_mode)
-            if not players:
-                await responder("No players found globally")
-                return
-
-            # Format each player as "name (rating) from server"
-            formatted = [
-                f"{i+1}. {p['PlayerName']}: {p['LatestRating']} ({p['Server']})"
-                for i, p in enumerate(players)
-            ]
-
-            await responder(f"Top 10 globally: {', '.join(formatted)}")
+            response = db.format_top_players_global(game_mode)
+            await responder(response)
         else:
             response = db.format_top_players(server, game_mode)
             await responder(response)

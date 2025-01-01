@@ -91,8 +91,21 @@ Contributors can start by reviewing the bot’s functionality and suggesting or 
 
 ## How to Run
 
-Documentation for setting up and running the bot is in progress. Check back soon for updates.
+Running the twitch and discord bots require private credentials which you would have to set up with your own twitch/discord accounts and put them in a `.env` file. Most of the logic is in the `leaderboard_queries.py` file which can be run locally with the `test_leaderboard_queries.py` script.
 
 ## Testing
 
-Testing instructions and processes are currently being developed. Updates will be provided as they become available.
+### **Overview**
+This repository contains two Python scripts:
+1. **`setup_local_dynamodb.py`**: Configures a local DynamoDB table for development and testing purposes.
+2. **`test_leaderboard_queries.py`**: Runs queries against the local DynamoDB table to validate functionality and simulate leaderboard operations..
+
+### **Scripts**
+1. **`setup_local_dynamodb.py`**:
+   - Prepares a local DynamoDB instance by creating the necessary table structure and configurations for testing.
+
+2. **`test_leaderboard_queries.py`**:
+   - Validates that the logic behind the twitch and discord commands works as expected.
+   - Simulates leaderboard operations and queries to validate their functionality.
+
+---
