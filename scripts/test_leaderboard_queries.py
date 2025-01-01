@@ -135,7 +135,7 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
             # Basic cases
             ("!week dogdog NA", "dog climbed from 13155 to 13295 (+140) in NA over 7 games: M: +140, T: 0, W: 0, Th: 0, F: 0, Sa: 0, Su: 0 liiHappyCat"),
             ("!week xqn EU", "xqn climbed from 14609 to 14947 (+338) in EU over 19 games: M: +223, T: +115, W: 0, Th: 0, F: 0, Sa: 0, Su: 0 liiHappyCat"),
-            ("!week kripp AP", "kripp is not on AP  BG leaderboards"),
+            ("!week kripp AP", "kripp is not on AP  BG leaderboards, sadfasf"),
             
             # Server inference
             ("!week dogdog", "dog climbed from 13155 to 13295 (+140) in NA over 7 games: M: +140, T: 0, W: 0, Th: 0, F: 0, Sa: 0, Su: 0 liiHappyCat"),
