@@ -46,16 +46,16 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
         test_cases = [
             # Basic cases
             ("!day dogdog NA", "dog is rank 8 in NA at 13295 with no games played"),
-            ("!day xqn EU", "xqn climbed from 14832 to 14993 (+161) in EU over 4 games: +57, +58, +62, -16 "),
-            ("!day satellite AP", "satellite fell from 14724 to 14416 (-308) in AP over 19 games: -116, -14, -40, -56, -48, +60, +54, -69, +32, +23, -62, +10, +32, -87, +54, +56, -31, -45, -61 "),
-            ("!day 1 ap", "satellite fell from 14724 to 14416 (-308) in AP over 19 games: -116, -14, -40, -56, -48, +60, +54, -69, +32, +23, -62, +10, +32, -87, +54, +56, -31, -45, -61 "),
+            ("!day xqn EU", "xqn climbed from 14832 to 14993 (+161) in EU over 4 games: +57, +58, +62, -16"),
+            ("!day satellite AP", "satellite fell from 14724 to 14416 (-308) in AP over 19 games: -116, -14, -40, -56, -48, +60, +54, -69, +32, +23, -62, +10, +32, -87, +54, +56, -31, -45, -61"),
+            ("!day 1 ap", "satellite fell from 14724 to 14416 (-308) in AP over 19 games: -116, -14, -40, -56, -48, +60, +54, -69, +32, +23, -62, +10, +32, -87, +54, +56, -31, -45, -61"),
             
             # Error cases
             ("!day ap 1", "Invalid server: 1. Valid servers are: NA, EU, AP"),
             ("!day dogdog", "dog is rank 8 in NA at 13295 with no games played"),
-            ("!day nonexistent NA", "nonexistent is not on NA  BG leaderboards."),
+            ("!day nonexistent NA", "nonexistent is not on NA BG leaderboards."),
             ("!day 1 XX", "Invalid server: XX. Valid servers are: NA, EU, AP"),
-            ("!day 99999 NA", "No player found at rank 99999 in NA  BG"),
+            ("!day 99999 NA", "No player found at rank 99999 in NA BG"),
         ]
 
         self._run_test_cases(test_cases, lambda command: self.queries.format_daily_stats(*self.parse_command(command)))
@@ -66,13 +66,13 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
             # Basic cases
             ("!lastweek dogdog NA", "dog climbed from 12813 to 13155 (+342) in NA over 26 games last week: M: 0, T: 0, W: 0, Th: 0, F: +468, Sa: -30, Su: -96 liiHappyCat"),
             ("!lastweek xqn EU", "xqn climbed from 14319 to 14609 (+290) in EU over 70 games last week: M: +252, T: +216, W: -101, Th: 0, F: -89, Sa: +126, Su: -114 liiHappyCat"),
-            ("!lastweek kripp AP", "kripp is not on AP  BG leaderboards"),
+            ("!lastweek kripp AP", "kripp is not on AP BG leaderboards"),
             
             # Server inference
             ("!lastweek dogdog", "dog climbed from 12813 to 13155 (+342) in NA over 26 games last week: M: 0, T: 0, W: 0, Th: 0, F: +468, Sa: -30, Su: -96 liiHappyCat"),
             
             # Error cases
-            ("!lastweek nonexistent NA", "nonexistent is not on NA  BG leaderboards"),
+            ("!lastweek nonexistent NA", "nonexistent is not on NA BG leaderboards"),
             ("!lastweek 1 XX", "Invalid server: XX. Valid servers are: NA, EU, AP"),
         ]
 
@@ -91,7 +91,7 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
             
             # Invalid cases
             ("!peak nonexistent NA", "nonexistent has no rating history in NA."),
-            ("!peak 999 NA", "mauvegnoll's peak rating in NA this season: 8007 on Dec 14, 2024"),
+            ("!peak 99999 NA", "No player found at rank 99999 in NA BG"),
             ("!peak 1 XX", "Invalid server: XX. Valid servers are: NA, EU, AP"),
             ("!peak 1", "Server is required for rank lookup"),
         ]
@@ -102,11 +102,11 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
         """Test !rank command with local data"""
         test_cases = [
             # Basic rank lookups
-            ("!rank 1 NA", "beterbabbit is rank 1 in NA at 15033 "),
-            ("!rank 10 NA", "akari is rank 10 in NA at 12998 "),
-            ("!rank 1 EU", "леший is rank 1 in EU at 15316 "),
-            ("!rank 1 AP", "satellite is rank 1 in AP at 14416 "),
-            ("!rank 999 NA", "mauvegnoll is rank 999 in NA at 8007 "),
+            ("!rank 1 NA", "beterbabbit is rank 1 in NA at 15033"),
+            ("!rank 10 NA", "akari is rank 10 in NA at 12998"),
+            ("!rank 1 EU", "леший is rank 1 in EU at 15316"),
+            ("!rank 1 AP", "satellite is rank 1 in AP at 14416"),
+            ("!rank 99999 NA", "No player found at rank 99999 in NA BG"),
             
             # Error cases
             ("!rank 1 XX", "Invalid server: XX. Valid servers are: NA, EU, AP"),
@@ -140,13 +140,13 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
             # Basic cases
             ("!week dogdog NA", "dog climbed from 13155 to 13295 (+140) in NA over 7 games: M: +140, T: 0, W: 0, Th: 0, F: 0, Sa: 0, Su: 0 liiHappyCat"),
             ("!week xqn EU", "xqn climbed from 14609 to 14993 (+384) in EU over 21 games: M: +223, T: +161, W: 0, Th: 0, F: 0, Sa: 0, Su: 0 liiHappyCat"),
-            ("!week kripp AP", "kripp is not on AP  BG leaderboards"),
+            ("!week kripp AP", "kripp is not on AP BG leaderboards"),
             
             # Server inference
             ("!week dogdog", "dog climbed from 13155 to 13295 (+140) in NA over 7 games: M: +140, T: 0, W: 0, Th: 0, F: 0, Sa: 0, Su: 0 liiHappyCat"),
             
             # Error cases
-            ("!week nonexistent NA", "nonexistent is not on NA  BG leaderboards"),
+            ("!week nonexistent NA", "nonexistent is not on NA BG leaderboards"),
             ("!week 1 XX", "Invalid server: XX. Valid servers are: NA, EU, AP"),
         ]
 
