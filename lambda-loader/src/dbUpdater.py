@@ -3,6 +3,10 @@ import os
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Dict, Any, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+from functools import partial
+import time
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -11,6 +15,29 @@ from api import getLeaderboardSnapshot
 from logger import setup_logger
 
 logger = setup_logger("dbUpdater")
+
+# Thread-local storage for thread-specific logging context
+thread_local = threading.local()
+
+def get_thread_logger():
+    """Get thread-specific logger with context"""
+    if not hasattr(thread_local, "logger_context"):
+        thread_local.logger_context = ""
+    return logger
+
+def set_thread_context(context):
+    """Set thread-specific logging context"""
+    thread_local.logger_context = f"[{context}] "
+
+def log_with_context(level, message):
+    """Log message with thread context"""
+    context = getattr(thread_local, "logger_context", "")
+    if level == "info":
+        logger.info(f"{context}{message}")
+    elif level == "error":
+        logger.error(f"{context}{message}")
+    elif level == "debug":
+        logger.debug(f"{context}{message}")
 
 def get_dynamodb_resource():
     """Get DynamoDB resource based on environment"""
@@ -312,12 +339,49 @@ def get_milestone_table_name():
     else:
         return "lambda-test-milestone-table"
 
+def fetch_leaderboard_data(game_type: str, max_pages: int) -> dict:
+    """Fetch leaderboard data for a specific game type"""
+    logger.info(f"Fetching {game_type} data...")
+    return getLeaderboardSnapshot(game_type=game_type, max_pages=max_pages)
+
+def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
+    """Batch get items with retry logic"""
+    for retry in range(max_retries):
+        try:
+            response = table.meta.client.batch_get_item(
+                RequestItems={
+                    table.name: {
+                        'Keys': keys,
+                        'ProjectionExpression': projection_expression
+                    }
+                }
+            )
+            return response['Responses'][table.name]
+        except Exception as e:
+            if retry == max_retries - 1:
+                raise
+            logger.info(f"Retry {retry + 1} for batch get")
+            time.sleep(0.1 * (retry + 1))  # Exponential backoff
+
+def batch_write_with_retry(table, items, max_retries=3):
+    """Batch write items with retry logic"""
+    for retry in range(max_retries):
+        try:
+            with table.batch_writer() as batch:
+                for item in items:
+                    batch.put_item(Item=item)
+            return
+        except Exception as e:
+            if retry == max_retries - 1:
+                raise
+            logger.info(f"Retry {retry + 1} for batch write")
+            time.sleep(0.1 * (retry + 1))  # Exponential backoff
+
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
         # Get max_pages from event or use default (40 pages = 1000 players)
-        max_pages = event.get("max_pages", 4)
-        pages_per_batch = 4  # Process 100 players at a time
+        max_pages = event.get("max_pages", 40)
         
         # Get table
         table = get_dynamodb_resource().Table(get_table_name())
@@ -325,24 +389,49 @@ def lambda_handler(event, context):
         # Get current time once for all updates
         current_time = int(datetime.now(timezone.utc).timestamp())
         
-        # Process updates for each game mode
+        # Fetch all data in parallel
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = {
+                executor.submit(fetch_leaderboard_data, "battlegrounds", max_pages): "battlegrounds",
+                executor.submit(fetch_leaderboard_data, "battlegroundsduo", max_pages): "battlegroundsduo"
+            }
+            
+            # Wait for all API calls to complete
+            data = {}
+            for future in as_completed(futures):
+                game_type = futures[future]
+                try:
+                    data[game_type] = future.result()
+                except Exception as e:
+                    logger.error(f"Error fetching {game_type} data: {str(e)}")
+                    data[game_type] = None
+        
+        # Define tasks using the pre-fetched data
+        tasks = []
+        
+        # Add battlegrounds tasks
+        if data.get("battlegrounds"):
+            for server in ["NA", "EU", "AP"]:
+                if server in data["battlegrounds"]:
+                    tasks.append(("0", "battlegrounds", server, data["battlegrounds"][server].get("battlegrounds", {})))
+        
+        # Add duo tasks
+        if data.get("battlegroundsduo"):
+            for server in ["NA", "EU", "AP"]:
+                if server in data["battlegroundsduo"]:
+                    tasks.append(("1", "battlegroundsduo", server, data["battlegroundsduo"][server].get("battlegroundsduo", {})))
+        
+        # Process updates for each game mode in parallel
         updates = {"battlegrounds": 0, "battlegroundsduo": 0}
         
-        # Get leaderboard data for both game modes
-        bg_data = getLeaderboardSnapshot(game_type="battlegrounds", max_pages=max_pages)
-        duo_data = getLeaderboardSnapshot(
-            game_type="battlegroundsduo", max_pages=max_pages
-        )
-        
-        for game_type, data in [("0", bg_data), ("1", duo_data)]:
-            if not data:
-                continue
-                
-            for server, server_data in data.items():
-                # Get the player data from the correct game mode key
-                game_mode_key = "battlegrounds" if game_type == "0" else "battlegroundsduo"
-                player_data = server_data.get(game_mode_key, {})
-                
+        def process_task(task):
+            """Process a single task with pre-fetched data"""
+            game_mode, game_type, server, player_data = task
+            
+            # Set thread context for logging
+            set_thread_context(f"{game_type}-{server}")
+            
+            try:
                 # Convert dictionary to list of player data
                 players = []
                 for player_name, stats in player_data.items():
@@ -352,22 +441,56 @@ def lambda_handler(event, context):
                         "Rating": stats["rating"]
                     })
                 
+                total_updates = 0
+                pages_per_batch = 4  # Process 100 players at a time
+                
                 # Process players in batches
                 for i in range(0, len(players), pages_per_batch * 25):
                     batch = players[i:i + pages_per_batch * 25]
                     
-                    # Process the batch
-                    num_updates, updates_needed, rating_history_needed = process_player_batch(
-                        table, batch, game_type, server, current_time
-                    )
-                    
-                    # Update items needing rating history updates
-                    update_rating_histories(table, rating_history_needed, current_time)
-                    
-                    # Write all updates
-                    batch_write_items(table, updates_needed)
-                    
-                    updates["battlegrounds" if game_type == "0" else "battlegroundsduo"] += num_updates
+                    # Process the batch with retries
+                    max_retries = 3
+                    for retry in range(max_retries):
+                        try:
+                            num_updates, updates_needed, rating_history_needed = process_player_batch(
+                                table, batch, game_mode, server, current_time
+                            )
+                            
+                            if rating_history_needed:
+                                # Update items needing rating history updates
+                                update_rating_histories(table, rating_history_needed, current_time)
+                            
+                            if updates_needed:
+                                # Write all updates
+                                batch_write_with_retry(table, updates_needed)
+                            
+                            total_updates += num_updates
+                            break
+                        except Exception as e:
+                            if retry == max_retries - 1:
+                                log_with_context("error", f"Failed to process batch after {max_retries} retries: {str(e)}")
+                                raise
+                            log_with_context("info", f"Retry {retry + 1} for batch processing")
+                
+                log_with_context("info", f"Completed processing with {total_updates} updates")
+                return game_type, total_updates
+                
+            except Exception as e:
+                log_with_context("error", f"Error processing {game_type} {server}: {str(e)}")
+                raise
+        
+        # Use ThreadPoolExecutor with a maximum of 3 concurrent threads
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit all tasks
+            futures = [executor.submit(process_task, task) for task in tasks]
+            
+            # Process completed futures
+            for future in as_completed(futures):
+                try:
+                    game_type, num_updates = future.result()
+                    updates[game_type] += num_updates
+                except Exception as e:
+                    logger.error(f"Task failed: {str(e)}")
         
         return {
             "statusCode": 200,
