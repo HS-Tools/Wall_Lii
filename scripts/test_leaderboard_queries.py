@@ -19,7 +19,7 @@ class TestLocalLeaderboardQueries(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Initialize DB connection to local DynamoDB"""
-        cls.queries = LeaderboardDB(use_local=True)
+        cls.queries = LeaderboardDB(use_local=True, useTestTimestamp=True)
 
     def setUp(self):
         """Print test name before each test"""
