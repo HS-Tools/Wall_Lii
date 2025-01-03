@@ -3,7 +3,7 @@ import aiocron
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import time
-
+import json
 import boto3
 from boto3.dynamodb.conditions import Key
 import requests
@@ -19,12 +19,13 @@ VALID_SERVERS = {"NA", "EU", "AP"}
 
 
 class LeaderboardDB:
-    def __init__(self, use_local=False, table_name="HearthstoneLeaderboard"):
+    def __init__(self, use_local=False, table_name="HearthstoneLeaderboard", useTestTimestamp=False):
         """Initialize DB connection
         
         Args:
             use_local (bool): If True, uses local DynamoDB tables. If False, uses AWS tables.
             table_name (str): Name of the leaderboard table
+            useTestTimestamp (bool): If True, uses fixed timestamp for current time
         """
         if use_local:
             # Configure local DynamoDB client
@@ -75,6 +76,11 @@ class LeaderboardDB:
                 logger.info("Successfully connected to channel table")
             except Exception as e:
                 logger.error(f"Failed to connect to channel table: {e}")
+
+        if useTestTimestamp:
+            self.useTestTimestamp = True
+            # This is a fixed timestamp that is used for test_leaderboard_queries
+            self.testTimestamp = datetime(2024, 12, 31, 12, 0, 0, tzinfo=timezone.utc)
 
         # Load aliases
         self.aliases = self._load_aliases()
@@ -221,31 +227,36 @@ class LeaderboardDB:
             logger.warning(f"No history found for {game_mode_server_player}")
             return None
 
+        # Get full history or filtered by time window
         history = response["Items"][0].get("RatingHistory", [])
+        if hours:
+            current_time = datetime.now(timezone.utc) if not self.useTestTimestamp else self.testTimestamp
+            cutoff = start_time or int((current_time - timedelta(hours=hours)).timestamp())
 
-        cutoff = start_time or int((datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp())
+            la_tz = pytz.timezone("America/Los_Angeles")
+            recent_history = []
+            last_entry_before_cutoff = None
 
-        la_tz = pytz.timezone("America/Los_Angeles")
-        recent_history = []
-        last_entry_before_cutoff = None
+            for h in history:
+                timestamp = int(float(h[1]))
+                entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
 
-        for h in history:
-            timestamp = int(float(h[1]))
-            entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
+                if timestamp < cutoff:
+                    last_entry_before_cutoff = h
+                else:
+                    recent_history.append(h)
 
-            if timestamp < cutoff:
-                last_entry_before_cutoff = h
-            else:
-                recent_history.append(h)
+            if last_entry_before_cutoff:
+                recent_history.insert(0, last_entry_before_cutoff)
 
-        if last_entry_before_cutoff:
-            recent_history.insert(0, last_entry_before_cutoff)
+            return recent_history
 
-        return recent_history
+        return history
 
     def get_top_players(self, server, game_mode="0", limit=10):
         """Get top players for a region"""
         game_mode_server = f"{game_mode}#{server}"
+
         top10Response = self.table.query(
             IndexName="RankLookupIndex",
             KeyConditionExpression=Key("GameModeServer").eq(game_mode_server),
@@ -311,16 +322,15 @@ class LeaderboardDB:
         # Get full history or filtered by time window
         history = response["Items"][0].get("RatingHistory", [])
         if hours:
-            cutoff = int(
-                (datetime.now(timezone.utc) - timedelta(hours=hours)).timestamp()
-            )
-            history = [h for h in history if h[1] >= cutoff]
+            current_time = datetime.now(timezone.utc) if not self.useTestTimestamp else self.testTimestamp
+            cutoff = int((current_time - timedelta(hours=hours)).timestamp())
+            history = [h for h in history if int(float(h[1])) >= cutoff]
 
         if not history:
             return None
 
-        peak = max(history, key=lambda x: x[0])
-        return {"rating": peak[0], "timestamp": peak[1]}
+        peak = max(history, key=lambda x: int(x[0]))
+        return {"rating": int(peak[0]), "timestamp": int(float(peak[1]))}
 
     def get_region_stats(self, server, game_mode="0"):
         """Get region statistics (avg rating, player count, etc)"""
@@ -397,7 +407,7 @@ class LeaderboardDB:
                 return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Calculate time range for yesterday
-        midnight_timestamp = get_la_midnight_today()
+        midnight_timestamp = self.get_la_midnight_today()
         starting_timestamp = midnight_timestamp - (24 * 60 * 60)  # Start of yesterday
         ending_timestamp = midnight_timestamp - 1  # End of yesterday
 
@@ -530,8 +540,8 @@ class LeaderboardDB:
                 return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
         # Calculate time range
-        midnight_timestamp = get_la_midnight_today()
-        now_timestamp = int(datetime.now().timestamp())
+        midnight_timestamp = self.get_la_midnight_today()
+        now_timestamp = int(datetime.now().timestamp()) if not self.useTestTimestamp else int(self.testTimestamp.now().timestamp())
 
         return self._format_stats_in_range(
             resolved_name, server, game_mode, midnight_timestamp, now_timestamp
@@ -583,7 +593,7 @@ class LeaderboardDB:
         # Format and return the peak stats
         return (
             f"{resolved_name}'s peak rating in {server} this season: {peak['rating']} "
-            f"on {format_la_time(peak_timestamp)}"
+            f"on {self.format_la_time(peak_timestamp)}"
         )
 
     def get_duplicate_names_count(self, base_name, game_mode="0"):
@@ -763,7 +773,7 @@ class LeaderboardDB:
             if not server:
                 return f"{resolved_name} is not on any BG {' duo' if game_mode == '1' else ''} leaderboards."
 
-        monday_midnight_timestamp = get_la_monday_midnight()
+        monday_midnight_timestamp = self.get_la_monday_midnight()
 
         # Fetch entire weekly history
         history = self.get_player_history(
@@ -885,7 +895,7 @@ class LeaderboardDB:
                 return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
 
         # Get timestamps for last week's Monday and this week's Monday
-        this_monday_midnight = get_la_monday_midnight()
+        this_monday_midnight = self.get_la_monday_midnight()
         last_monday_midnight = this_monday_midnight - (7 * 24 * 60 * 60)  # 7 days before
 
         # Fetch history starting from Sunday before last week (to get starting rating)
@@ -1178,27 +1188,27 @@ class LeaderboardDB:
         else:
             logger.error(f"Failed to retrieve data. Status code: {response.status_code}")
 
-def get_la_midnight_today():
-    """Get UTC timestamp for LA midnight today"""
-    la_tz = pytz.timezone("America/Los_Angeles")
-    utc_now = datetime.fromtimestamp(time.time(), pytz.UTC)
-    la_now = utc_now.astimezone(la_tz)
-    la_midnight = la_now.replace(hour=0, minute=0, second=0, microsecond=0)
-    return int(la_midnight.astimezone(pytz.UTC).timestamp())
+    def get_la_midnight_today(self):
+        """Get UTC timestamp for LA midnight today"""
+        la_tz = pytz.timezone("America/Los_Angeles")
+        utc_now = datetime.fromtimestamp(time.time(), pytz.UTC) if not self.useTestTimestamp else datetime.fromtimestamp(self.testTimestamp.timestamp(), pytz.UTC)
+        la_now = utc_now.astimezone(la_tz)
+        la_midnight = la_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        return int(la_midnight.astimezone(pytz.UTC).timestamp())
 
-def get_la_monday_midnight():
-    """Get UTC timestamp for LA midnight of current week's Monday"""
-    la_tz = pytz.timezone("America/Los_Angeles")
-    utc_now = datetime.fromtimestamp(time.time(), pytz.UTC)
-    la_now = utc_now.astimezone(la_tz)
-    days_since_monday = la_now.weekday()  # Monday = 0, Sunday = 6
-    la_monday = la_now - timedelta(days=days_since_monday)
-    la_monday_midnight = la_monday.replace(hour=0, minute=0, second=0, microsecond=0)
-    return int(la_monday_midnight.astimezone(pytz.UTC).timestamp())
+    def get_la_monday_midnight(self):
+        """Get UTC timestamp for LA midnight of current week's Monday"""
+        la_tz = pytz.timezone("America/Los_Angeles")
+        utc_now = datetime.fromtimestamp(time.time(), pytz.UTC) if not self.useTestTimestamp else datetime.fromtimestamp(self.testTimestamp.timestamp(), pytz.UTC)
+        la_now = utc_now.astimezone(la_tz)
+        days_since_monday = la_now.weekday()  # Monday = 0, Sunday = 6
+        la_monday = la_now - timedelta(days=days_since_monday)
+        la_monday_midnight = la_monday.replace(hour=0, minute=0, second=0, microsecond=0)
+        return int(la_monday_midnight.astimezone(pytz.UTC).timestamp())
 
-def format_la_time(timestamp):
-    """Format UTC timestamp to LA time string"""
-    la_tz = pytz.timezone("America/Los_Angeles")
-    utc_time = datetime.fromtimestamp(timestamp, pytz.UTC)
-    la_time = utc_time.astimezone(la_tz)
-    return la_time.strftime("%b %d, %Y")
+    def format_la_time(self, timestamp):
+        """Format UTC timestamp to LA time string"""
+        la_tz = pytz.timezone("America/Los_Angeles")
+        utc_time = datetime.fromtimestamp(timestamp, pytz.UTC)
+        la_time = utc_time.astimezone(la_tz)
+        return la_time.strftime("%b %d, %Y")
