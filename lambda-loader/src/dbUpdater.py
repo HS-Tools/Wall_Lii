@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from functools import partial
 import time
+import logging
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -53,223 +54,239 @@ def get_dynamodb_resource():
         )
 
 def get_table_name():
-    """Get table name based on environment"""
-    if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
-        return os.environ.get("TABLE_NAME", "LeaderboardData")
+    """Get the DynamoDB table name based on environment"""
+    if os.environ.get('AWS_SAM_LOCAL') == 'true':
+        return "lambda-test-table"
+    elif os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        return "lambda-prod-table"
     else:
         return "lambda-test-table"
 
-def batch_get_player_data(table, keys: List[Dict[str, Any]], projection: List[str]) -> Dict[str, Dict]:
-    """
-    Batch get items from DynamoDB with specified projection
+def is_local_dynamodb():
+    """Check if we're using local DynamoDB"""
+    if os.environ.get('AWS_SAM_LOCAL') == 'true':
+        return True
+    if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        return False
+    # If neither environment variable is set, assume local
+    return True
+
+class CapacityTracker:
+    def __init__(self):
+        self.read_units = 0
+        self.write_units = 0
+        self._start_time = time.time()
+        self.is_local = is_local_dynamodb()
     
-    Args:
-        table: DynamoDB table resource
-        keys: List of key dictionaries
-        projection: List of attributes to fetch
+    def add_consumed_capacity(self, capacity):
+        if self.is_local:
+            # Estimate capacity units for local development
+            # Read: 1 unit per 4KB, Write: 1 unit per 1KB
+            if hasattr(self, '_last_operation'):
+                if self._last_operation == 'read':
+                    # Rough estimation: assume each item is about 1KB
+                    self.read_units += (len(self._last_items) * 1.0) / 4.0
+                elif self._last_operation == 'write':
+                    # Each write costs at least 1 WCU
+                    self.write_units += len(self._last_items) * 1.0
+        else:
+            if capacity:
+                self.read_units += capacity.get('ReadCapacityUnits', 0)
+                self.write_units += capacity.get('WriteCapacityUnits', 0)
+    
+    def track_operation(self, operation_type, items):
+        self._last_operation = operation_type
+        self._last_items = items
+        self.add_consumed_capacity(None)  # Trigger estimation for local mode
+    
+    def log_consumption(self):
+        elapsed_time = time.time() - self._start_time
+        env_type = "Local" if self.is_local else "Production"
+        logger.info(f"DynamoDB Consumption ({env_type}, over {elapsed_time:.1f}s):")
+        logger.info(f"Total Read Capacity Units: {self.read_units:.2f}")
+        logger.info(f"Total Write Capacity Units: {self.write_units:.2f}")
+        logger.info(f"Average RCU/s: {self.read_units/elapsed_time:.2f}")
+        logger.info(f"Average WCU/s: {self.write_units/elapsed_time:.2f}")
+        if self.is_local:
+            logger.info("Note: Local consumption is estimated based on item counts and sizes")
+
+# Global capacity tracker
+capacity_tracker = CapacityTracker()
+
+def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
+    """Batch get items with retry logic"""
+    if not keys:
+        return []
         
-    Returns:
-        Dictionary mapping GameModeServerPlayer to item data
-    """
-    results = {}
-    logger.info(f"Batch getting {len(keys)} items with projection {projection}")
-    
-    # Process in batches of 100 (DynamoDB limit)
+    # Split into chunks of 100 (DynamoDB limit)
+    all_items = []
     for i in range(0, len(keys), 100):
-        batch_keys = keys[i:i + 100]
-        try:
-            response = table.meta.client.batch_get_item(
-                RequestItems={
-                    table.name: {
-                        'Keys': batch_keys,
-                        'ProjectionExpression': ', '.join(projection)
-                    }
-                }
-            )
-            
-            # Add results to our dictionary
-            for item in response['Responses'][table.name]:
-                results[item['GameModeServerPlayer']] = item
-                
-            # Handle unprocessed keys
-            unprocessed = response['UnprocessedKeys'].get(table.name, {}).get('Keys', [])
-            while unprocessed:
-                logger.info(f"Retrying {len(unprocessed)} unprocessed keys")
-                response = table.meta.client.batch_get_item(
-                    RequestItems={
+        chunk = keys[i:i + 100]
+        for retry in range(max_retries):
+            try:
+                kwargs = {
+                    'RequestItems': {
                         table.name: {
-                            'Keys': unprocessed,
-                            'ProjectionExpression': ', '.join(projection)
+                            'Keys': chunk,
+                            'ProjectionExpression': projection_expression
                         }
                     }
-                )
-                for item in response['Responses'][table.name]:
-                    results[item['GameModeServerPlayer']] = item
-                unprocessed = response['UnprocessedKeys'].get(table.name, {}).get('Keys', [])
+                }
+                if not capacity_tracker.is_local:
+                    kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
-        except Exception as e:
-            logger.error(f"Error in batch_get_player_data: {str(e)}")
-            logger.error(f"Batch keys: {batch_keys}")
-            raise
-    
-    logger.info(f"Retrieved {len(results)} items from DynamoDB")
-    return results
-
-def batch_write_items(table, items: List[Dict[str, Any]]):
-    """
-    Write items to DynamoDB in batches
-    
-    Args:
-        table: DynamoDB table resource
-        items: List of items to write
-    """
-    with table.batch_writer() as batch:
-        for item in items:
-            try:
-                batch.put_item(Item=item)
+                response = table.meta.client.batch_get_item(**kwargs)
+                items = response['Responses'][table.name]
+                all_items.extend(items)
+                
+                # Track capacity
+                if capacity_tracker.is_local:
+                    capacity_tracker.track_operation('read', items)
+                else:
+                    for cc in response.get('ConsumedCapacity', []):
+                        capacity_tracker.add_consumed_capacity(cc)
+                    
+                break
             except Exception as e:
-                logger.error(f"Error writing item {item.get('GameModeServerPlayer')}: {str(e)}")
+                if retry == max_retries - 1:
+                    raise
+                logger.info(f"Retry {retry + 1} for batch get")
+                time.sleep(0.1 * (retry + 1))  # Exponential backoff
+    return all_items
 
-def process_player_batch(
-    table,
-    players: List[Dict[str, Any]],
-    game_mode: str,
-    server: str,
-    current_time: int
-) -> Tuple[int, List[Dict[str, Any]], List[Dict[str, Any]]]:
-    """
-    Process a batch of players and prepare updates
-    
-    Args:
-        table: DynamoDB table resource
-        players: List of player data from API
-        game_mode: Game mode being processed
-        server: Server being processed
-        current_time: Current timestamp
-        
-    Returns:
-        Tuple of (number of updates, list of items to update, list of items needing rating history)
-    """
-    # Normalize server names
-    server_mapping = {"US": "NA", "EU": "EU", "AP": "AP"}
-    server = server_mapping.get(server, server)
-    
-    # Prepare batch get keys
-    keys = []
-    for player in players:
-        player_name = player["PlayerName"].lower()
-        game_mode_server_player = f"{game_mode}#{server}#{player_name}"
-        game_mode_server = f"{game_mode}#{server}"
-        keys.append({
-            "GameModeServerPlayer": game_mode_server_player,
-            "GameModeServer": game_mode_server
-        })
-    
-    # Batch get current data
-    current_data = batch_get_player_data(
-        table,
-        keys,
-        ["GameModeServerPlayer", "CurrentRank", "LatestRating"]
-    ) if keys else {}
-    
-    # Identify players needing updates
-    updates_needed = []
-    rating_history_needed = []
-    
-    for player in players:
-        player_name = player["PlayerName"].lower()
-        game_mode_server_player = f"{game_mode}#{server}#{player_name}"
-        game_mode_server = f"{game_mode}#{server}"
-        
-        rank = Decimal(str(player["Rank"]))
-        rating = Decimal(str(player["Rating"]))
-        
-        current = current_data.get(game_mode_server_player, {})
-        current_rating = current.get("LatestRating")
-        current_rank = current.get("CurrentRank")
-        
-        # If player doesn't exist or rating/rank has changed
-        if not current or current_rating != rating or current_rank != rank:
-            # Prepare update item
-            update_item = {
-                "GameModeServerPlayer": game_mode_server_player,
-                "GameModeServer": game_mode_server,
-                "PlayerName": player_name,
-                "GameMode": game_mode,
-                "Server": server,
-                "CurrentRank": rank,
-                "LatestRating": rating,
-            }
-            
-            # Only set initial rating history for new players
-            if not current:
-                update_item["RatingHistory"] = [[rating, current_time]]
-            else:
-                # If player exists and rating changed, need to update rating history
-                if current.get("LatestRating") is not None and current_rating != rating:
-                    rating_history_needed.append(update_item)
-            
-            updates_needed.append(update_item)
-            
-            # Check for rank 1 milestone
-            if rank == 1:
-                check_milestones(player_name, rating, game_mode, server, table)
-    
-    return len(updates_needed), updates_needed, rating_history_needed
-
-def update_rating_histories(table, items: List[Dict[str, Any]], current_time: int):
-    """Update rating histories for items that need it"""
+def batch_write_with_retry(table, items, max_retries=3):
+    """Batch write items with retry logic"""
     if not items:
         return
-    
-    logger.info(f"Updating rating histories for {len(items)} items")
-    logger.debug(f"First item to update: {items[0] if items else None}")
         
-    # Prepare keys for batch get
+    # Split into chunks of 25 (DynamoDB limit)
+    for i in range(0, len(items), 25):
+        chunk = items[i:i + 25]
+        for retry in range(max_retries):
+            try:
+                kwargs = {
+                    'RequestItems': {
+                        table.name: [{'PutRequest': {'Item': item}} for item in chunk]
+                    }
+                }
+                if not capacity_tracker.is_local:
+                    kwargs['ReturnConsumedCapacity'] = 'TOTAL'
+                
+                response = table.meta.client.batch_write_item(**kwargs)
+                
+                # Track capacity
+                if capacity_tracker.is_local:
+                    capacity_tracker.track_operation('write', chunk)
+                else:
+                    for cc in response.get('ConsumedCapacity', []):
+                        capacity_tracker.add_consumed_capacity(cc)
+                    
+                break
+            except Exception as e:
+                if retry == max_retries - 1:
+                    raise
+                logger.info(f"Retry {retry + 1} for batch write")
+                time.sleep(0.1 * (retry + 1))  # Exponential backoff
+
+def update_rating_histories(table, items_to_update, current_time):
+    """Update rating histories for multiple items in batch"""
+    if not items_to_update:
+        return
+        
+    # Get all histories in one batch
     keys = [{
-        "GameModeServerPlayer": item["GameModeServerPlayer"],
-        "GameModeServer": item["GameModeServer"]
-    } for item in items]
-        
-    # Batch get current rating histories
-    try:
-        current_histories = batch_get_player_data(
-            table,
-            keys,
-            ["GameModeServerPlayer", "RatingHistory"]
-        )
-    except Exception as e:
-        logger.error(f"Error getting current histories: {str(e)}")
-        logger.error(f"Items: {items}")
-        raise
+        'GameModeServerPlayer': item['GameModeServerPlayer'],
+        'GameModeServer': item['GameModeServer']
+    } for item in items_to_update]
     
-    logger.info(f"Retrieved {len(current_histories)} current histories")
+    histories = batch_get_with_retry(table, keys, 'GameModeServerPlayer, RatingHistory')
     
-    # Prepare updates with rating histories
+    # Create a map for quick lookup
+    history_map = {item['GameModeServerPlayer']: item.get('RatingHistory', []) for item in histories}
+    
+    # Prepare all updates
     updates = []
-    for item in items:
-        try:
-            gmsp = item["GameModeServerPlayer"]
-            current = current_histories.get(gmsp, {})
-            logger.debug(f"Processing {gmsp}: Current data = {current}")
-            
-            if current and "RatingHistory" in current:
-                item["RatingHistory"] = current["RatingHistory"] + [[item["LatestRating"], current_time]]
-            else:
-                item["RatingHistory"] = [[item["LatestRating"], current_time]]
-            updates.append(item)
-        except Exception as e:
-            logger.error(f"Error processing item {item}: {str(e)}")
-            raise
+    for item in items_to_update:
+        gms_player = item['GameModeServerPlayer']
+        current_history = history_map.get(gms_player, [])
+        
+        # Add new rating to history
+        new_history = current_history[-99:] if current_history else []  # Keep last 99 entries
+        new_history.append({
+            'Rating': item['LatestRating'],
+            'Timestamp': current_time
+        })
+        
+        # Create update item
+        update_item = {
+            'GameModeServerPlayer': gms_player,
+            'GameModeServer': item['GameModeServer'],
+            'PlayerName': item['PlayerName'],
+            'GameMode': item['GameMode'],
+            'Server': item['Server'],
+            'CurrentRank': item['CurrentRank'],
+            'LatestRating': item['LatestRating'],
+            'RatingHistory': new_history
+        }
+        updates.append(update_item)
     
-    # Write updates in batches
-    try:
-        batch_write_items(table, updates)
-        logger.info(f"Successfully wrote {len(updates)} rating history updates")
-    except Exception as e:
-        logger.error(f"Error writing updates: {str(e)}")
-        logger.error(f"Updates: {updates}")
-        raise
+    # Write all updates in one batch
+    batch_write_with_retry(table, updates)
+
+def process_player_batch(table, players, game_mode, server, current_time):
+    """Process a batch of players"""
+    # Get current data for all players in one batch
+    keys = [{
+        'GameModeServerPlayer': f"{game_mode}-{server}-{p['PlayerName']}",
+        'GameModeServer': f"{game_mode}-{server}"
+    } for p in players]
+    
+    current_items = batch_get_with_retry(
+        table, 
+        keys,
+        'GameModeServerPlayer, CurrentRank, LatestRating'
+    )
+    
+    # Create a map for quick lookup
+    current_map = {item['GameModeServerPlayer']: item for item in current_items}
+    
+    # Prepare updates
+    updates_needed = []
+    rating_history_needed = []
+    num_updates = 0
+    
+    for player in players:
+        gms_player = f"{game_mode}-{server}-{player['PlayerName']}"
+        gms = f"{game_mode}-{server}"
+        current_item = current_map.get(gms_player)
+        
+        # Check if update needed
+        if not current_item or (
+            current_item.get('CurrentRank') != player['Rank'] or 
+            current_item.get('LatestRating') != player['Rating']
+        ):
+            update_item = {
+                'GameModeServerPlayer': gms_player,
+                'GameModeServer': gms,
+                'PlayerName': player['PlayerName'],
+                'GameMode': game_mode,
+                'Server': server,
+                'CurrentRank': player['Rank'],
+                'LatestRating': player['Rating']
+            }
+            updates_needed.append(update_item)
+            rating_history_needed.append(update_item)
+            num_updates += 1
+    
+    # Batch write updates
+    if updates_needed:
+        batch_write_with_retry(table, updates_needed)
+    
+    # Update rating histories in batch
+    if rating_history_needed:
+        update_rating_histories(table, rating_history_needed, current_time)
+    
+    return num_updates
 
 def check_milestones(player_name, rating, game_mode, server, table):
     """Check if player has reached a new milestone"""
@@ -344,42 +361,13 @@ def fetch_leaderboard_data(game_type: str, max_pages: int) -> dict:
     logger.info(f"Fetching {game_type} data...")
     return getLeaderboardSnapshot(game_type=game_type, max_pages=max_pages)
 
-def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
-    """Batch get items with retry logic"""
-    for retry in range(max_retries):
-        try:
-            response = table.meta.client.batch_get_item(
-                RequestItems={
-                    table.name: {
-                        'Keys': keys,
-                        'ProjectionExpression': projection_expression
-                    }
-                }
-            )
-            return response['Responses'][table.name]
-        except Exception as e:
-            if retry == max_retries - 1:
-                raise
-            logger.info(f"Retry {retry + 1} for batch get")
-            time.sleep(0.1 * (retry + 1))  # Exponential backoff
-
-def batch_write_with_retry(table, items, max_retries=3):
-    """Batch write items with retry logic"""
-    for retry in range(max_retries):
-        try:
-            with table.batch_writer() as batch:
-                for item in items:
-                    batch.put_item(Item=item)
-            return
-        except Exception as e:
-            if retry == max_retries - 1:
-                raise
-            logger.info(f"Retry {retry + 1} for batch write")
-            time.sleep(0.1 * (retry + 1))  # Exponential backoff
-
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
+        # Reset capacity tracker
+        global capacity_tracker
+        capacity_tracker = CapacityTracker()
+        
         # Get max_pages from event or use default (40 pages = 1000 players)
         max_pages = event.get("max_pages", 40)
         
@@ -452,17 +440,9 @@ def lambda_handler(event, context):
                     max_retries = 3
                     for retry in range(max_retries):
                         try:
-                            num_updates, updates_needed, rating_history_needed = process_player_batch(
+                            num_updates = process_player_batch(
                                 table, batch, game_mode, server, current_time
                             )
-                            
-                            if rating_history_needed:
-                                # Update items needing rating history updates
-                                update_rating_histories(table, rating_history_needed, current_time)
-                            
-                            if updates_needed:
-                                # Write all updates
-                                batch_write_with_retry(table, updates_needed)
                             
                             total_updates += num_updates
                             break
@@ -492,6 +472,9 @@ def lambda_handler(event, context):
                 except Exception as e:
                     logger.error(f"Task failed: {str(e)}")
         
+        # Log consumption at the end
+        capacity_tracker.log_consumption()
+        
         return {
             "statusCode": 200,
             "body": json.dumps(
@@ -503,6 +486,9 @@ def lambda_handler(event, context):
         }
         
     except Exception as e:
+        # Log consumption even on error
+        capacity_tracker.log_consumption()
+        
         logger.error(f"Error updating leaderboard data: {str(e)}")
         return {
             "statusCode": 500,
