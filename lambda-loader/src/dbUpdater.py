@@ -60,7 +60,7 @@ def get_table_name():
     if os.environ.get('AWS_SAM_LOCAL') == 'true':
         return "lambda-test-table"
     elif os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
-        return "lambda-prod-table"
+        return "HearthstoneLeaderboardV2"
     else:
         return "lambda-test-table"
 
