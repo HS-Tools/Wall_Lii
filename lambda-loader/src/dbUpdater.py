@@ -8,6 +8,8 @@ import threading
 from functools import partial
 import time
 import logging
+from queue import Queue
+from dataclasses import dataclass
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -361,6 +363,135 @@ def fetch_leaderboard_data(game_type: str, max_pages: int) -> dict:
     logger.info(f"Fetching {game_type} data...")
     return getLeaderboardSnapshot(game_type=game_type, max_pages=max_pages)
 
+@dataclass
+class LeaderboardTask:
+    """Represents a task to process a batch of players for a specific game mode and server"""
+    game_mode: str
+    server: str
+    players: List[Dict]
+    batch_size: int = 100  # Default batch size
+    priority: int = 0      # Higher priority = processed first
+
+    def __lt__(self, other):
+        # For priority queue ordering - higher priority first
+        return self.priority > other.priority
+
+def create_tasks(leaderboard_data: Dict[str, Dict[str, List[Dict]]]) -> List[LeaderboardTask]:
+    """Create tasks from leaderboard data with appropriate priorities"""
+    tasks = []
+    
+    for game_mode, server_data in leaderboard_data.items():
+        for server, data in server_data.items():
+            # Convert dictionary to list of player data
+            players = []
+            for player_name, stats in data.get(game_mode, {}).items():
+                players.append({
+                    "PlayerName": player_name,
+                    "Rank": stats["rank"],
+                    "Rating": stats["rating"]
+                })
+            
+            # Set priority based on batch size
+            priority = len(players)
+            
+            # Split into batches of 100 players
+            for i in range(0, len(players), 100):
+                batch = players[i:i + 100]
+                tasks.append(LeaderboardTask(
+                    game_mode=game_mode,
+                    server=server,
+                    players=batch,
+                    priority=priority
+                ))
+    
+    # Sort tasks by priority (larger batches first)
+    tasks.sort(reverse=True)
+    return tasks
+
+def process_leaderboards(table, leaderboard_data: Dict[str, Dict[str, List[Dict]]], current_time: int) -> Dict[str, int]:
+    """Process all leaderboards using dynamic task allocation"""
+    # Create prioritized tasks
+    tasks = create_tasks(leaderboard_data)
+    
+    # Create task queue
+    task_queue = Queue()
+    for task in tasks:
+        task_queue.put(task)
+    
+    # Calculate optimal number of threads
+    total_players = sum(
+        len(data.get(game_mode, {}))
+        for game_mode, server_data in leaderboard_data.items()
+        for server, data in server_data.items()
+    )
+    num_threads = min(
+        max(4, total_players // 500),  # At least 4 threads, 1 thread per 500 players
+        16  # Maximum threads
+    )
+    
+    log_with_context("info", f"Processing {total_players} players using {num_threads} threads")
+    
+    # Create thread pool and process tasks
+    updates_by_thread = {}
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        futures = [
+            executor.submit(worker, task_queue, table, current_time)
+            for _ in range(num_threads)
+        ]
+        
+        # Wait for all tasks to complete and collect results
+        for future in futures:
+            try:
+                thread_updates = future.result()
+                for key, count in thread_updates.items():
+                    updates_by_thread[key] = updates_by_thread.get(key, 0) + count
+            except Exception as e:
+                log_with_context("error", f"Thread failed: {str(e)}")
+                raise
+    
+    # Log completion for each game mode and server
+    for key, count in updates_by_thread.items():
+        log_with_context("info", f"[{key}] Completed processing with {count} updates")
+    
+    return updates_by_thread
+
+def worker(task_queue: Queue, table, current_time: int) -> Dict[str, int]:
+    """Worker function to process tasks from the queue"""
+    updates = {}
+    thread_id = threading.get_ident()
+    
+    while True:
+        try:
+            task = task_queue.get_nowait()
+        except:
+            break
+            
+        try:
+            set_thread_context(f"{task.game_mode}-{task.server}")
+            
+            # Process the batch
+            num_updates = process_player_batch(
+                table,
+                task.players,
+                task.game_mode,
+                task.server,
+                current_time
+            )
+            
+            # Record updates
+            key = f"{task.game_mode}-{task.server}"
+            updates[key] = updates.get(key, 0) + num_updates
+            
+            log_with_context("info", f"Thread {thread_id} completed batch with {num_updates} updates")
+            
+        except Exception as e:
+            log_with_context("error", f"Error processing batch: {str(e)}")
+            raise
+        finally:
+            task_queue.task_done()
+    
+    return updates
+
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
@@ -369,120 +500,46 @@ def lambda_handler(event, context):
         capacity_tracker = CapacityTracker()
         
         # Get max_pages from event or use default (40 pages = 1000 players)
-        max_pages = event.get("max_pages", 40)
+        max_pages = event.get("max_pages", 40) if event else 40
         
-        # Get table
+        # Initialize DynamoDB
         table = get_dynamodb_resource().Table(get_table_name())
         
-        # Get current time once for all updates
+        # Get current timestamp
         current_time = int(datetime.now(timezone.utc).timestamp())
         
-        # Fetch all data in parallel
+        # Fetch leaderboard data concurrently
         with ThreadPoolExecutor(max_workers=2) as executor:
+            log_with_context("info", "Fetching battlegrounds data...")
+            log_with_context("info", "Fetching battlegroundsduo data...")
+            
             futures = {
                 executor.submit(fetch_leaderboard_data, "battlegrounds", max_pages): "battlegrounds",
                 executor.submit(fetch_leaderboard_data, "battlegroundsduo", max_pages): "battlegroundsduo"
             }
             
-            # Wait for all API calls to complete
-            data = {}
+            # Collect results
+            leaderboard_data = {}
             for future in as_completed(futures):
                 game_type = futures[future]
                 try:
-                    data[game_type] = future.result()
+                    leaderboard_data[game_type] = future.result()
                 except Exception as e:
-                    logger.error(f"Error fetching {game_type} data: {str(e)}")
-                    data[game_type] = None
+                    log_with_context("error", f"Error fetching {game_type} data: {str(e)}")
+                    raise
         
-        # Define tasks using the pre-fetched data
-        tasks = []
-        
-        # Add battlegrounds tasks
-        if data.get("battlegrounds"):
-            for server in ["NA", "EU", "AP"]:
-                if server in data["battlegrounds"]:
-                    tasks.append(("0", "battlegrounds", server, data["battlegrounds"][server].get("battlegrounds", {})))
-        
-        # Add duo tasks
-        if data.get("battlegroundsduo"):
-            for server in ["NA", "EU", "AP"]:
-                if server in data["battlegroundsduo"]:
-                    tasks.append(("1", "battlegroundsduo", server, data["battlegroundsduo"][server].get("battlegroundsduo", {})))
-        
-        # Process updates for each game mode in parallel
-        updates = {"battlegrounds": 0, "battlegroundsduo": 0}
-        
-        def process_task(task):
-            """Process a single task with pre-fetched data"""
-            game_mode, game_type, server, player_data = task
-            
-            # Set thread context for logging
-            set_thread_context(f"{game_type}-{server}")
-            
-            try:
-                # Convert dictionary to list of player data
-                players = []
-                for player_name, stats in player_data.items():
-                    players.append({
-                        "PlayerName": player_name,
-                        "Rank": stats["rank"],
-                        "Rating": stats["rating"]
-                    })
-                
-                total_updates = 0
-                pages_per_batch = 4  # Process 100 players at a time
-                
-                # Process players in batches
-                for i in range(0, len(players), pages_per_batch * 25):
-                    batch = players[i:i + pages_per_batch * 25]
-                    
-                    # Process the batch with retries
-                    max_retries = 3
-                    for retry in range(max_retries):
-                        try:
-                            num_updates = process_player_batch(
-                                table, batch, game_mode, server, current_time
-                            )
-                            
-                            total_updates += num_updates
-                            break
-                        except Exception as e:
-                            if retry == max_retries - 1:
-                                log_with_context("error", f"Failed to process batch after {max_retries} retries: {str(e)}")
-                                raise
-                            log_with_context("info", f"Retry {retry + 1} for batch processing")
-                
-                log_with_context("info", f"Completed processing with {total_updates} updates")
-                return game_type, total_updates
-                
-            except Exception as e:
-                log_with_context("error", f"Error processing {game_type} {server}: {str(e)}")
-                raise
-        
-        # Use ThreadPoolExecutor with a maximum of 3 concurrent threads
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            # Submit all tasks
-            futures = [executor.submit(process_task, task) for task in tasks]
-            
-            # Process completed futures
-            for future in as_completed(futures):
-                try:
-                    game_type, num_updates = future.result()
-                    updates[game_type] += num_updates
-                except Exception as e:
-                    logger.error(f"Task failed: {str(e)}")
+        # Process all leaderboards with dynamic task allocation
+        updates = process_leaderboards(table, leaderboard_data, current_time)
         
         # Log consumption at the end
         capacity_tracker.log_consumption()
         
         return {
             "statusCode": 200,
-            "body": json.dumps(
-                {
-                    "message": "Successfully updated leaderboard data",
-                    "updates": updates,
-                }
-            ),
+            "body": json.dumps({
+                "message": "Successfully updated leaderboard data",
+                "updates": updates
+            })
         }
         
     except Exception as e:
@@ -492,7 +549,9 @@ def lambda_handler(event, context):
         logger.error(f"Error updating leaderboard data: {str(e)}")
         return {
             "statusCode": 500,
-            "body": json.dumps({"error": f"Error updating leaderboard data: {str(e)}"}),
+            "body": json.dumps({
+                "error": str(e)
+            })
         }
 
 def main():
