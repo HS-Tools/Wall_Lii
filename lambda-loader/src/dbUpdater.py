@@ -228,12 +228,14 @@ def check_milestones(player_name, rating, game_mode, server, table):
             f"Checking milestones for {player_name} ({rating}) in {season_game_mode_server}"
         )
 
-        # Get milestone table
-        milestone_table_name = get_milestone_table_name()
+        # Get milestone table name from environment
+        milestone_table_name = os.environ.get(
+            "MILESTONE_TABLE_NAME", "MilestoneTracking"
+        )
         logger.info(f"Using milestone table: {milestone_table_name}")
 
         # Use same resource as main table but different table name
-        milestone_table = get_dynamodb_resource().Table(milestone_table_name)
+        milestone_table = boto3.resource("dynamodb").Table(milestone_table_name)
 
         # Get highest milestone achieved for this server/mode
         response = milestone_table.query(
@@ -371,19 +373,19 @@ def lambda_handler(event, context):
         
         return {
             "statusCode": 200,
-            "body": json.dumps({
-                "message": "Successfully updated leaderboard data",
-                "updates": updates
-            })
+            "body": json.dumps(
+                {
+                    "message": "Successfully updated leaderboard data",
+                    "updates": updates,
+                }
+            ),
         }
-        
+
     except Exception as e:
         logger.error(f"Error updating leaderboard data: {str(e)}")
         return {
             "statusCode": 500,
-            "body": json.dumps({
-                "error": str(e)
-            })
+            "body": json.dumps({"error": f"Error updating leaderboard data: {str(e)}"}),
         }
 
 if __name__ == "__main__":
