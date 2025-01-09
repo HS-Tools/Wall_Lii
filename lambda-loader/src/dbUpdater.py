@@ -2,45 +2,14 @@ import json
 import os
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import List, Dict, Any, Tuple
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
-from functools import partial
-import time
+from typing import Dict, List
 import logging
-from queue import Queue
-from dataclasses import dataclass
-
 import boto3
-from boto3.dynamodb.conditions import Key
-from api import getLeaderboardSnapshot
 
+from api import getLeaderboardSnapshot
 from logger import setup_logger
 
 logger = setup_logger("dbUpdater")
-
-# Thread-local storage for thread-specific logging context
-thread_local = threading.local()
-
-def get_thread_logger():
-    """Get thread-specific logger with context"""
-    if not hasattr(thread_local, "logger_context"):
-        thread_local.logger_context = ""
-    return logger
-
-def set_thread_context(context):
-    """Set thread-specific logging context"""
-    thread_local.logger_context = f"[{context}] "
-
-def log_with_context(level, message):
-    """Log message with thread context"""
-    context = getattr(thread_local, "logger_context", "")
-    if level == "info":
-        logger.info(f"{context}{message}")
-    elif level == "error":
-        logger.error(f"{context}{message}")
-    elif level == "debug":
-        logger.debug(f"{context}{message}")
 
 def get_dynamodb_resource():
     """Get DynamoDB resource based on environment"""
@@ -73,48 +42,6 @@ def is_local_dynamodb():
     # If neither environment variable is set, assume local
     return True
 
-class CapacityTracker:
-    def __init__(self):
-        self.read_units = 0
-        self.write_units = 0
-        self._start_time = time.time()
-        self.is_local = is_local_dynamodb()
-    
-    def add_consumed_capacity(self, capacity):
-        if self.is_local:
-            # Estimate capacity units for local development
-            # Read: 1 unit per 4KB, Write: 1 unit per 1KB
-            if hasattr(self, '_last_operation'):
-                if self._last_operation == 'read':
-                    # Rough estimation: assume each item is about 1KB
-                    self.read_units += (len(self._last_items) * 1.0) / 4.0
-                elif self._last_operation == 'write':
-                    # Each write costs at least 1 WCU
-                    self.write_units += len(self._last_items) * 1.0
-        else:
-            if capacity:
-                self.read_units += capacity.get('ReadCapacityUnits', 0)
-                self.write_units += capacity.get('WriteCapacityUnits', 0)
-    
-    def track_operation(self, operation_type, items):
-        self._last_operation = operation_type
-        self._last_items = items
-        self.add_consumed_capacity(None)  # Trigger estimation for local mode
-    
-    def log_consumption(self):
-        elapsed_time = time.time() - self._start_time
-        env_type = "Local" if self.is_local else "Production"
-        logger.info(f"DynamoDB Consumption ({env_type}, over {elapsed_time:.1f}s):")
-        logger.info(f"Total Read Capacity Units: {self.read_units:.2f}")
-        logger.info(f"Total Write Capacity Units: {self.write_units:.2f}")
-        logger.info(f"Average RCU/s: {self.read_units/elapsed_time:.2f}")
-        logger.info(f"Average WCU/s: {self.write_units/elapsed_time:.2f}")
-        if self.is_local:
-            logger.info("Note: Local consumption is estimated based on item counts and sizes")
-
-# Global capacity tracker
-capacity_tracker = CapacityTracker()
-
 def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
     """Batch get items with retry logic"""
     if not keys:
@@ -134,7 +61,7 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                         }
                     }
                 }
-                if not capacity_tracker.is_local:
+                if not is_local_dynamodb():
                     kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
                 response = table.meta.client.batch_get_item(**kwargs)
@@ -142,18 +69,18 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                 all_items.extend(items)
                 
                 # Track capacity
-                if capacity_tracker.is_local:
-                    capacity_tracker.track_operation('read', items)
+                if is_local_dynamodb():
+                    pass
                 else:
                     for cc in response.get('ConsumedCapacity', []):
-                        capacity_tracker.add_consumed_capacity(cc)
+                        pass
                     
                 break
             except Exception as e:
                 if retry == max_retries - 1:
                     raise
                 logger.info(f"Retry {retry + 1} for batch get")
-                time.sleep(0.1 * (retry + 1))  # Exponential backoff
+                # Exponential backoff
     return all_items
 
 def batch_write_with_retry(table, items, max_retries=3):
@@ -171,24 +98,24 @@ def batch_write_with_retry(table, items, max_retries=3):
                         table.name: [{'PutRequest': {'Item': item}} for item in chunk]
                     }
                 }
-                if not capacity_tracker.is_local:
+                if not is_local_dynamodb():
                     kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
                 response = table.meta.client.batch_write_item(**kwargs)
                 
                 # Track capacity
-                if capacity_tracker.is_local:
-                    capacity_tracker.track_operation('write', chunk)
+                if is_local_dynamodb():
+                    pass
                 else:
                     for cc in response.get('ConsumedCapacity', []):
-                        capacity_tracker.add_consumed_capacity(cc)
+                        pass
                     
                 break
             except Exception as e:
                 if retry == max_retries - 1:
                     raise
                 logger.info(f"Retry {retry + 1} for batch write")
-                time.sleep(0.1 * (retry + 1))  # Exponential backoff
+                # Exponential backoff
 
 def update_rating_histories(table, items_to_update, current_time):
     """Update rating histories for multiple items in batch"""
@@ -239,8 +166,8 @@ def process_player_batch(table, players, game_mode, server, current_time):
     """Process a batch of players"""
     # Get current data for all players in one batch
     keys = [{
-        'GameModeServerPlayer': f"{game_mode}-{server}-{p['PlayerName']}",
-        'GameModeServer': f"{game_mode}-{server}"
+        'GameModeServerPlayer': f"{game_mode}#{server}#{p['PlayerName'].lower()}",
+        'GameModeServer': f"{game_mode}#{server}"
     } for p in players]
     
     current_items = batch_get_with_retry(
@@ -258,8 +185,8 @@ def process_player_batch(table, players, game_mode, server, current_time):
     num_updates = 0
     
     for player in players:
-        gms_player = f"{game_mode}-{server}-{player['PlayerName']}"
-        gms = f"{game_mode}-{server}"
+        gms_player = f"{game_mode}#{server}#{player['PlayerName'].lower()}"  # Use # as separator and lowercase player name
+        gms = f"{game_mode}#{server}"
         current_item = current_map.get(gms_player)
         
         # Check if update needed
@@ -270,7 +197,7 @@ def process_player_batch(table, players, game_mode, server, current_time):
             update_item = {
                 'GameModeServerPlayer': gms_player,
                 'GameModeServer': gms,
-                'PlayerName': player['PlayerName'],
+                'PlayerName': player['PlayerName'].lower(),  # Store player name in lowercase
                 'GameMode': game_mode,
                 'Server': server,
                 'CurrentRank': player['Rank'],
@@ -363,21 +290,8 @@ def fetch_leaderboard_data(game_type: str, max_pages: int) -> dict:
     logger.info(f"Fetching {game_type} data...")
     return getLeaderboardSnapshot(game_type=game_type, max_pages=max_pages)
 
-@dataclass
-class LeaderboardTask:
-    """Represents a task to process a batch of players for a specific game mode and server"""
-    game_mode: str
-    server: str
-    players: List[Dict]
-    batch_size: int = 100  # Default batch size
-    priority: int = 0      # Higher priority = processed first
-
-    def __lt__(self, other):
-        # For priority queue ordering - higher priority first
-        return self.priority > other.priority
-
-def create_tasks(leaderboard_data: Dict[str, Dict[str, List[Dict]]]) -> List[LeaderboardTask]:
-    """Create tasks from leaderboard data with appropriate priorities"""
+def create_tasks(leaderboard_data: Dict[str, Dict[str, List[Dict]]]) -> List[Dict]:
+    """Create tasks from leaderboard data"""
     tasks = []
     
     for game_mode, server_data in leaderboard_data.items():
@@ -391,114 +305,47 @@ def create_tasks(leaderboard_data: Dict[str, Dict[str, List[Dict]]]) -> List[Lea
                     "Rating": stats["rating"]
                 })
             
-            # Set priority based on batch size
-            priority = len(players)
-            
             # Split into batches of 100 players
             for i in range(0, len(players), 100):
                 batch = players[i:i + 100]
-                tasks.append(LeaderboardTask(
-                    game_mode=game_mode,
-                    server=server,
-                    players=batch,
-                    priority=priority
-                ))
+                tasks.append({
+                    "game_mode": game_mode,
+                    "server": server,
+                    "players": batch
+                })
     
-    # Sort tasks by priority (larger batches first)
-    tasks.sort(reverse=True)
     return tasks
 
 def process_leaderboards(table, leaderboard_data: Dict[str, Dict[str, List[Dict]]], current_time: int) -> Dict[str, int]:
-    """Process all leaderboards using dynamic task allocation"""
-    # Create prioritized tasks
-    tasks = create_tasks(leaderboard_data)
-    
-    # Create task queue
-    task_queue = Queue()
-    for task in tasks:
-        task_queue.put(task)
-    
-    # Calculate optimal number of threads
-    total_players = sum(
-        len(data.get(game_mode, {}))
-        for game_mode, server_data in leaderboard_data.items()
-        for server, data in server_data.items()
-    )
-    num_threads = min(
-        max(4, total_players // 500),  # At least 4 threads, 1 thread per 500 players
-        16  # Maximum threads
-    )
-    
-    log_with_context("info", f"Processing {total_players} players using {num_threads} threads")
-    
-    # Create thread pool and process tasks
-    updates_by_thread = {}
-    with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        futures = [
-            executor.submit(worker, task_queue, table, current_time)
-            for _ in range(num_threads)
-        ]
-        
-        # Wait for all tasks to complete and collect results
-        for future in futures:
-            try:
-                thread_updates = future.result()
-                for key, count in thread_updates.items():
-                    updates_by_thread[key] = updates_by_thread.get(key, 0) + count
-            except Exception as e:
-                log_with_context("error", f"Thread failed: {str(e)}")
-                raise
-    
-    # Log completion for each game mode and server
-    for key, count in updates_by_thread.items():
-        log_with_context("info", f"[{key}] Completed processing with {count} updates")
-    
-    return updates_by_thread
-
-def worker(task_queue: Queue, table, current_time: int) -> Dict[str, int]:
-    """Worker function to process tasks from the queue"""
+    """Process all leaderboards sequentially"""
     updates = {}
-    thread_id = threading.get_ident()
     
-    while True:
-        try:
-            task = task_queue.get_nowait()
-        except:
-            break
+    for game_mode, server_data in leaderboard_data.items():
+        # Convert game mode to database format
+        mode_num = "0" if game_mode == "battlegrounds" else "1"
+        for server, data in server_data.items():
+            # Convert dictionary to list of player data
+            players = []
+            for player_name, stats in data.get(game_mode, {}).items():
+                players.append({
+                    "PlayerName": player_name,
+                    "Rank": stats["rank"],
+                    "Rating": stats["rating"]
+                })
             
-        try:
-            set_thread_context(f"{task.game_mode}-{task.server}")
-            
-            # Process the batch
-            num_updates = process_player_batch(
-                table,
-                task.players,
-                task.game_mode,
-                task.server,
-                current_time
-            )
-            
-            # Record updates
-            key = f"{task.game_mode}-{task.server}"
-            updates[key] = updates.get(key, 0) + num_updates
-            
-            log_with_context("info", f"Thread {thread_id} completed batch with {num_updates} updates")
-            
-        except Exception as e:
-            log_with_context("error", f"Error processing batch: {str(e)}")
-            raise
-        finally:
-            task_queue.task_done()
+            # Process in batches of 100
+            for i in range(0, len(players), 100):
+                batch = players[i:i + 100]
+                num_updates = process_player_batch(table, batch, mode_num, server, current_time)
+                key = f"{mode_num}#{server}"  # Use # as separator for consistency
+                updates[key] = updates.get(key, 0) + num_updates
+                logger.info(f"[{key}] Processed batch with {num_updates} updates")
     
     return updates
 
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
-        # Reset capacity tracker
-        global capacity_tracker
-        capacity_tracker = CapacityTracker()
-        
         # Get max_pages from event or use default (40 pages = 1000 players)
         max_pages = event.get("max_pages", 40) if event else 40
         
@@ -508,31 +355,19 @@ def lambda_handler(event, context):
         # Get current timestamp
         current_time = int(datetime.now(timezone.utc).timestamp())
         
-        # Fetch leaderboard data concurrently
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            log_with_context("info", "Fetching battlegrounds data...")
-            log_with_context("info", "Fetching battlegroundsduo data...")
-            
-            futures = {
-                executor.submit(fetch_leaderboard_data, "battlegrounds", max_pages): "battlegrounds",
-                executor.submit(fetch_leaderboard_data, "battlegroundsduo", max_pages): "battlegroundsduo"
-            }
-            
-            # Collect results
-            leaderboard_data = {}
-            for future in as_completed(futures):
-                game_type = futures[future]
-                try:
-                    leaderboard_data[game_type] = future.result()
-                except Exception as e:
-                    log_with_context("error", f"Error fetching {game_type} data: {str(e)}")
-                    raise
+        # Fetch leaderboard data sequentially
+        logger.info("Fetching battlegrounds data...")
+        bg_data = fetch_leaderboard_data("battlegrounds", max_pages)
+        logger.info("Fetching battlegroundsduo data...")
+        duo_data = fetch_leaderboard_data("battlegroundsduo", max_pages)
         
-        # Process all leaderboards with dynamic task allocation
+        leaderboard_data = {
+            "battlegrounds": bg_data,
+            "battlegroundsduo": duo_data
+        }
+        
+        # Process all leaderboards
         updates = process_leaderboards(table, leaderboard_data, current_time)
-        
-        # Log consumption at the end
-        capacity_tracker.log_consumption()
         
         return {
             "statusCode": 200,
@@ -543,9 +378,6 @@ def lambda_handler(event, context):
         }
         
     except Exception as e:
-        # Log consumption even on error
-        capacity_tracker.log_consumption()
-        
         logger.error(f"Error updating leaderboard data: {str(e)}")
         return {
             "statusCode": 500,
@@ -554,13 +386,5 @@ def lambda_handler(event, context):
             })
         }
 
-def main():
-    """Main function for local execution"""
-    event = {
-        "game_modes": ["0", "1"],
-        "servers": ["NA", "EU", "AP"]
-    }
-    lambda_handler(event, None)
-
 if __name__ == "__main__":
-    main()
+    lambda_handler(None, None)
