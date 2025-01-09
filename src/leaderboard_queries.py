@@ -81,6 +81,9 @@ class LeaderboardDB:
             self.useTestTimestamp = True
             # This is a fixed timestamp that is used for test_leaderboard_queries
             self.testTimestamp = datetime(2024, 12, 31, 12, 0, 0, tzinfo=timezone.utc)
+        else:
+            self.useTestTimestamp = False
+            self.testTimestamp = None
 
         # Load aliases
         self.aliases = self._load_aliases()
@@ -238,7 +241,14 @@ class LeaderboardDB:
             last_entry_before_cutoff = None
 
             for h in history:
-                timestamp = int(float(h[1]))
+                # Support both old list format and new dict format
+                if isinstance(h, dict):
+                    timestamp = int(float(h['Timestamp']))
+                    rating = h['Rating']
+                else:
+                    timestamp = int(float(h[1]))
+                    rating = h[0]
+                    
                 entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
 
                 if timestamp < cutoff:
@@ -302,35 +312,27 @@ class LeaderboardDB:
 
     def get_player_peak(self, player_name, server=None, game_mode="0", hours=None):
         """Get player's peak rating within time window. If hours is None, get all-time peak"""
-        player_name = self._resolve_name(player_name, server, game_mode)
-        # First get current stats to find server if not provided
-        if not server:
-            stats = self.get_player_stats(player_name, game_mode=game_mode)
-            if not stats:
-                return None
-            server = stats["Server"]
-
-        game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
-        response = self.table.query(
-            KeyConditionExpression="GameModeServerPlayer = :gmsp",
-            ExpressionAttributeValues={":gmsp": game_mode_server_player},
-        )
-
-        if not response.get("Items"):
-            return None
-
-        # Get full history or filtered by time window
-        history = response["Items"][0].get("RatingHistory", [])
-        if hours:
-            current_time = datetime.now(timezone.utc) if not self.useTestTimestamp else self.testTimestamp
-            cutoff = int((current_time - timedelta(hours=hours)).timestamp())
-            history = [h for h in history if int(float(h[1])) >= cutoff]
-
+        history = self.get_player_history(player_name, server, game_mode, hours=hours)
         if not history:
             return None
 
-        peak = max(history, key=lambda x: int(x[0]))
-        return {"rating": int(peak[0]), "timestamp": int(float(peak[1]))}
+        peak_rating = float('-inf')
+        peak_timestamp = None
+
+        for entry in history:
+            # Support both old list format and new dict format
+            if isinstance(entry, dict):
+                rating = entry['Rating']
+                timestamp = int(float(entry['Timestamp']))
+            else:
+                rating = entry[0]
+                timestamp = int(float(entry[1]))
+
+            if rating > peak_rating:
+                peak_rating = rating
+                peak_timestamp = timestamp
+
+        return {"rating": peak_rating, "timestamp": peak_timestamp} if peak_rating != float('-inf') else None
 
     def get_region_stats(self, server, game_mode="0"):
         """Get region statistics (avg rating, player count, etc)"""
@@ -419,109 +421,75 @@ class LeaderboardDB:
         """
         Fetch and format stats for a player in the given time range.
         """
-        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
         if error:
             return error
 
-        history = self.get_player_history(player_name, server, game_mode, hours=24, start_time=start_timestamp)
+        # Get player's history and current stats
+        history = self.get_player_history(player_name, server, game_mode)
         stats = self.get_player_stats(player_name, server, game_mode)
-
-        if not stats:
-            return f"{player_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards."
-
+        
+        logger.info(f"History: {history}")
+        logger.info(f"Stats: {stats}")
+        
         if not history:
-            return self._format_no_games_response(player_name, stats)
+            return f"{player_name} has no games played on {server}."
 
-        # Sort history by timestamp (if not already sorted)
-        history = sorted(history, key=lambda x: int(float(x[1])))
-
-        # Initialize variables
-        last_entry_before_range = None
-        filtered_history = []  # Properly initialize the list
-
-        # Determine the last entry before the range and filter the history
-        for entry in history:
-            timestamp = int(float(entry[1]))
-            if timestamp < start_timestamp:
-                last_entry_before_range = entry  # Keep track of the last entry before the range
-            elif start_timestamp <= timestamp <= end_timestamp:
-                filtered_history.append(entry)
-
-        if not filtered_history:
-            return self._format_no_games_response(player_name, None)
-
-        # Determine starting_rating
-        starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
-
-        # Calculate deltas
-        deltas = []
-        for i, entry in enumerate(filtered_history):
-            rating = int(entry[0])
-            if i == 0:
-                # First delta uses starting_rating if set, else compares with the same value
-                delta = rating - (starting_rating if starting_rating is not None else rating)
-            else:
-                delta = rating - int(filtered_history[i - 1][0])
-            deltas.append(delta)
-
-        # Calculate total change
-        total_change = int(filtered_history[-1][0]) - starting_rating
-
-        # Format response
-        games_played = len(filtered_history)
-        changes_str = ", ".join(f"{'+' if delta > 0 else ''}{delta}" for delta in deltas)
-        progression = f"{'climbed' if total_change > 0 else 'fell'} from {starting_rating} to {filtered_history[-1][0]} ({total_change:+})"
-        if not server:
-            # Use the server from the player's stats if available
-            stats = self.get_player_stats(player_name, game_mode=game_mode)
-            server = stats["Server"] if stats else "Unknown"
-        else:
-            server = server.upper()
-
-        # Check for duplicate names
-        dup_count = self.get_duplicate_names_count(player_name, game_mode)
-        dup_msg = self._format_duplicate_names_message(player_name, dup_count, game_mode)
-
-        return (
-            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}{dup_msg}"
-        )
-
-    def get_starting_rating(self, player_history, start_timestamp):
-        """
-        Determine the starting rating for a given time range.
-        - Uses the last entry before the range if available.
-        - Otherwise, defaults to the first entry in the range.
-
-        Args:
-            player_history: List of history entries (rating, timestamp).
-            start_timestamp: Start of the time range.
-
-        Returns:
-            starting_rating, adjusted_history: The determined starting rating and the filtered history.
-        """
-        last_entry_before_range = None
+        # Convert timestamps to ints for comparison
         filtered_history = []
+        for entry in history:
+            try:
+                # Handle DynamoDB format
+                if isinstance(entry, dict):
+                    if 'M' in entry:  # Raw DynamoDB format
+                        timestamp = int(float(entry['M']['Timestamp']['N']))
+                        rating = int(entry['M']['Rating']['N'])
+                    else:  # Deserialized format
+                        timestamp = int(float(entry['Timestamp']))
+                        rating = int(entry['Rating'])
+                else:  # List format
+                    timestamp = int(float(entry[1]))
+                    rating = int(entry[0])
 
-        for entry in player_history:
-            rating, timestamp = int(entry[0]), int(float(entry[1]))
-            if timestamp < start_timestamp:
-                last_entry_before_range = entry
-            elif timestamp >= start_timestamp:
-                filtered_history.append(entry)
+                if start_timestamp <= timestamp <= end_timestamp:
+                    filtered_history.append([rating, timestamp])
+                    logger.info(f"Added entry to filtered history: rating={rating}, timestamp={timestamp}")
+            except (KeyError, IndexError) as e:
+                logger.error(f"Error processing history entry {entry}: {e}")
+                continue
 
-        if last_entry_before_range:
-            starting_rating = int(last_entry_before_range[0])
-        elif filtered_history:
-            starting_rating = int(filtered_history[0][0])
-        else:
-            # No valid entries at all; return None or appropriate defaults
-            return None, []
+        logger.info(f"Filtered history: {filtered_history}")
+        
+        # If no games in period but player exists, show current rank and rating
+        if not filtered_history and stats:
+            logger.info("No filtered history but stats exist - returning no games played message")
+            return f"{player_name} is rank {stats['CurrentRank']} in {server} at {stats['LatestRating']} with no games played in this time period"
 
-        # Ensure the first delta isn't zero by skipping duplicates
-        if last_entry_before_range and filtered_history and last_entry_before_range[0] == filtered_history[0][0]:
-            filtered_history = filtered_history[1:]
+        # Calculate games played (number of rating changes) and rating change
+        # Number of games is one less than number of entries since each game creates a new rating
+        games_played = max(0, len(filtered_history) - 1)
+        if games_played == 0:
+            if stats:
+                logger.info(f"No games played - rank={stats['CurrentRank']}, rating={stats['LatestRating']}")
+                return f"{player_name} is rank {stats['CurrentRank']} in {server} at {stats['LatestRating']} with no games played"
+            return f"{player_name} has no games played in this time period on {server}."
 
-        return starting_rating, filtered_history
+        starting_rating = filtered_history[0][0]
+        current_rating = filtered_history[-1][0]
+        rating_change = current_rating - starting_rating
+        sign = "+" if rating_change >= 0 else ""
+        
+        # Format response
+        if stats:
+            logger.info(f"Returning stats with games - rank={stats['CurrentRank']}, rating={current_rating}, change={rating_change}, games={games_played}")
+            games_str = f" over {games_played} games" if games_played > 0 else " with no games played"
+            return f"{player_name} is rank {stats['CurrentRank']} in {server} at {current_rating} ({sign}{rating_change}){games_str}"
+        
+        logger.info(f"Returning stats without rank - rating={current_rating}, change={rating_change}, games={games_played}")
+        games_str = f" over {games_played} games" if games_played > 0 else " with no games played"
+        return f"{player_name} on {server}: {current_rating} ({sign}{rating_change}){games_str}"
 
     def format_daily_stats(self, player_or_rank, server=None, game_mode="0"):
         player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
@@ -535,7 +503,7 @@ class LeaderboardDB:
 
         # Infer the server if not provided
         if not server:
-            server = self.get_most_recent_server(resolved_name, game_mode)
+            server = self.get_most_recent_server(player_name, game_mode)
             if not server:
                 return f"{resolved_name} is not on any{' duo' if game_mode == '1' else ''} BG leaderboards."
 
@@ -554,8 +522,14 @@ class LeaderboardDB:
         recent_activity = {}
         for region in VALID_SERVERS:
             history = self.get_player_history(player_name, region, game_mode)
-            if history:
-                recent_activity[region] = int(float(history[-1][1]))  # Use the last timestamp
+            if history and history[-1]:  # Check if history exists and has entries
+                last_entry = history[-1]
+                # Support both old list format and new dict format
+                if isinstance(last_entry, dict):
+                    timestamp = int(float(last_entry['Timestamp']))
+                else:
+                    timestamp = int(float(last_entry[1]))
+                recent_activity[region] = timestamp
 
         if recent_activity:
             return max(recent_activity, key=recent_activity.get)  # Server with the most recent activity
@@ -566,7 +540,9 @@ class LeaderboardDB:
         Format peak stats for a player in chat-ready format.
         """
         # Resolve rank or name and determine server
-        player_name, server, error = self._handle_rank_or_name(player_or_rank, server, game_mode)
+        player_name, server, error = self._handle_rank_or_name(
+            player_or_rank, server, game_mode
+        )
         if error:
             return error
 
@@ -1212,3 +1188,51 @@ class LeaderboardDB:
         utc_time = datetime.fromtimestamp(timestamp, pytz.UTC)
         la_time = utc_time.astimezone(la_tz)
         return la_time.strftime("%b %d, %Y")
+
+    def get_starting_rating(self, history, start_timestamp):
+        """Get the starting rating and filtered history for a given time period.
+        
+        Args:
+            history: List of rating history entries
+            start_timestamp: Start of time period to look at
+            
+        Returns:
+            Tuple of (starting_rating, filtered_history) or (None, None) if no valid entries
+        """
+        if not history:
+            return None, None
+            
+        # Find the last entry before start_timestamp
+        last_before = None
+        filtered = []
+        
+        for entry in history:
+            if isinstance(entry, dict):
+                timestamp = int(float(entry['Timestamp']))
+                rating = entry['Rating']
+            else:
+                timestamp = int(float(entry[1]))
+                rating = entry[0]
+                
+            if timestamp < start_timestamp:
+                last_before = entry
+            else:
+                filtered.append(entry)
+                
+        if not filtered:
+            return None, None
+            
+        # Use the last entry before start_timestamp as starting point
+        # If none exists, use the first entry in filtered
+        if last_before:
+            if isinstance(last_before, dict):
+                starting_rating = last_before['Rating']
+            else:
+                starting_rating = last_before[0]
+        else:
+            if isinstance(filtered[0], dict):
+                starting_rating = filtered[0]['Rating']
+            else:
+                starting_rating = filtered[0][0]
+                
+        return starting_rating, filtered

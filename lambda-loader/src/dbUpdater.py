@@ -139,12 +139,28 @@ def update_rating_histories(table, items_to_update, current_time):
         gms_player = item['GameModeServerPlayer']
         current_history = history_map.get(gms_player, [])
         
-        # Add new rating to history
-        new_history = current_history[-99:] if current_history else []  # Keep last 99 entries
-        new_history.append({
-            'Rating': item['LatestRating'],
-            'Timestamp': current_time
-        })
+        # Convert current history if it's in the new format
+        clean_history = []
+        for h in current_history:
+            if isinstance(h, dict):
+                if 'M' in h:  # New DynamoDB format
+                    clean_history.append([
+                        int(h['M']['Rating']['N']),
+                        int(h['M']['Timestamp']['N'])
+                    ])
+                else:  # Our Python dict format
+                    clean_history.append([
+                        int(h['Rating']),
+                        int(h['Timestamp'])
+                    ])
+            else:  # Old list format
+                clean_history.append([int(h[0]), int(h[1])])
+        
+        # Add new entry to history (no more 99 entry limit)
+        clean_history.append([
+            int(item['LatestRating']),
+            int(current_time)
+        ])
         
         # Create update item
         update_item = {
@@ -155,7 +171,7 @@ def update_rating_histories(table, items_to_update, current_time):
             'Server': item['Server'],
             'CurrentRank': item['CurrentRank'],
             'LatestRating': item['LatestRating'],
-            'RatingHistory': new_history
+            'RatingHistory': clean_history
         }
         updates.append(update_item)
     
