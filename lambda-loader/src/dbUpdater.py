@@ -130,25 +130,11 @@ def update_rating_histories(table, items_to_update, current_time):
     if not items_to_update:
         return
         
-    # Get all histories in one batch
-    keys = [{
-        'GameModeServerPlayer': item['GameModeServerPlayer'],
-        'GameModeServer': item['GameModeServer']
-    } for item in items_to_update]
-    
-    # Get all fields to ensure we have complete history
-    histories = batch_get_with_retry(table, keys, 'GameModeServerPlayer, GameModeServer, PlayerName, GameMode, Server, CurrentRank, LatestRating, RatingHistory')
-    logger.info(f"Retrieved {len(histories)} histories from DynamoDB")
-    
-    # Create a map for quick lookup
-    history_map = {item['GameModeServerPlayer']: item.get('RatingHistory', []) for item in histories}
-    logger.info(f"History map keys: {list(history_map.keys())}")
-    
     # Prepare all updates
     updates = []
     for item in items_to_update:
         gms_player = item['GameModeServerPlayer']
-        current_history = history_map.get(gms_player, [])
+        current_history = item.get('RatingHistory', [])
         logger.info(f"Processing {gms_player}")
         logger.info(f"Current history length: {len(current_history)}")
         logger.info(f"Current history: {current_history[:2]}...{current_history[-2:] if len(current_history) > 2 else []}")
@@ -173,30 +159,33 @@ def update_rating_histories(table, items_to_update, current_time):
         logger.info(f"Clean history length: {len(clean_history)}")
         logger.info(f"Clean history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
         
-        # Add new entry to history
-        clean_history.append([
-            int(item['LatestRating']),
-            int(current_time)
-        ])
-        
-        logger.info(f"Final history length: {len(clean_history)}")
-        logger.info(f"Final history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
-        
-        # Create update item
-        update_item = {
-            'GameModeServerPlayer': gms_player,
-            'GameModeServer': item['GameModeServer'],
-            'PlayerName': item['PlayerName'],
-            'GameMode': item['GameMode'],
-            'Server': item['Server'],
-            'CurrentRank': item['CurrentRank'],
-            'LatestRating': item['LatestRating'],
-            'RatingHistory': clean_history
-        }
-        updates.append(update_item)
+        # Only add new entry if rating changed
+        latest_entry = clean_history[-1] if clean_history else None
+        if not latest_entry or latest_entry[0] != int(item['LatestRating']):
+            clean_history.append([
+                int(item['LatestRating']),
+                int(current_time)
+            ])
+            
+            logger.info(f"Final history length: {len(clean_history)}")
+            logger.info(f"Final history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
+            
+            # Create update item
+            update_item = {
+                'GameModeServerPlayer': gms_player,
+                'GameModeServer': item['GameModeServer'],
+                'PlayerName': item['PlayerName'],
+                'GameMode': item['GameMode'],
+                'Server': item['Server'],
+                'CurrentRank': item['CurrentRank'],
+                'LatestRating': item['LatestRating'],
+                'RatingHistory': clean_history
+            }
+            updates.append(update_item)
     
     # Write all updates in one batch
-    batch_write_with_retry(table, updates)
+    if updates:
+        batch_write_with_retry(table, updates)
 
 def process_player_batch(table, players, game_mode, server, current_time):
     """Process a batch of players"""
@@ -206,10 +195,11 @@ def process_player_batch(table, players, game_mode, server, current_time):
         'GameModeServer': f"{game_mode}#{server}"
     } for p in players]
     
+    # First batch read: Get current data without rating history
     current_items = batch_get_with_retry(
         table, 
         keys,
-        'GameModeServerPlayer, CurrentRank, LatestRating, RatingHistory'
+        'GameModeServerPlayer, CurrentRank, LatestRating'
     )
     
     # Create a map for quick lookup
@@ -240,8 +230,25 @@ def process_player_batch(table, players, game_mode, server, current_time):
                 'LatestRating': player['Rating']
             }
             updates_needed.append(update_item)
-            rating_history_needed.append(update_item)
+            rating_history_needed.append({
+                'GameModeServerPlayer': gms_player,
+                'GameModeServer': gms
+            })
             num_updates += 1
+    
+    # Second batch read: Get rating histories only for items that need updates
+    if rating_history_needed:
+        history_items = batch_get_with_retry(
+            table,
+            rating_history_needed,
+            'GameModeServerPlayer, RatingHistory'
+        )
+        history_map = {item['GameModeServerPlayer']: item.get('RatingHistory', []) for item in history_items}
+        
+        # Update the updates_needed items with their histories
+        for item in updates_needed:
+            gms_player = item['GameModeServerPlayer']
+            item['RatingHistory'] = history_map.get(gms_player, [])
     
     # Batch write updates
     if updates_needed:
@@ -249,7 +256,7 @@ def process_player_batch(table, players, game_mode, server, current_time):
     
     # Update rating histories in batch
     if rating_history_needed:
-        update_rating_histories(table, rating_history_needed, current_time)
+        update_rating_histories(table, updates_needed, current_time)
     
     return num_updates
 
