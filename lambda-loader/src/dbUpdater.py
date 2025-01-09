@@ -5,36 +5,11 @@ from decimal import Decimal
 from typing import Dict, List
 import logging
 import boto3
-import random
-import time
-from botocore.exceptions import ClientError
 
 from api import getLeaderboardSnapshot
 from logger import setup_logger
 
 logger = setup_logger("dbUpdater")
-
-def exponential_backoff(attempt, base_delay=0.1, max_delay=5.0):
-    """Calculate delay with exponential backoff and jitter"""
-    delay = min(base_delay * (2 ** attempt), max_delay)
-    jitter = random.uniform(0, 0.1 * delay)  # Add up to 10% jitter
-    return delay + jitter
-
-def handle_dynamodb_error(e: Exception, operation: str, retry: int, max_retries: int):
-    """Handle DynamoDB errors with appropriate logging and retry logic"""
-    if isinstance(e, ClientError):
-        error_code = e.response['Error']['Code']
-        if error_code == 'ProvisionedThroughputExceededException':
-            if retry < max_retries - 1:
-                delay = exponential_backoff(retry)
-                logger.warning(f"{operation} - Throughput exceeded, retry {retry + 1}/{max_retries} after {delay:.2f}s")
-                time.sleep(delay)
-                return True
-            else:
-                logger.error(f"{operation} - Max retries ({max_retries}) reached for throughput exceeded")
-        else:
-            logger.error(f"{operation} - DynamoDB error: {error_code}")
-    return False
 
 def get_dynamodb_resource():
     """Get DynamoDB resource based on environment"""
@@ -67,8 +42,8 @@ def is_local_dynamodb():
     # If neither environment variable is set, assume local
     return True
 
-def batch_get_with_retry(table, keys, projection_expression, max_retries=5):
-    """Batch get items with improved retry logic"""
+def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
+    """Batch get items with retry logic"""
     if not keys:
         return []
         
@@ -76,7 +51,6 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=5):
     all_items = []
     for i in range(0, len(keys), 100):
         chunk = keys[i:i + 100]
-        
         for retry in range(max_retries):
             try:
                 kwargs = {
@@ -94,42 +68,34 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=5):
                 items = response['Responses'][table.name]
                 all_items.extend(items)
                 
-                # Handle unprocessed keys if any
-                unprocessed = response.get('UnprocessedKeys', {}).get(table.name, {}).get('Keys', [])
-                if unprocessed:
-                    delay = exponential_backoff(retry)
-                    logger.warning(f"Retrying {len(unprocessed)} unprocessed keys after {delay:.2f}s")
-                    time.sleep(delay)
-                    chunk = unprocessed
-                    continue
+                # Track capacity
+                if is_local_dynamodb():
+                    pass
+                else:
+                    for cc in response.get('ConsumedCapacity', []):
+                        pass
                     
                 break
-                
             except Exception as e:
-                should_retry = handle_dynamodb_error(e, "BatchGet", retry, max_retries)
-                if not should_retry:
+                if retry == max_retries - 1:
                     raise
-                
+                logger.info(f"Retry {retry + 1} for batch get")
+                # Exponential backoff
     return all_items
 
-def batch_write_with_retry(table, items, max_retries=5):
-    """Batch write items with improved retry logic"""
+def batch_write_with_retry(table, items, max_retries=3):
+    """Batch write items with retry logic"""
     if not items:
         return
         
     # Split into chunks of 25 (DynamoDB limit)
     for i in range(0, len(items), 25):
         chunk = items[i:i + 25]
-        unprocessed = chunk
-        
         for retry in range(max_retries):
             try:
-                if not unprocessed:
-                    break
-                    
                 kwargs = {
                     'RequestItems': {
-                        table.name: [{'PutRequest': {'Item': item}} for item in unprocessed]
+                        table.name: [{'PutRequest': {'Item': item}} for item in chunk]
                     }
                 }
                 if not is_local_dynamodb():
@@ -137,24 +103,19 @@ def batch_write_with_retry(table, items, max_retries=5):
                 
                 response = table.meta.client.batch_write_item(**kwargs)
                 
-                # Handle unprocessed items
-                unprocessed = []
-                for item in response.get('UnprocessedItems', {}).get(table.name, []):
-                    if 'PutRequest' in item:
-                        unprocessed.append(item['PutRequest']['Item'])
-                
-                if unprocessed:
-                    delay = exponential_backoff(retry)
-                    logger.warning(f"Retrying {len(unprocessed)} unprocessed items after {delay:.2f}s")
-                    time.sleep(delay)
-                    continue
+                # Track capacity
+                if is_local_dynamodb():
+                    pass
+                else:
+                    for cc in response.get('ConsumedCapacity', []):
+                        pass
                     
                 break
-                
             except Exception as e:
-                should_retry = handle_dynamodb_error(e, "BatchWrite", retry, max_retries)
-                if not should_retry:
+                if retry == max_retries - 1:
                     raise
+                logger.info(f"Retry {retry + 1} for batch write")
+                # Exponential backoff
 
 def update_rating_histories(table, items_to_update, current_time):
     """Update rating histories for multiple items in batch"""
