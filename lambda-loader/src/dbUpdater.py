@@ -2,14 +2,220 @@ import json
 import os
 from datetime import datetime, timezone
 from decimal import Decimal
-
+from typing import Dict, List
+import logging
 import boto3
-from api import getLeaderboardSnapshot
 
+from api import getLeaderboardSnapshot
 from logger import setup_logger
 
 logger = setup_logger("dbUpdater")
 
+def get_dynamodb_resource():
+    """Get DynamoDB resource based on environment"""
+    if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return boto3.resource("dynamodb", region_name="us-east-1")
+    else:
+        return boto3.resource(
+            "dynamodb",
+            endpoint_url="http://localhost:8000",
+            region_name="us-west-2",
+            aws_access_key_id="dummy",
+            aws_secret_access_key="dummy"
+        )
+
+def get_table_name():
+    """Get the DynamoDB table name based on environment"""
+    if os.environ.get('AWS_SAM_LOCAL') == 'true':
+        return "lambda-test-table"
+    elif os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        return "HearthstoneLeaderboardV2"
+    else:
+        return "lambda-test-table"
+
+def is_local_dynamodb():
+    """Check if we're using local DynamoDB"""
+    if os.environ.get('AWS_SAM_LOCAL') == 'true':
+        return True
+    if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        return False
+    # If neither environment variable is set, assume local
+    return True
+
+def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
+    """Batch get items with retry logic"""
+    if not keys:
+        return []
+        
+    # Split into chunks of 100 (DynamoDB limit)
+    all_items = []
+    for i in range(0, len(keys), 100):
+        chunk = keys[i:i + 100]
+        for retry in range(max_retries):
+            try:
+                kwargs = {
+                    'RequestItems': {
+                        table.name: {
+                            'Keys': chunk,
+                            'ProjectionExpression': projection_expression
+                        }
+                    }
+                }
+                if not is_local_dynamodb():
+                    kwargs['ReturnConsumedCapacity'] = 'TOTAL'
+                
+                response = table.meta.client.batch_get_item(**kwargs)
+                items = response['Responses'][table.name]
+                all_items.extend(items)
+                
+                # Track capacity
+                if is_local_dynamodb():
+                    pass
+                else:
+                    for cc in response.get('ConsumedCapacity', []):
+                        pass
+                    
+                break
+            except Exception as e:
+                if retry == max_retries - 1:
+                    raise
+                logger.info(f"Retry {retry + 1} for batch get")
+                # Exponential backoff
+    return all_items
+
+def batch_write_with_retry(table, items, max_retries=3):
+    """Batch write items with retry logic"""
+    if not items:
+        return
+        
+    # Split into chunks of 25 (DynamoDB limit)
+    for i in range(0, len(items), 25):
+        chunk = items[i:i + 25]
+        for retry in range(max_retries):
+            try:
+                kwargs = {
+                    'RequestItems': {
+                        table.name: [{'PutRequest': {'Item': item}} for item in chunk]
+                    }
+                }
+                if not is_local_dynamodb():
+                    kwargs['ReturnConsumedCapacity'] = 'TOTAL'
+                
+                response = table.meta.client.batch_write_item(**kwargs)
+                
+                # Track capacity
+                if is_local_dynamodb():
+                    pass
+                else:
+                    for cc in response.get('ConsumedCapacity', []):
+                        pass
+                    
+                break
+            except Exception as e:
+                if retry == max_retries - 1:
+                    raise
+                logger.info(f"Retry {retry + 1} for batch write")
+                # Exponential backoff
+
+def update_rating_histories(table, items_to_update, current_time):
+    """Update rating histories for multiple items in batch"""
+    if not items_to_update:
+        return
+        
+    # Get all histories in one batch
+    keys = [{
+        'GameModeServerPlayer': item['GameModeServerPlayer'],
+        'GameModeServer': item['GameModeServer']
+    } for item in items_to_update]
+    
+    histories = batch_get_with_retry(table, keys, 'GameModeServerPlayer, RatingHistory')
+    
+    # Create a map for quick lookup
+    history_map = {item['GameModeServerPlayer']: item.get('RatingHistory', []) for item in histories}
+    
+    # Prepare all updates
+    updates = []
+    for item in items_to_update:
+        gms_player = item['GameModeServerPlayer']
+        current_history = history_map.get(gms_player, [])
+        
+        # Add new rating to history
+        new_history = current_history[-99:] if current_history else []  # Keep last 99 entries
+        new_history.append({
+            'Rating': item['LatestRating'],
+            'Timestamp': current_time
+        })
+        
+        # Create update item
+        update_item = {
+            'GameModeServerPlayer': gms_player,
+            'GameModeServer': item['GameModeServer'],
+            'PlayerName': item['PlayerName'],
+            'GameMode': item['GameMode'],
+            'Server': item['Server'],
+            'CurrentRank': item['CurrentRank'],
+            'LatestRating': item['LatestRating'],
+            'RatingHistory': new_history
+        }
+        updates.append(update_item)
+    
+    # Write all updates in one batch
+    batch_write_with_retry(table, updates)
+
+def process_player_batch(table, players, game_mode, server, current_time):
+    """Process a batch of players"""
+    # Get current data for all players in one batch
+    keys = [{
+        'GameModeServerPlayer': f"{game_mode}#{server}#{p['PlayerName'].lower()}",
+        'GameModeServer': f"{game_mode}#{server}"
+    } for p in players]
+    
+    current_items = batch_get_with_retry(
+        table, 
+        keys,
+        'GameModeServerPlayer, CurrentRank, LatestRating'
+    )
+    
+    # Create a map for quick lookup
+    current_map = {item['GameModeServerPlayer']: item for item in current_items}
+    
+    # Prepare updates
+    updates_needed = []
+    rating_history_needed = []
+    num_updates = 0
+    
+    for player in players:
+        gms_player = f"{game_mode}#{server}#{player['PlayerName'].lower()}"  # Use # as separator and lowercase player name
+        gms = f"{game_mode}#{server}"
+        current_item = current_map.get(gms_player)
+        
+        # Check if update needed
+        if not current_item or (
+            current_item.get('CurrentRank') != player['Rank'] or 
+            current_item.get('LatestRating') != player['Rating']
+        ):
+            update_item = {
+                'GameModeServerPlayer': gms_player,
+                'GameModeServer': gms,
+                'PlayerName': player['PlayerName'].lower(),  # Store player name in lowercase
+                'GameMode': game_mode,
+                'Server': server,
+                'CurrentRank': player['Rank'],
+                'LatestRating': player['Rating']
+            }
+            updates_needed.append(update_item)
+            rating_history_needed.append(update_item)
+            num_updates += 1
+    
+    # Batch write updates
+    if updates_needed:
+        batch_write_with_retry(table, updates_needed)
+    
+    # Update rating histories in batch
+    if rating_history_needed:
+        update_rating_histories(table, rating_history_needed, current_time)
+    
+    return num_updates
 
 def check_milestones(player_name, rating, game_mode, server, table):
     """Check if player has reached a new milestone"""
@@ -74,137 +280,97 @@ def check_milestones(player_name, rating, game_mode, server, table):
     except Exception as e:
         logger.error(f"Error checking milestones: {str(e)}")
 
+def get_milestone_table_name():
+    """Get milestone table name based on environment"""
+    if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return os.environ.get("MILESTONE_TABLE_NAME", "MilestoneTracking")
+    else:
+        return "lambda-test-milestone-table"
+
+def fetch_leaderboard_data(game_type: str, max_pages: int) -> dict:
+    """Fetch leaderboard data for a specific game type"""
+    logger.info(f"Fetching {game_type} data...")
+    return getLeaderboardSnapshot(game_type=game_type, max_pages=max_pages)
+
+def create_tasks(leaderboard_data: Dict[str, Dict[str, List[Dict]]]) -> List[Dict]:
+    """Create tasks from leaderboard data"""
+    tasks = []
+    
+    for game_mode, server_data in leaderboard_data.items():
+        for server, data in server_data.items():
+            # Convert dictionary to list of player data
+            players = []
+            for player_name, stats in data.get(game_mode, {}).items():
+                players.append({
+                    "PlayerName": player_name,
+                    "Rank": stats["rank"],
+                    "Rating": stats["rating"]
+                })
+            
+            # Split into batches of 100 players
+            for i in range(0, len(players), 100):
+                batch = players[i:i + 100]
+                tasks.append({
+                    "game_mode": game_mode,
+                    "server": server,
+                    "players": batch
+                })
+    
+    return tasks
+
+def process_leaderboards(table, leaderboard_data: Dict[str, Dict[str, List[Dict]]], current_time: int) -> Dict[str, int]:
+    """Process all leaderboards sequentially"""
+    updates = {}
+    
+    for game_mode, server_data in leaderboard_data.items():
+        # Convert game mode to database format
+        mode_num = "0" if game_mode == "battlegrounds" else "1"
+        for server, data in server_data.items():
+            # Convert dictionary to list of player data
+            players = []
+            for player_name, stats in data.get(game_mode, {}).items():
+                players.append({
+                    "PlayerName": player_name,
+                    "Rank": stats["rank"],
+                    "Rating": stats["rating"]
+                })
+            
+            # Process in batches of 100
+            for i in range(0, len(players), 100):
+                batch = players[i:i + 100]
+                num_updates = process_player_batch(table, batch, mode_num, server, current_time)
+                key = f"{mode_num}#{server}"  # Use # as separator for consistency
+                updates[key] = updates.get(key, 0) + num_updates
+                logger.info(f"[{key}] Processed batch with {num_updates} updates")
+    
+    return updates
 
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
-        logger.info("Starting leaderboard fetch")
-
         # Get max_pages from event or use default (40 pages = 1000 players)
-        max_pages = event.get("max_pages", 40)
-
-        # Get DynamoDB table
-        table_name = os.environ["TABLE_NAME"]
-
-        # Initialize DynamoDB client
-        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-        table = dynamodb.Table(table_name)
-
-        # Get leaderboard data for both game modes
-        bg_data = getLeaderboardSnapshot(game_type="battlegrounds", max_pages=max_pages)
-        duo_data = getLeaderboardSnapshot(
-            game_type="battlegroundsduo", max_pages=max_pages
-        )
-
-        def update_player_data(player_name, rank, rating, game_mode, server, table):
-            """Update a player's data in DynamoDB"""
-            try:
-                # Normalize server name
-                server_mapping = {"US": "NA", "EU": "EU", "AP": "AP"}
-                server = server_mapping.get(server, server)
-
-                # Create composite keys
-                game_mode_server_player = f"{game_mode}#{server}#{player_name.lower()}"
-                game_mode_server = f"{game_mode}#{server}"
-
-                # Step 1: Fetch only CurrentRank and LatestRating
-                response = table.get_item(
-                    Key={
-                        "GameModeServerPlayer": game_mode_server_player,
-                        "GameModeServer": game_mode_server,
-                    },
-                    ProjectionExpression="CurrentRank, LatestRating"
-                )
-
-                # Extract current values or create new entry
-                item = response.get("Item", None)
-                current_rating = item.get("LatestRating") if item else None
-                current_rank = item.get("CurrentRank") if item else None
-
-                # Step 2: Determine if an update is needed
-                current_time = int(datetime.now(timezone.utc).timestamp())
-                rating_decimal = Decimal(str(rating))
-                rank_decimal = Decimal(str(rank))
-
-                should_update = (
-                    not current_rating or
-                    current_rating != rating_decimal or
-                    current_rank != rank_decimal
-                )
-
-                if not item:
-                    # Create new player entry
-                    new_item = {
-                        "GameModeServerPlayer": game_mode_server_player,
-                        "GameModeServer": game_mode_server,
-                        "PlayerName": player_name.lower(),
-                        "GameMode": game_mode,
-                        "Server": server,
-                        "CurrentRank": rank_decimal,
-                        "LatestRating": rating_decimal,
-                        "RatingHistory": [[rating_decimal, current_time]],
-                    }
-                    table.put_item(Item=new_item)
-                    logger.info(f"New player added: {player_name} with rating {rating} and rank {rank}")
-                elif should_update:
-                    # Update existing player entry
-                    update_expression = "SET CurrentRank = :new_rank, LatestRating = :new_rating"
-                    expression_attribute_values = {
-                        ":new_rank": rank_decimal,
-                        ":new_rating": rating_decimal,
-                    }
-
-                    if current_rating != rating_decimal:
-                        update_expression += ", RatingHistory = list_append(if_not_exists(RatingHistory, :empty_list), :new_history)"
-                        expression_attribute_values.update({
-                            ":empty_list": [],
-                            ":new_history": [[rating_decimal, current_time]],
-                        })
-
-                    table.update_item(
-                        Key={
-                            "GameModeServerPlayer": game_mode_server_player,
-                            "GameModeServer": game_mode_server,
-                        },
-                        UpdateExpression=update_expression,
-                        ExpressionAttributeValues=expression_attribute_values,
-                    )
-                    logger.info(f"Updated player {player_name}: {rating} (rank {rank})")
-
-                # Check milestones for rank 1 player regardless of update
-                if rank == 1:
-                    logger.info(
-                        f"Found rank 1 player: {player_name} ({rating}) in {server}"
-                    )
-                    check_milestones(player_name, rating, game_mode, server, table)
-
-                return should_update or not item
-
-            except Exception as e:
-                logger.error(f"Error updating player {player_name}: {e}")
-                return False
-
-        # Process updates for each game mode
-        updates = {"battlegrounds": 0, "battlegroundsduo": 0}
-
-        for game_type, data in [
-            ("battlegrounds", bg_data),
-            ("battlegroundsduo", duo_data),
-        ]:
-            mode_num = "0" if game_type == "battlegrounds" else "1"
-            for server, server_data in data.items():
-                for mode, players in server_data.items():
-                    for player_name, stats in players.items():
-                        if update_player_data(
-                            player_name=player_name,
-                            rank=stats["rank"],
-                            rating=stats["rating"],
-                            game_mode=mode_num,
-                            server=server,
-                            table=table,
-                        ):
-                            updates[game_type] += 1
-
+        max_pages = event.get("max_pages", 40) if event else 40
+        
+        # Initialize DynamoDB
+        table = get_dynamodb_resource().Table(get_table_name())
+        
+        # Get current timestamp
+        current_time = int(datetime.now(timezone.utc).timestamp())
+        
+        # Fetch leaderboard data sequentially
+        logger.info("Fetching battlegrounds data...")
+        bg_data = fetch_leaderboard_data("battlegrounds", max_pages)
+        logger.info("Fetching battlegroundsduo data...")
+        duo_data = fetch_leaderboard_data("battlegroundsduo", max_pages)
+        
+        leaderboard_data = {
+            "battlegrounds": bg_data,
+            "battlegroundsduo": duo_data
+        }
+        
+        # Process all leaderboards
+        updates = process_leaderboards(table, leaderboard_data, current_time)
+        
         return {
             "statusCode": 200,
             "body": json.dumps(
@@ -216,8 +382,11 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        logger.error(f"Error updating leaderboard data: {str(e)}")
         return {
             "statusCode": 500,
             "body": json.dumps({"error": f"Error updating leaderboard data: {str(e)}"}),
         }
+
+if __name__ == "__main__":
+    lambda_handler(None, None)
