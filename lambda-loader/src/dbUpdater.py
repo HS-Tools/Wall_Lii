@@ -64,7 +64,10 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                 if not is_local_dynamodb():
                     kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
+                logger.info(f"Batch get request: {kwargs}")
                 response = table.meta.client.batch_get_item(**kwargs)
+                logger.info(f"Batch get response: {response}")
+                
                 items = response['Responses'][table.name]
                 all_items.extend(items)
                 
@@ -77,10 +80,15 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                     
                 break
             except Exception as e:
+                logger.error(f"Error in batch get: {e}")
                 if retry == max_retries - 1:
                     raise
                 logger.info(f"Retry {retry + 1} for batch get")
                 # Exponential backoff
+    
+    logger.info(f"Total items retrieved: {len(all_items)}")
+    if all_items:
+        logger.info(f"Sample item: {all_items[0]}")
     return all_items
 
 def batch_write_with_retry(table, items, max_retries=3):
@@ -128,16 +136,22 @@ def update_rating_histories(table, items_to_update, current_time):
         'GameModeServer': item['GameModeServer']
     } for item in items_to_update]
     
-    histories = batch_get_with_retry(table, keys, 'GameModeServerPlayer, RatingHistory')
+    # Get all fields to ensure we have complete history
+    histories = batch_get_with_retry(table, keys, 'GameModeServerPlayer, GameModeServer, PlayerName, GameMode, Server, CurrentRank, LatestRating, RatingHistory')
+    logger.info(f"Retrieved {len(histories)} histories from DynamoDB")
     
     # Create a map for quick lookup
     history_map = {item['GameModeServerPlayer']: item.get('RatingHistory', []) for item in histories}
+    logger.info(f"History map keys: {list(history_map.keys())}")
     
     # Prepare all updates
     updates = []
     for item in items_to_update:
         gms_player = item['GameModeServerPlayer']
         current_history = history_map.get(gms_player, [])
+        logger.info(f"Processing {gms_player}")
+        logger.info(f"Current history length: {len(current_history)}")
+        logger.info(f"Current history: {current_history[:2]}...{current_history[-2:] if len(current_history) > 2 else []}")
         
         # Convert current history if it's in the new format
         clean_history = []
@@ -156,11 +170,17 @@ def update_rating_histories(table, items_to_update, current_time):
             else:  # Old list format
                 clean_history.append([int(h[0]), int(h[1])])
         
-        # Add new entry to history (no more 99 entry limit)
+        logger.info(f"Clean history length: {len(clean_history)}")
+        logger.info(f"Clean history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
+        
+        # Add new entry to history
         clean_history.append([
             int(item['LatestRating']),
             int(current_time)
         ])
+        
+        logger.info(f"Final history length: {len(clean_history)}")
+        logger.info(f"Final history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
         
         # Create update item
         update_item = {
@@ -189,7 +209,7 @@ def process_player_batch(table, players, game_mode, server, current_time):
     current_items = batch_get_with_retry(
         table, 
         keys,
-        'GameModeServerPlayer, CurrentRank, LatestRating'
+        'GameModeServerPlayer, CurrentRank, LatestRating, RatingHistory'
     )
     
     # Create a map for quick lookup
