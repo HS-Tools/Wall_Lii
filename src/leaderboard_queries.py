@@ -240,7 +240,6 @@ class LeaderboardDB:
             last_entry_before_cutoff = None
 
             for h in history:
-                print("sdfdsafs ", h)
                 timestamp = int(float(h[1]))
                 entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
 
@@ -465,13 +464,15 @@ class LeaderboardDB:
                 delta = rating - (starting_rating if starting_rating is not None else rating)
             else:
                 delta = rating - int(filtered_history[i - 1][0])
-            deltas.append(delta)
+
+            if delta != 0:
+                deltas.append(delta)
 
         # Calculate total change
         total_change = int(filtered_history[-1][0]) - starting_rating
 
         # Format response
-        games_played = len(filtered_history)
+        games_played = len(filtered_history) - 1
         changes_str = ", ".join(f"{'+' if delta > 0 else ''}{delta}" for delta in deltas)
         progression = f"{'climbed' if total_change > 0 else 'fell'} from {starting_rating} to {filtered_history[-1][0]} ({total_change:+})"
         if not server:
@@ -486,7 +487,7 @@ class LeaderboardDB:
         dup_msg = self._format_duplicate_names_message(player_name, dup_count, game_mode)
 
         return (
-            f"{player_name} {progression} in {server} over {games_played} games: {changes_str}{dup_msg}"
+            f"{player_name} {progression} in {server} over {games_played} game{'s' if games_played > 1 else ''}: {changes_str}{dup_msg}"
         )
 
     def get_starting_rating(self, player_history, start_timestamp):
@@ -494,6 +495,7 @@ class LeaderboardDB:
         Determine the starting rating for a given time range.
         - Uses the last entry before the range if available.
         - Otherwise, defaults to the first entry in the range.
+        - Handles duplicate ratings at period boundaries to avoid redundant entries.
 
         Args:
             player_history: List of history entries (rating, timestamp).
@@ -504,25 +506,30 @@ class LeaderboardDB:
         """
         last_entry_before_range = None
         filtered_history = []
+        current_rating = None
 
-        for entry in player_history:
+        # Sort history by timestamp to ensure proper ordering
+        sorted_history = sorted(player_history, key=lambda x: int(float(x[1])))
+
+        for entry in sorted_history:
             rating, timestamp = int(entry[0]), int(float(entry[1]))
+            
             if timestamp < start_timestamp:
                 last_entry_before_range = entry
+                current_rating = rating
             elif timestamp >= start_timestamp:
-                filtered_history.append(entry)
+                # Only add entry if it represents a rating change
+                if current_rating is None or rating != current_rating:
+                    filtered_history.append(entry)
+                    current_rating = rating
 
+        # Determine starting rating
         if last_entry_before_range:
             starting_rating = int(last_entry_before_range[0])
         elif filtered_history:
             starting_rating = int(filtered_history[0][0])
         else:
-            # No valid entries at all; return None or appropriate defaults
             return None, []
-
-        # Ensure the first delta isn't zero by skipping duplicates
-        if last_entry_before_range and filtered_history and last_entry_before_range[0] == filtered_history[0][0]:
-            filtered_history = filtered_history[1:]
 
         return starting_rating, filtered_history
 
@@ -827,6 +834,15 @@ class LeaderboardDB:
         starting_rating = last_valid_rating if last_valid_rating is not None else int(history[0][0])
         logger.info(f"Final starting rating: {starting_rating}")
 
+        # Remove adjacent duplicate ratings from each day's entries
+        for day in range(len(daily_entries)):
+            if daily_entries[day]:
+                filtered_entries = [daily_entries[day][0]]  # Keep the first entry
+                for entry in daily_entries[day][1:]:
+                    if entry != filtered_entries[-1]:  # Compare ratings
+                        filtered_entries.append(entry)
+                daily_entries[day] = filtered_entries
+
         # Calculate daily deltas with proper carry-over for starting ratings
         logger.info("Calculating daily deltas...")
         for day, entries in enumerate(daily_entries):
@@ -852,16 +868,6 @@ class LeaderboardDB:
         day_names = ["M", "T", "W", "Th", "F", "Sa", "Su"]
         changes_str = ", ".join(f"{day}: {'+' if delta > 0 else ''}{delta}" for day, delta in zip(day_names, daily_deltas))
 
-        # Stats fallback if missing
-        stats = self.get_player_stats(resolved_name, server, game_mode)
-        if not stats:
-            stats = {
-                "CurrentRank": 0,
-                "LatestRating": current_rating,
-                "Server": server or "Unknown",
-                "PlayerName": resolved_name,
-            }
-
         # Determine climb or fall wording and emote
         action = "climbed" if total_change > 0 else "fell"
         emote = "liiHappyCat" if total_change > 0 else "liiCat"
@@ -869,8 +875,8 @@ class LeaderboardDB:
         # Build the response
         return (
             f"{resolved_name} {action} from {starting_rating} to {current_rating} "
-            f"({'+' if total_change > 0 else ''}{total_change}) in {stats['Server']} "
-            f"over {games_played} games: {changes_str} {emote}"
+            f"({'+' if total_change > 0 else ''}{total_change}) in {server} "
+            f"over {games_played} game{'s' if games_played > 1 else ''}: {changes_str} {emote}"
         )
 
     def format_last_week_stats(self, player_or_rank, server=None, game_mode="0"):
@@ -946,6 +952,15 @@ class LeaderboardDB:
         starting_rating = last_valid_rating if last_valid_rating is not None else int(history[0][0])
         logger.info(f"Final starting rating for last week: {starting_rating}")
 
+        # Remove adjacent duplicate ratings from each day's entries
+        for day in range(len(daily_entries)):
+            if daily_entries[day]:
+                filtered_entries = [daily_entries[day][0]]  # Keep the first entry
+                for entry in daily_entries[day][1:]:
+                    if entry != filtered_entries[-1]:  # Compare ratings
+                        filtered_entries.append(entry)
+                daily_entries[day] = filtered_entries
+
         # Calculate daily deltas with proper carry-over for starting ratings
         logger.info("Calculating last week's daily deltas...")
         for day, entries in enumerate(daily_entries):
@@ -964,6 +979,13 @@ class LeaderboardDB:
         games_played = sum(len(entries[1:]) for entries in daily_entries)  # Skip the starting rating for each day
         total_change = sum(daily_deltas)
 
+        # If no games were played, return the no games response
+        if games_played == 0:
+            stats = self.get_player_stats(resolved_name, server, game_mode)
+            if not stats:
+                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
+            return self._format_no_games_response(resolved_name, stats, " last week")
+
         # Determine the final rating at the end of last week
         final_rating = daily_entries[-1][-1] if daily_entries[-1] else starting_rating + total_change
 
@@ -979,7 +1001,7 @@ class LeaderboardDB:
         return (
             f"{resolved_name} {action} from {starting_rating} to {final_rating} "
             f"({'+' if total_change > 0 else ''}{total_change}) in {server} "
-            f"over {games_played} games last week: {changes_str} {emote}"
+            f"over {games_played} game{'s' if games_played > 1 else ''} last week: {changes_str} {emote}"
         )
 
     def format_milestone_stats(self, rating_threshold, server=None, game_mode="0"):
