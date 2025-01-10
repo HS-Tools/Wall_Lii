@@ -95,15 +95,23 @@ def batch_write_with_retry(table, items, max_retries=3):
     """Batch write items with retry logic"""
     if not items:
         return
+
+    import time
         
     # Split into chunks of 25 (DynamoDB limit)
     for i in range(0, len(items), 25):
         chunk = items[i:i + 25]
+        unprocessed_items = [{'PutRequest': {'Item': item}} for item in chunk]
+        backoff = 1  # Start with 1 second backoff
+        
         for retry in range(max_retries):
+            if not unprocessed_items:
+                break
+                
             try:
                 kwargs = {
                     'RequestItems': {
-                        table.name: [{'PutRequest': {'Item': item}} for item in chunk]
+                        table.name: unprocessed_items
                     }
                 }
                 if not is_local_dynamodb():
@@ -111,19 +119,27 @@ def batch_write_with_retry(table, items, max_retries=3):
                 
                 response = table.meta.client.batch_write_item(**kwargs)
                 
+                # Handle unprocessed items
+                unprocessed_items = response.get('UnprocessedItems', {}).get(table.name, [])
+                if unprocessed_items:
+                    logger.warning(f"Got {len(unprocessed_items)} unprocessed items, will retry")
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2, 32)  # Exponential backoff, max 32 seconds
+                
                 # Track capacity
                 if is_local_dynamodb():
                     pass
                 else:
                     for cc in response.get('ConsumedCapacity', []):
-                        pass
+                        logger.info(f"Consumed capacity: {cc}")
                     
-                break
             except Exception as e:
+                logger.error(f"Error in batch write: {e}")
                 if retry == max_retries - 1:
                     raise
+                time.sleep(backoff)
+                backoff = min(backoff * 2, 32)  # Exponential backoff, max 32 seconds
                 logger.info(f"Retry {retry + 1} for batch write")
-                # Exponential backoff
 
 def update_rating_histories(table, items_to_update, current_time):
     """Update rating histories for multiple items in batch. Each history entry is [rating, timestamp] where both values are Decimals for DynamoDB compatibility."""
