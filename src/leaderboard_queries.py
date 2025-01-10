@@ -449,7 +449,7 @@ class LeaderboardDB:
             elif start_timestamp <= timestamp <= end_timestamp:
                 filtered_history.append(entry)
 
-        if not filtered_history:
+        if not filtered_history or len(filtered_history) < 2:
             return self._format_no_games_response(player_name, None)
 
         # Determine starting_rating
