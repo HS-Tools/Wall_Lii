@@ -81,6 +81,8 @@ class LeaderboardDB:
             self.useTestTimestamp = True
             # This is a fixed timestamp that is used for test_leaderboard_queries
             self.testTimestamp = datetime(2024, 12, 31, 12, 0, 0, tzinfo=timezone.utc)
+        else:
+            self.useTestTimestamp = False
 
         # Load aliases
         self.aliases = self._load_aliases()
@@ -238,6 +240,7 @@ class LeaderboardDB:
             last_entry_before_cutoff = None
 
             for h in history:
+                print("sdfdsafs ", h)
                 timestamp = int(float(h[1]))
                 entry_time_la = datetime.fromtimestamp(timestamp, timezone.utc).astimezone(la_tz)
 

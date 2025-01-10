@@ -126,7 +126,7 @@ def batch_write_with_retry(table, items, max_retries=3):
                 # Exponential backoff
 
 def update_rating_histories(table, items_to_update, current_time):
-    """Update rating histories for multiple items in batch"""
+    """Update rating histories for multiple items in batch. Each history entry is [rating, timestamp] where both values are Decimals for DynamoDB compatibility."""
     if not items_to_update:
         return
         
@@ -136,39 +136,14 @@ def update_rating_histories(table, items_to_update, current_time):
         gms_player = item['GameModeServerPlayer']
         current_history = item.get('RatingHistory', [])
         logger.info(f"Processing {gms_player}")
-        logger.info(f"Current history length: {len(current_history)}")
-        logger.info(f"Current history: {current_history[:2]}...{current_history[-2:] if len(current_history) > 2 else []}")
-        
-        # Convert current history if it's in the new format
-        clean_history = []
-        for h in current_history:
-            if isinstance(h, dict):
-                if 'M' in h:  # New DynamoDB format
-                    clean_history.append([
-                        int(h['M']['Rating']['N']),
-                        int(h['M']['Timestamp']['N'])
-                    ])
-                else:  # Our Python dict format
-                    clean_history.append([
-                        int(h['Rating']),
-                        int(h['Timestamp'])
-                    ])
-            else:  # Old list format
-                clean_history.append([int(h[0]), int(h[1])])
-        
-        logger.info(f"Clean history length: {len(clean_history)}")
-        logger.info(f"Clean history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
         
         # Only add new entry if rating changed
-        latest_entry = clean_history[-1] if clean_history else None
-        if not latest_entry or latest_entry[0] != int(item['LatestRating']):
-            clean_history.append([
-                int(item['LatestRating']),
-                int(current_time)
-            ])
-            
-            logger.info(f"Final history length: {len(clean_history)}")
-            logger.info(f"Final history: {clean_history[:2]}...{clean_history[-2:] if len(clean_history) > 2 else []}")
+        latest_entry = current_history[-1] if current_history else None
+        current_rating = Decimal(str(item['LatestRating']))
+        current_timestamp = Decimal(str(current_time))
+        
+        if not latest_entry or latest_entry[0] != current_rating:
+            current_history.append([current_rating, current_timestamp])
             
             # Create update item
             update_item = {
@@ -178,8 +153,8 @@ def update_rating_histories(table, items_to_update, current_time):
                 'GameMode': item['GameMode'],
                 'Server': item['Server'],
                 'CurrentRank': item['CurrentRank'],
-                'LatestRating': item['LatestRating'],
-                'RatingHistory': clean_history
+                'LatestRating': current_rating,
+                'RatingHistory': current_history
             }
             updates.append(update_item)
     
