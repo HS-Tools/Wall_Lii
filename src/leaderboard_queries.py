@@ -454,6 +454,7 @@ class LeaderboardDB:
 
         # Determine starting_rating
         starting_rating = int(last_entry_before_range[0]) if last_entry_before_range else int(filtered_history[0][0])
+        starting_timestamp = int(float(last_entry_before_range[1])) if last_entry_before_range else int(float(filtered_history[0][1]))
 
         # Calculate deltas
         deltas = []
@@ -472,7 +473,11 @@ class LeaderboardDB:
         total_change = int(filtered_history[-1][0]) - starting_rating
 
         # Format response
-        games_played = len(filtered_history) - 1
+        # If starting_timestamp is from today, count it in games_played
+        if starting_timestamp >= start_timestamp:
+            games_played = len(filtered_history) - 1
+        else:
+            games_played = len(filtered_history)
         changes_str = ", ".join(f"{'+' if delta > 0 else ''}{delta}" for delta in deltas)
         progression = f"{'climbed' if total_change > 0 else 'fell'} from {starting_rating} to {filtered_history[-1][0]} ({total_change:+})"
         if not server:
