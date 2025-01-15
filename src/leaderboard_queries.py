@@ -778,17 +778,16 @@ class LeaderboardDB:
             return error
 
         resolved_name = self._resolve_name(player_name, server, game_mode)
-
-        if not resolved_name:
-            return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
-
         stats = self.get_player_stats(resolved_name, server, game_mode)
+
+        if not resolved_name or not stats:
+            return f"{resolved_name} is not on {'any' if not server else server} BG{' duo' if game_mode == '1' else ''} leaderboards"
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG {' duo' if game_mode == '1' else ''} leaderboards."
+                return f"{resolved_name} is not on {'any' if not server else server} BG{' duo' if game_mode == '1' else ''} leaderboards"
 
         monday_midnight_timestamp = self.get_la_monday_midnight()
 
@@ -797,8 +796,6 @@ class LeaderboardDB:
             resolved_name, server, game_mode, start_time=monday_midnight_timestamp - (24 * 60 * 60)
         )
 
-        if not history or len(history) == 1:
-            return self._format_no_games_response(resolved_name, stats, " this week")
         logger.info(f"Weekly stats for {resolved_name} in {server}:")
         logger.info(f"Monday midnight timestamp: {monday_midnight_timestamp}")
         logger.info(f"History entries count: {len(history) if history else 0}")
@@ -900,17 +897,16 @@ class LeaderboardDB:
             return error
 
         resolved_name = self._resolve_name(player_name, server, game_mode)
-
-        if not resolved_name:
-            return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
-
         stats = self.get_player_stats(resolved_name, server, game_mode)
+
+        if not resolved_name or stats is None:
+            return f"{resolved_name} is not on {'any' if not server else server} BG{' duo' if game_mode == '1' else ''} leaderboards"
 
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
             if not server:
-                return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
+                return f"{resolved_name} is not on {'any' if not server else server} BG{' duo' if game_mode == '1' else ''} leaderboards"
 
         # Get timestamps for last week's Monday and this week's Monday
         this_monday_midnight = self.get_la_monday_midnight()
@@ -920,12 +916,6 @@ class LeaderboardDB:
         history = self.get_player_history(
             resolved_name, server, game_mode, start_time=last_monday_midnight - (24 * 60 * 60)
         )
-
-        if not history or len(history) == 1:
-            stats = self.get_player_stats(resolved_name, server, game_mode)
-            if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
-            return self._format_no_games_response(resolved_name, stats, " last week")
 
         # Initialize variables
         daily_deltas = [0] * 7
