@@ -64,9 +64,7 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                 if not is_local_dynamodb():
                     kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
-                logger.info(f"Batch get request: {kwargs}")
                 response = table.meta.client.batch_get_item(**kwargs)
-                logger.info(f"Batch get response: {response}")
                 
                 items = response['Responses'][table.name]
                 all_items.extend(items)
@@ -87,8 +85,7 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                 # Exponential backoff
     
     logger.info(f"Total items retrieved: {len(all_items)}")
-    if all_items:
-        logger.info(f"Sample item: {all_items[0]}")
+
     return all_items
 
 def batch_write_with_retry(table, items, max_retries=3):
@@ -151,7 +148,6 @@ def update_rating_histories(table, items_to_update, current_time):
     for item in items_to_update:
         gms_player = item['GameModeServerPlayer']
         current_history = item.get('RatingHistory', [])
-        logger.info(f"Processing {gms_player}")
         
         # Only add new entry if rating changed
         latest_entry = current_history[-1] if current_history else None

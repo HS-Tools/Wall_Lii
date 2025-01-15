@@ -12,7 +12,7 @@ Resources:
       BillingMode: PROVISIONED
       ProvisionedThroughput:
         ReadCapacityUnits: 23
-        WriteCapacityUnits: 11
+        WriteCapacityUnits: 10
       AttributeDefinitions:
         - AttributeName: GameModeServerPlayer
           AttributeType: S
@@ -37,10 +37,13 @@ Resources:
             - AttributeName: CurrentRank
               KeyType: RANGE
           Projection:
-            ProjectionType: ALL
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - PlayerName
+              - LatestRating
           ProvisionedThroughput:
             ReadCapacityUnits: 1
-            WriteCapacityUnits: 12
+            WriteCapacityUnits: 10
         - IndexName: PlayerLookupIndex
           KeySchema:
             - AttributeName: PlayerName
@@ -48,10 +51,14 @@ Resources:
             - AttributeName: GameMode
               KeyType: RANGE
           Projection:
-            ProjectionType: ALL
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - Server
+              - CurrentRank
+              - LatestRating
           ProvisionedThroughput:
             ReadCapacityUnits: 1
-            WriteCapacityUnits: 2
+            WriteCapacityUnits: 5
 
   MilestoneTable:
     Type: AWS::DynamoDB::Table
