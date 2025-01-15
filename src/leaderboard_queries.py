@@ -782,6 +782,8 @@ class LeaderboardDB:
         if not resolved_name:
             return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
 
+        stats = self.get_player_stats(resolved_name, server, game_mode)
+
         # Infer the server if not provided
         if not server:
             server = self.get_most_recent_server(player_name, game_mode)
@@ -796,9 +798,6 @@ class LeaderboardDB:
         )
 
         if not history or len(history) == 1:
-            stats = self.get_player_stats(resolved_name, server, game_mode)
-            if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " this week")
         logger.info(f"Weekly stats for {resolved_name} in {server}:")
         logger.info(f"Monday midnight timestamp: {monday_midnight_timestamp}")
@@ -866,6 +865,9 @@ class LeaderboardDB:
         games_played = sum(len(entries[1:]) for entries in daily_entries)  # Skip the starting rating for each day
         total_change = sum(daily_deltas)
 
+        if games_played == 0:
+            return self._format_no_games_response(player_name, stats, " this week")
+
         # Determine the current rating at the end of the week
         current_rating = daily_entries[-1][-1] if daily_entries[-1] else starting_rating + total_change
 
@@ -901,6 +903,8 @@ class LeaderboardDB:
 
         if not resolved_name:
             return f"{resolved_name} is not on any BG{' duo' if game_mode == '1' else ''} leaderboards."
+
+        stats = self.get_player_stats(resolved_name, server, game_mode)
 
         # Infer the server if not provided
         if not server:
@@ -986,9 +990,6 @@ class LeaderboardDB:
 
         # If no games were played, return the no games response
         if games_played == 0:
-            stats = self.get_player_stats(resolved_name, server, game_mode)
-            if not stats:
-                return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
             return self._format_no_games_response(resolved_name, stats, " last week")
 
         # Determine the final rating at the end of last week
