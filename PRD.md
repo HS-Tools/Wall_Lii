@@ -4,7 +4,7 @@
 A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard statistics, including player rankings, MMR changes, and daily/weekly progress.
 ## Core Components
 ### 1. Data Collection (AWS Lambda)
-- Fetches leaderboard data every 2 minutes
+- Fetches leaderboard data every 5 minutes
 - Supports both game modes:
   - Regular Battlegrounds (mode: 0)
   - Battlegrounds Duo (mode: 1)
@@ -17,16 +17,42 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
   - Logs duplicate name occurrences
   - Ensures unique player keys in database
 ### 2. Data Storage (DynamoDB)
+#### Main Leaderboard Table (HearthstoneLeaderboardV2)
+- Provisioned Throughput:
+  - Base Table: 23 RCU, 11 WCU
 - Schema:
-  - Primary Key: GameModeServerPlayer (e.g., "0#NA#beterbabbit")
-  - GSI: RankLookupIndex (GameModeServer, CurrentRank)
-  - GSI: PlayerLookupIndex (PlayerName, GameMode)
-  - RatingHistory: Array of [rating, timestamp] pairs
-- MilestoneTracking
-  - Primary Key: SeasonGameModeServer (e.g., "14-0-NA")
+  - Partition Key: GameModeServerPlayer (e.g., "0#NA#beterbabbit")
+  - Sort Key: GameModeServer (e.g., "0#NA")
+  - GSI: RankLookupIndex
+    - Partition Key: GameModeServer
+    - Sort Key: CurrentRank
+    - Provisioned Throughput: 1 RCU, 12 WCU
+    - Projection: ALL
+  - GSI: PlayerLookupIndex
+    - Partition Key: PlayerName
+    - Sort Key: GameMode
+    - Provisioned Throughput: 1 RCU, 2 WCU
+    - Projection: ALL
+  - Attributes:
+    - RatingHistory: Array of [rating, timestamp] pairs
+    - CurrentRank: Number
+    - LatestRating: Number
+
+#### Milestone Table
+- Provisioned Throughput: 1 RCU, 1 WCU
+- Schema:
+  - Partition Key: SeasonGameModeServer (e.g., "14-0-NA")
   - Sort Key: Milestone (e.g., 8000)
-  - Attributes: PlayerName, Rating, Timestamp
-- player-alias-table
+  - Attributes:
+    - PlayerName: String
+    - Rating: Number
+    - Timestamp: Number
+
+#### Error Monitoring
+- CloudWatch alarms configured for Lambda errors
+- SNS notifications for error alerts
+
+#### player-alias-table
   - Stores player name aliases
   - Used for resolving alternative names
 ### 3. Bot Interface
@@ -56,7 +82,7 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
   - Example: "!bgrank" in channel "liihs" resolves to "!bgrank lii"
 ## Commands and Responses
 ### Player Stats
-1. `!bgrank <player|rank> [server]`
+1. `!bgrank/!duorank <player|rank> [server]`
    ```
    # Default channel lookup (no arguments)
    {default_player} is rank {rank} in {server} at {rating}
@@ -66,62 +92,126 @@ A Twitch chat bot that tracks real-time Hearthstone Battlegrounds leaderboard st
    {player} is rank {rank} in {server} at {rating}
    # Player lookup (multiple servers)
    {player} is rank {rank} in {server} at {rating} (also rank {rank2} {server2} at {rating2})
-   # Rank lookup
-2. `!bgdaily/!duodaily <player|rank> [server]`
-   # Default channel and alias lookups supported
+   ```
+
+2. `!bgdaily/!duodaily/!day/!duoday <player|rank> [server]`
+   ```
    # With games played
    {player} climbed/fell from {start_rating} to {current_rating} ({change}) in {server} over {games} games: [{changes}] liiHappyCat/liiCat
    # No games played
    {player} is rank {rank} in {server} at {rating} with 0 games played
-3. `!bgweekly/!duoweekly <player|rank> [server]`
+   ```
+
+3. `!yesterday/!bgyesterday/!duoyesterday/!yday/!duoyday <player|rank> [server]`
+   ```
+   # Shows player's stats from yesterday
+   {player} climbed/fell from {start_rating} to {current_rating} ({change}) in {server} over {games} games yesterday
+   ```
+
+4. `!bgweekly/!duoweekly/!week/!duoweek <player|rank> [server]`
+   ```
    {player} climbed/fell from {start_rating} to {current_rating} ({change}) in {server} over {games} games: [{daily_changes}] liiHappyCat/liiCat
    {player} is rank {rank} in {server} at {rating} with 0 games played this week
-4. `!peak <player|rank> [server]`
+   ```
+
+5. `!lastweek/!bglastweek/!duolastweek/!lweek/!duolweek <player|rank> [server]`
+   ```
+   {player} climbed/fell from {start_rating} to {current_rating} ({change}) in {server} over {games} games last week
+   ```
+
+6. `!peak/!duopeak <player|rank> [server]`
+   ```
    {player}'s peak rating in {server}: {rating}
+   ```
+
 ### Milestone Stats
-1. Rating Milestones (!8k through !18k)
-   - Track first player to reach each 1000-rating milestone (8000, 9000, etc.)
-   - Support server-specific queries (!8k na) and global queries (!8k)
-   - Show player name, server, and date of achievement
-   - Data Storage:
-     - Separate DynamoDB table for milestone tracking
-       Primary Key: SeasonId-GameMode-Server-Milestone (e.g., "1-0-NA-8000")
-       Attributes:
-         - PlayerName: First player to reach milestone
-         - Timestamp: When milestone was reached (UTC)
-         - Rating: Exact rating when milestone was reached
-   - Lambda Processing:
-     - Efficient Milestone Checking:
-       - Query highest milestone achieved for current season/server/game mode
-       - Only check top player's rating against next milestone
-       - Example: If highest milestone is 13000, only check top player for 14000
-     - Write new milestone record when:
-       - Top player's rating exceeds next milestone threshold
-       - No existing record for that milestone in current season
-     - Timestamps stored in UTC for consistency
-     - Track milestones per season/server/game mode
-     - Efficient querying without scanning main leaderboard table
-   - Example responses:
-     # Server specific
-     {player} was the first to reach {k}k in {server} on {date}
-     # Global (any server)
-     {player} was the first to reach {k}k (in {server}) on {date}
-     # Not reached
-     No one has reached {k}k in {server} yet!
-     No one has reached {k}k in any server yet!
+1. Rating Milestones (`!8k` through `!21k`)
+   ```
+   # Server specific
+   {player} was the first to reach {k}k in {server} on {date}
+   # Global (any server)
+   {player} was the first to reach {k}k (in {server}) on {date}
+   # Not reached
+   No one has reached {k}k in {server} yet!
+   No one has reached {k}k in any server yet!
+   ```
+
 ### Server Stats
-1. `!stats <server>`
+1. `!stats [server]`
+   ```
    {server} has {count} players with an average rating of {avg_rating}. The highest rating is {max_rating}
-2. `!top <server>`
+   ```
+
+2. `!bgtop [server]`
+   ```
    Top 5 {server}: 1. {player1} ({rating1}), 2. {player2} ({rating2})...
+   ```
+
+### Game Information
+1. `!buddy <hero>`
+   ```
+   Shows buddy information for specified hero
+   ```
+
+2. `!goldenbuddy <hero>`
+   ```
+   Shows golden buddy information for specified hero
+   ```
+
+3. `!trinket <name>`
+   ```
+   Shows trinket information
+   ```
+
+4. `!buddygold`
+   ```
+   Shows gold cost for buddy tiers
+   ```
+
+5. `!curves`
+   ```
+   Links to BGcurvesheet.com for hero curves
+   ```
+
+6. `!gold <amount>`
+   ```
+   Calculates the turn when a quest requiring X gold will be completed
+   ```
+
+### Utility Commands
+1. `!help [command]`
+   ```
+   Shows help information for commands
+   ```
+
+2. `!patch`
+   ```
+   Shows link to latest patch notes
+   ```
+
+### Special Commands
+1. `!bgdailii`
+   ```
+   Shows daily stats for liihs
+   ```
+
+2. `!weeklii`
+   ```
+   Shows weekly stats for liihs
+   ```
+
 ### Error Responses
+```
 # Invalid server
 Invalid server: {server}. Valid servers are: NA, EU, AP
+
 # Player not found
 {player} is not on any BG leaderboards
+
 # Rank lookup errors
 Server is required for rank lookup
 No player found at rank {rank} in {server}
+```
 ## Data Rules
 1. Rating Updates
    - Store new rating if changed and 60+ seconds since last update
