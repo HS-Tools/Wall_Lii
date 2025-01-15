@@ -61,20 +61,11 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                         }
                     }
                 }
-                if not is_local_dynamodb():
-                    kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
                 response = table.meta.client.batch_get_item(**kwargs)
                 
                 items = response['Responses'][table.name]
                 all_items.extend(items)
-                
-                # Track capacity
-                if is_local_dynamodb():
-                    pass
-                else:
-                    for cc in response.get('ConsumedCapacity', []):
-                        pass
                     
                 break
             except Exception as e:
@@ -83,8 +74,6 @@ def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
                     raise
                 logger.info(f"Retry {retry + 1} for batch get")
                 # Exponential backoff
-    
-    logger.info(f"Total items retrieved: {len(all_items)}")
 
     return all_items
 
@@ -111,8 +100,6 @@ def batch_write_with_retry(table, items, max_retries=3):
                         table.name: unprocessed_items
                     }
                 }
-                if not is_local_dynamodb():
-                    kwargs['ReturnConsumedCapacity'] = 'TOTAL'
                 
                 response = table.meta.client.batch_write_item(**kwargs)
                 
@@ -122,14 +109,7 @@ def batch_write_with_retry(table, items, max_retries=3):
                     logger.warning(f"Got {len(unprocessed_items)} unprocessed items, will retry")
                     time.sleep(backoff)
                     backoff = min(backoff * 2, 32)  # Exponential backoff, max 32 seconds
-                
-                # Track capacity
-                if is_local_dynamodb():
-                    pass
-                else:
-                    for cc in response.get('ConsumedCapacity', []):
-                        logger.info(f"Consumed capacity: {cc}")
-                    
+
             except Exception as e:
                 logger.error(f"Error in batch write: {e}")
                 if retry == max_retries - 1:
@@ -319,7 +299,6 @@ def get_milestone_table_name():
 
 def fetch_leaderboard_data(game_type: str, max_pages: int) -> dict:
     """Fetch leaderboard data for a specific game type"""
-    logger.info(f"Fetching {game_type} data...")
     return getLeaderboardSnapshot(game_type=game_type, max_pages=max_pages)
 
 def create_tasks(leaderboard_data: Dict[str, Dict[str, List[Dict]]]) -> List[Dict]:
@@ -371,7 +350,6 @@ def process_leaderboards(table, leaderboard_data: Dict[str, Dict[str, List[Dict]
                 num_updates = process_player_batch(table, batch, mode_num, server, current_time)
                 key = f"{mode_num}#{server}"  # Use # as separator for consistency
                 updates[key] = updates.get(key, 0) + num_updates
-                logger.info(f"[{key}] Processed batch with {num_updates} updates")
     
     return updates
 
@@ -388,9 +366,7 @@ def lambda_handler(event, context):
         current_time = int(datetime.now(timezone.utc).timestamp())
         
         # Fetch leaderboard data sequentially
-        logger.info("Fetching battlegrounds data...")
         bg_data = fetch_leaderboard_data("battlegrounds", max_pages)
-        logger.info("Fetching battlegroundsduo data...")
         duo_data = fetch_leaderboard_data("battlegroundsduo", max_pages)
         
         leaderboard_data = {
