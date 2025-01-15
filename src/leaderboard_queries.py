@@ -689,7 +689,7 @@ class LeaderboardDB:
             return f"{resolved_name} is not on {server if server else 'any'}{' duo' if game_mode == '1' else ''} BG leaderboards"
 
         # Get best rating and other servers
-        best = max(items, key=lambda x: x["LatestRating"])
+        best = min(items, key=lambda x: x["CurrentRank"])
         others = [i for i in items if i["Server"] != best["Server"]]
 
         # Check for duplicate names
@@ -697,7 +697,7 @@ class LeaderboardDB:
         dup_msg = self._format_duplicate_names_message(resolved_name, dup_count, game_mode)
 
         if others:
-            other = max(others, key=lambda x: x["LatestRating"])
+            other = max(others, key=lambda x: x["CurrentRank"])
             return (
                 f"{resolved_name} is rank {best['CurrentRank']} in {best['Server']} at {best['LatestRating']} "
                 f"(also rank {other['CurrentRank']} {other['Server']} at {other['LatestRating']}) {dup_msg}"
