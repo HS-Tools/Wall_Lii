@@ -5,8 +5,13 @@ import functools
 import time
 
 class CommandLogger:
-    def __init__(self, log_dir="logs/commands"):
-        self.log_dir = log_dir
+    def __init__(self, log_dir=None):
+        if log_dir is None:
+            # Get the project root directory (parent of src)
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.log_dir = os.path.join(project_root, "logs", "commands")
+        else:
+            self.log_dir = log_dir
         self._ensure_log_directory()
         self.current_file = None
         self.current_date = None
