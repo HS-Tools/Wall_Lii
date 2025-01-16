@@ -362,12 +362,12 @@ class LeaderboardBot(commands.Bot):
 
     @commands.command(name="peak", aliases=["duopeak"])
     @command_timer
-    async def peak_command(self, ctx, player_or_rank=None, server=None):
+    async def peak_command(self, ctx, arg1=None, arg2=None):
         """Get player's peak rating for both regular and duo modes"""
-        await self._handle_command(ctx, self._peak_command_impl(ctx, player_or_rank, server))
+        await self._handle_command(ctx, self._peak_command_impl(ctx, arg1, arg2))
 
-    async def _peak_command_impl(self, ctx, player_or_rank, server):
-        player_or_rank = clean_input(player_or_rank)
+    async def _peak_command_impl(self, ctx, arg1, arg2):
+        player_or_rank, server = self._parse_rank_and_server(arg1, arg2)
 
         if player_or_rank is None or player_or_rank == "":
             player_or_rank = ctx.channel.name
