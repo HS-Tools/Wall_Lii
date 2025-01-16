@@ -68,4 +68,7 @@ __pycache__/
 .Python
 venv/
 
+# Logs
+logs/
+
 *~
