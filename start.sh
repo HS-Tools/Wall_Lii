@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Remove all images
 git pull
 
@@ -10,5 +12,15 @@ docker build -t hs_leaderboards_discord -f ./discord.Dockerfile .
 docker kill $(docker ps -q)
 docker rm $(docker ps -a -q)
 
-docker run --restart always -d hs_leaderboards_discord
-docker run --restart always -d hs_leaderboards_twitch
+# Create logs directory if it doesn't exist
+mkdir -p /home/jim/Wall_Lii/logs
+
+# Run containers with volume mounts
+docker run --restart always -d \
+  -v /home/jim/Wall_Lii/logs:/logs \
+  --name hs_twitch \
+  hs_leaderboards_twitch
+
+docker run --restart always -d \
+  --name hs_discord \
+  hs_leaderboards_discord
