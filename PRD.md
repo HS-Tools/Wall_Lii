@@ -511,6 +511,36 @@ Bot now connects to specific channels by default:
    - Adjust cache timing based on usage
    - Expand cached data based on needs
    - Implement advanced analytics
+## Command Monitoring
+### Overview
+Track usage patterns and performance of bot commands to help optimize and improve the service.
+
+### Data Collection
+Each successful command execution logs:
+1. **Basic Information**:
+   - Timestamp (UTC)
+   - User who invoked the command
+   - Channel where command was invoked
+   - Command name
+   - Full command string (including arguments)
+   - Player name/rank (if applicable)
+   - Server (if applicable)
+
+2. **Performance Metrics**:
+   - Response time (milliseconds)
+
+### Implementation
+- CSV file-based logging for simplicity and low resource usage
+- Format: `timestamp,user,channel,command,full_command,player_name,server,response_time_ms`
+- Daily log rotation to prevent file size issues
+- Logs stored in `logs/commands/` directory
+- File naming: `commands_YYYY_MM_DD.csv`
+
+### Usage Examples
+```csv
+2025-01-15T16:07:45,user123,superjj102,rank,!rank beter NA,beterbabbit,NA,150
+2025-01-15T16:08:12,viewer55,rdulive,day,!day dogdog,dogdog,NA,180
+```
 ## Help Command Enhancement
 
 ### Objective

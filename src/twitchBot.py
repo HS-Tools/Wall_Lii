@@ -14,6 +14,7 @@ from leaderboard_queries import LeaderboardDB
 from logger import setup_logger
 from buddies import easter_egg_buddies_dict
 from buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_trinket
+from command_logger import CommandLogger, command_timer
 
 logger = setup_logger("twitchBot")
 
@@ -97,6 +98,9 @@ class LeaderboardBot(commands.Bot):
             prefix=prefix,
             initial_channels=list(self.priority_channels)
         )
+        
+        # Initialize command logger
+        self.command_logger = CommandLogger()
         
         # Initialize buddy and trinket dictionaries
         self.buddy_dict = get_buddy_dict()
@@ -251,6 +255,7 @@ class LeaderboardBot(commands.Bot):
             logger.error(f"Error executing command in {channel}: {e}")
 
     @commands.command(name="rank", aliases=["bgrank", "duorank"])
+    @command_timer
     async def rank_command(self, ctx, arg1=None, arg2=None):
         """Get player rank, defaulting to channel name if no player specified"""
         await self._handle_command(ctx, self._rank_command_impl(ctx, arg1, arg2))
@@ -280,6 +285,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(response)
 
     @commands.command(name="day", aliases=["bgdaily", "daily", "duoday", "duodaily"])
+    @command_timer
     async def day_command(self, ctx, arg1=None, arg2=None):
         """Get player's daily stats for both regular and duo modes"""
         await self._handle_command(ctx, self._day_command_impl(ctx, arg1, arg2))
@@ -298,6 +304,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="yesterday", aliases=["bgyesterday", "duoyesterday", "yday", "duoyday"])
+    @command_timer
     async def yesterday_command(self, ctx, arg1=None, arg2=None):
         """Get player's stats for yesterday for both regular and duo modes"""
         await self._handle_command(ctx, self._yesterday_command_impl(ctx, arg1, arg2))
@@ -316,6 +323,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="week", aliases=["bgweekly", "duoweek", "duoweekly"])
+    @command_timer
     async def week_command(self, ctx, arg1=None, arg2=None):
         """Get player's weekly stats for both regular and duo modes"""
         await self._handle_command(ctx, self._week_command_impl(ctx, arg1, arg2))
@@ -334,6 +342,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="lastweek", aliases=["bglastweek", "duolastweek", "lweek", "duolweek"])
+    @command_timer
     async def lastweek_command(self, ctx, arg1=None, arg2=None):
         """Get player's stats for last week for both regular and duo modes"""
         await self._handle_command(ctx, self._lastweek_command_impl(ctx, arg1, arg2))
@@ -352,6 +361,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="peak", aliases=["duopeak"])
+    @command_timer
     async def peak_command(self, ctx, player_or_rank=None, server=None):
         """Get player's peak rating for both regular and duo modes"""
         await self._handle_command(ctx, self._peak_command_impl(ctx, player_or_rank, server))
@@ -372,6 +382,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="stats", aliases=["bgstats", "duostats"])
+    @command_timer
     async def stats(self, ctx, server=None):
         """Display server stats, or all servers if no server specified"""
         await self._handle_command(ctx, self._stats_impl(ctx, server))
@@ -400,6 +411,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(response)
 
     @commands.command(name="top", aliases=["bgtop", "duotop"])
+    @command_timer
     async def bgtop(self, ctx, server=None):
         """Display top players, or top globally if no server specified"""
         await self._handle_command(ctx, self._bgtop_impl(ctx, server))
@@ -422,6 +434,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(response)
 
     @commands.command(name="help", aliases=["commands", "wall_lii"])
+    @command_timer
     async def help_command(self, ctx, command_name=None):
         """Display help information for commands"""
         await self._handle_command(ctx, self._help_command_impl(ctx, command_name))
@@ -493,6 +506,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(help_messages.get(command_name, "Command not found. Use `!help` to see available commands."))
 
     @commands.command(name="8k")
+    @command_timer
     async def eight_k(self, ctx, server=None):
         """Show first player to reach 8000 rating"""
         await self._handle_command(ctx, self._eight_k_impl(ctx, server))
@@ -503,6 +517,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="9k")
+    @command_timer
     async def nine_k(self, ctx, server=None):
         """Show first player to reach 9000 rating"""
         await self._handle_command(ctx, self._nine_k_impl(ctx, server))
@@ -513,6 +528,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="10k")
+    @command_timer
     async def ten_k(self, ctx, server=None):
 
         await self._handle_command(ctx, self._ten_k_impl(ctx, server))
@@ -523,6 +539,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="11k")
+    @command_timer
     async def eleven_k(self, ctx, server=None):
         await self._handle_command(ctx, self._eleven_k_impl(ctx, server))
 
@@ -532,6 +549,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="12k")
+    @command_timer
     async def twelve_k(self, ctx, server=None):
         await self._handle_command(ctx, self._twelve_k_impl(ctx, server))
 
@@ -541,6 +559,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="13k")
+    @command_timer
     async def thirteen_k(self, ctx, server=None):
         await self._handle_command(ctx, self._thirteen_k_impl(ctx, server))
 
@@ -550,6 +569,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="14k")
+    @command_timer
     async def fourteen_k(self, ctx, server=None):
         await self._handle_command(ctx, self._fourteen_k_impl(ctx, server))
 
@@ -559,6 +579,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="15k")
+    @command_timer
     async def fifteen_k(self, ctx, server=None):
 
         await self._handle_command(ctx, self._fifteen_k_impl(ctx, server))
@@ -569,6 +590,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="16k")
+    @command_timer
     async def sixteen_k(self, ctx, server=None):
         await self._handle_command(ctx, self._sixteen_k_impl(ctx, server))
 
@@ -578,6 +600,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="17k")
+    @command_timer
     async def seventeen_k(self, ctx, server=None):
         await self._handle_command(ctx, self._seventeen_k_impl(ctx, server))
 
@@ -587,6 +610,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="18k")
+    @command_timer
     async def eighteen_k(self, ctx, server=None):
         """Show first player to reach 18000 rating"""
         await self._handle_command(ctx, self._eighteen_k_impl(ctx, server))
@@ -597,6 +621,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="19k")
+    @command_timer
     async def nineteen_k(self, ctx, server=None):
         """Show first player to reach 19000 rating"""
         await self._handle_command(ctx, self._nineteen_k_impl(ctx, server))
@@ -607,6 +632,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="20k")
+    @command_timer
     async def twenty_k(self, ctx, server=None):
         """Show first player to reach 20000 rating"""
         await self._handle_command(ctx, self._twenty_k_impl(ctx, server))
@@ -617,6 +643,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="21k")
+    @command_timer
     async def twentyone_k(self, ctx, server=None):
         """Show first player to reach 21000 rating"""
         await self._handle_command(ctx, self._twentyone_k_impl(ctx, server))
@@ -627,6 +654,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="goodbot")
+    @command_timer
     async def goodbot(self, ctx):
         """Respond to praise with a robotic acknowledgment"""
         await self._handle_command(ctx, self._goodbot_impl(ctx))
@@ -635,6 +663,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send("MrDestructoid Just doing my job MrDestructoid")
 
     @commands.command(name="bgdailii")
+    @command_timer
     async def bgdailii(self, ctx):
         """Show daily stats for liihs"""
         await self._handle_command(ctx, self._bgdailii_impl(ctx))
@@ -644,6 +673,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="weeklii")
+    @command_timer
     async def weeklii(self, ctx):
         """Show weekly stats for liihs"""
         await self._handle_command(ctx, self._weeklii_impl(ctx))
@@ -653,6 +683,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(response)
 
     @commands.command(name="patch", aliases=["bgpatch"])
+    @command_timer
     async def patch(self, ctx):
         """Fetch the latest patch notes link"""
         await self._handle_command(ctx, self._patch_impl(ctx))
@@ -661,6 +692,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send(f"{self.db.get_patch_link()}")
 
     @commands.command(name="origin")
+    @command_timer
     async def origin(self, ctx):
         await self._handle_command(ctx, self._origin_impl(ctx))
 
@@ -668,6 +700,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send("I was created by twitch.tv/liihs to help track BG leaderboard stats. My code is here: https://github.com/HS-Tools/Wall_Lii")
 
     @commands.command(name="buddy")
+    @command_timer
     async def buddy(self, ctx):
         """Get buddy information for a hero"""
         await self._handle_command(ctx, self._buddy_impl(ctx))
@@ -684,6 +717,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(results[1])  # Send regular buddy text
 
     @commands.command(name="goldenbuddy")
+    @command_timer
     async def goldenbuddy(self, ctx):
         """Get golden buddy information for a hero"""
         if ctx.channel.name == "dogdog":  # Skip command in certain channels
@@ -702,6 +736,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(results[2])  # Send golden buddy text
 
     @commands.command(name="trinket")
+    @command_timer
     async def trinket(self, ctx):
         """Get trinket information"""
         await self._handle_command(ctx, self._trinket_impl(ctx))
@@ -718,6 +753,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send(results)
 
     @commands.command(name="buddygold")
+    @command_timer
     async def buddygold(self, ctx):
         """Show gold cost for buddy tiers"""
         await self._handle_command(ctx, self._buddygold_impl(ctx))
@@ -747,6 +783,7 @@ class LeaderboardBot(commands.Bot):
             await ctx.send("Invalid tier, try a number between 1 and 6 like !buddygold 3")
 
     @commands.command(name="curves")
+    @command_timer
     async def curves(self, ctx):
         """Link to BG curve sheet"""
         await self._handle_command(ctx, self._curves_impl(ctx))
@@ -755,6 +792,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send("Check out www.BGcurvesheet.com for information about heroes and curves")
 
     @commands.command(name="shush", aliases=["Shush"])
+    @command_timer
     async def shush(self, ctx):
         """Shush command"""
         await self._handle_command(ctx, self._shush_impl(ctx))
@@ -763,6 +801,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send("Shush")
 
     @commands.command(name="frog", aliases=["Frog"])
+    @command_timer
     async def frog(self, ctx):
         """Frog command"""
         await self._handle_command(ctx, self._frog_impl(ctx))
@@ -771,6 +810,7 @@ class LeaderboardBot(commands.Bot):
         await ctx.send("liiPers liiPers liiPers")
 
     @commands.command(name="gold")
+    @command_timer
     async def gold(self, ctx):
         """Calculate the turn when a quest requiring X gold will be completed"""
         await self._handle_command(ctx, self._gold_impl(ctx))
