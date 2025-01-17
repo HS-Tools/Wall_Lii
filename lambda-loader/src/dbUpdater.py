@@ -234,15 +234,10 @@ def check_milestones(player_name, rating, game_mode, server, table):
         season = "14"
         season_game_mode_server = f"{season}-{game_mode}-{server}"
 
-        logger.info(
-            f"Checking milestones for {player_name} ({rating}) in {season_game_mode_server}"
-        )
-
         # Get milestone table name from environment
         milestone_table_name = os.environ.get(
             "MILESTONE_TABLE_NAME", "MilestoneTracking"
         )
-        logger.info(f"Using milestone table: {milestone_table_name}")
 
         # Use same resource as main table but different table name
         milestone_table = boto3.resource("dynamodb").Table(milestone_table_name)

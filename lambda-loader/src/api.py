@@ -88,12 +88,6 @@ def getLeaderboardSnapshot(game_type="battlegrounds", max_pages=20):
                 )
 
         result[normalized_region][game_type] = players
-        logger.info(f"Fetched {len(players)} players from {normalized_region}")
-
-        # Log duplicate names if any
-        duplicates = {name: count for name, count in name_counts.items() if count > 1}
-        if duplicates:
-            logger.info(f"Found duplicate names in {normalized_region}: {duplicates}")
 
     return result
 
