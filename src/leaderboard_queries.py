@@ -637,6 +637,8 @@ class LeaderboardDB:
         return count if count > 1 else 0
 
     def _format_duplicate_names_message(self, base_name, count, game_mode="0"):
+        # Temp remove this message while I figure out how to handle fake duplicates
+        return ""
         """Format a message about duplicate names if they exist"""
         if count == 0:
             return ""
