@@ -11,7 +11,7 @@ Wall_lii is a Twitch and Discord bot that stores leaderboard and game data for H
 
 Great news! No need to manually set up the bot yourself. Wall_lii is running and freely available to all Twitch streamers. To get started:
 
-1. Join liihs's [Discord](https://discord.com/invite/C6NguFf).
+1. Join liihs's [Discord](https://discord.gg/JA6qjJQDq8).
 2. Navigate to the `#wall-lii-requests` channel.
 3. Follow the directions in the pinned message to request Wall_lii to join your channel.
 
