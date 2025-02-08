@@ -3,20 +3,49 @@ import os
 from datetime import datetime, timezone
 import functools
 import time
+from supabase import create_client
+from dotenv import load_dotenv
 
 class CommandLogger:
     def __init__(self, log_dir=None):
+        # Load environment variables
+        load_dotenv()
+        
+        # Initialize Supabase client
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        self.supabase = create_client(url, key)
+        
+        # Keep log_dir initialization for backward compatibility
         if log_dir is None:
-            # Get the project root directory (parent of src)
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             self.log_dir = os.path.join(project_root, "logs", "commands")
         else:
             self.log_dir = log_dir
         self._ensure_log_directory()
-        self.current_file = None
-        self.current_date = None
-        self.csv_writer = None
-        self.csv_file = None
+
+    def log_command(self, user, channel, command, full_command, player_name, server, response_time_ms):
+        """Log a command execution to Supabase"""
+        now = datetime.now(timezone.utc)
+        
+        # Create the data record matching the table structure
+        data = {
+            'timestamp': now.isoformat(),
+            'created_at': now.isoformat(),
+            'user_name': user,          # Changed from 'user' to 'user_name'
+            'channel': channel,
+            'command': command,
+            'full_command': full_command,
+            'player_name': player_name or None,  # Use NULL instead of empty string
+            'server': server or None,            # Use NULL instead of empty string
+            'response_time_ms': response_time_ms
+        }
+        
+        try:
+            # Insert the data into the Supabase table
+            self.supabase.table('commands').insert(data).execute()
+        except Exception as e:
+            print(f"Error logging command to Supabase: {e}")
 
     def _ensure_log_directory(self):
         """Ensure the log directory exists"""
@@ -56,24 +85,7 @@ class CommandLogger:
             
             self.current_date = current_date
 
-    def log_command(self, user, channel, command, full_command, player_name, server, response_time_ms):
-        """Log a command execution"""
-        self._ensure_file_open()
-        
-        timestamp = datetime.now(timezone.utc).isoformat()
-        
-        self.csv_writer.writerow([
-            timestamp,
-            user,
-            channel,
-            command,
-            full_command,
-            player_name or '',  # Use empty string if None
-            server or '',       # Use empty string if None
-            response_time_ms
-        ])
-        self.csv_file.flush()  # Ensure it's written to disk
-
+# Keep the command_timer decorator unchanged
 def command_timer(func):
     """Decorator to time command execution"""
     @functools.wraps(func)
