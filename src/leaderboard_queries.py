@@ -203,7 +203,7 @@ class LeaderboardDB:
             
             # Update Supabase using upsert
             if supabase_data:
-                self.supabase.table('daily_liiderboards').upsert(supabase_data).execute()
+                self.supabase.table('daily_leaderboards').upsert(supabase_data).execute()
                 logger.info(f"Successfully updated daily leaderboards for {today}")
             
         except Exception as e:
