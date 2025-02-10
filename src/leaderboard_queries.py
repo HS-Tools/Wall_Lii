@@ -9,6 +9,7 @@ from boto3.dynamodb.conditions import Key
 import requests
 from discord import channel
 import pytz
+from supabase import create_client
 
 from logger import setup_logger
 from parseRegion import parseServer
@@ -84,6 +85,10 @@ class LeaderboardDB:
         else:
             self.useTestTimestamp = False
 
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        self.supabase = create_client(url, key)
+
         # Load aliases
         self.aliases = self._load_aliases()
         self.patch_link = "Currently fetching patch link..."
@@ -92,6 +97,120 @@ class LeaderboardDB:
         # Set up cron job to update aliases every minute
         self.cron = aiocron.crontab("*/1 * * * *", func=self.update_aliases)
         self.fetch_patch_link_cron = aiocron.crontab('* * * * *', func=self.fetchPatchLink)
+
+        self.update_daily_leaderboards()
+
+    def update_daily_leaderboards(self, top_n: int = 10):
+        """Updates the daily leaderboards in Supabase."""
+        logger.info("Starting daily leaderboards update...")
+        
+        # Get today's date in LA timezone
+        la_tz = pytz.timezone("America/Los_Angeles")
+        utc_now = datetime.now(timezone.utc) if not self.useTestTimestamp else self.testTimestamp
+        la_now = utc_now.astimezone(la_tz)
+        today = la_now.date()
+        
+        # Initialize containers for each category
+        climbers = []
+        unluckiest = []
+        grinders = []
+        highest_rated = []
+        
+        try:
+            # Scan DynamoDB for all players
+            for server in VALID_SERVERS:
+                logger.info(f"Processing server: {server}")
+                game_mode_server = f"0#{server}"  # game_mode 0 for regular BG
+                    
+                response = self.table.scan(
+                    FilterExpression="GameModeServer = :gms",
+                    ExpressionAttributeValues={":gms": game_mode_server}
+                )
+                
+                for item in response.get('Items', []):
+                    player_name = item['PlayerName']
+                    history = item.get('RatingHistory', [])
+                    
+                    # Get today's records
+                    la_tz = pytz.timezone("America/Los_Angeles")
+                    midnight = la_now.replace(hour=0, minute=0, second=0, microsecond=0)
+                    midnight_timestamp = int(midnight.timestamp())
+                    
+                    # Filter today's records and get the first record before today
+                    today_records = []
+                    last_record_before_today = None
+                    
+                    for record in history:
+                        timestamp = int(float(record[1]))
+                        if timestamp < midnight_timestamp:
+                            last_record_before_today = record
+                        elif timestamp >= midnight_timestamp:
+                            today_records.append(record)
+                    
+                    if not today_records:
+                        continue
+                        
+                    # Use last record before today as starting point, or first record of today if not available
+                    start_mmr = int(last_record_before_today[0]) if last_record_before_today else int(today_records[0][0])
+                    end_mmr = int(today_records[-1][0])
+                    mmr_change = end_mmr - start_mmr
+                    games_played = len(today_records) - (0 if last_record_before_today else 1)  # Don't count first record if it's today's starting point
+                    
+                    player_data = {
+                        'player_name': player_name,
+                        'server': server,
+                        'start_mmr': start_mmr,
+                        'end_mmr': end_mmr,
+                        'games_played': games_played
+                    }
+                    
+                    # Add to appropriate lists
+                    if mmr_change > 0:
+                        climbers.append((mmr_change, player_data))
+                    elif mmr_change < 0:
+                        unluckiest.append((mmr_change, player_data))
+                    if games_played > 0:
+                        grinders.append((games_played, player_data))
+                        highest_rated.append((end_mmr, player_data))
+            
+            # Sort and get top N for each category
+            top_climbers = sorted(climbers, key=lambda x: x[0], reverse=True)[:top_n]
+            top_unluckiest = sorted(unluckiest, key=lambda x: x[0])[:top_n]
+            top_grinders = sorted(grinders, key=lambda x: x[0], reverse=True)[:top_n]
+            top_rated = sorted(highest_rated, key=lambda x: x[0], reverse=True)[:top_n]
+
+            print(top_climbers)
+            
+            # Prepare data for Supabase
+            supabase_data = []
+            for category, data in [
+                ('climbers', top_climbers),
+                ('unluckiest', top_unluckiest),
+                ('grinders', top_grinders),
+                ('highest_rated', top_rated)
+            ]:
+                for rank, (_, player_data) in enumerate(data, 1):  # Add rank starting from 1
+                    entry = {
+                        'date': today.isoformat(),
+                        'category': category,
+                        'player_name': player_data['player_name'],
+                        'server': player_data['server'],
+                        'start_mmr': player_data['start_mmr'],
+                        'end_mmr': player_data['end_mmr'],
+                        'mmr_change': player_data['end_mmr'] - player_data['start_mmr'],
+                        'games_played': player_data['games_played'],
+                        'rank': rank  # Add rank to the entry
+                    }
+                    supabase_data.append(entry)
+            
+            # Update Supabase using upsert
+            if supabase_data:
+                self.supabase.table('daily_leaderboards').upsert(supabase_data).execute()
+                logger.info(f"Successfully updated daily leaderboards for {today}")
+            
+        except Exception as e:
+            logger.error(f"Error updating daily leaderboards: {e}")
+            raise
 
     async def update_aliases(self):
         """Update aliases from DynamoDB table"""
