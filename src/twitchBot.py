@@ -106,8 +106,18 @@ class LeaderboardBot(commands.Bot):
         self.buddy_dict = get_buddy_dict()
         self.trinket_dict = get_trinkets_dict()
         
+        # Add cron job for updating daily leaderboards every hour
+        self.update_leaderboards_cron = aiocron.crontab('59 * * * *', func=self.update_leaderboards)
         # Set up cron job to update channels every minute
         self.channel_cron = aiocron.crontab("*/1 * * * *", func=self.update_live_channels)
+        
+    async def update_leaderboards(self):
+        """Update daily leaderboards every hour"""
+        try:
+            self.db.update_daily_leaderboards()
+            logger.info("Successfully updated daily leaderboards via cron job")
+        except Exception as e:
+            logger.error(f"Error updating daily leaderboards via cron job: {e}")
 
     def _load_channels(self):
         """Load channels from DynamoDB table"""
