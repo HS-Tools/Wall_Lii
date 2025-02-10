@@ -98,8 +98,6 @@ class LeaderboardDB:
         self.cron = aiocron.crontab("*/1 * * * *", func=self.update_aliases)
         self.fetch_patch_link_cron = aiocron.crontab('* * * * *', func=self.fetchPatchLink)
 
-        self.update_daily_leaderboards()
-
     def update_daily_leaderboards(self, top_n: int = 10):
         """Updates the daily leaderboards in Supabase."""
         logger.info("Starting daily leaderboards update...")
