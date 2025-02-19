@@ -100,7 +100,7 @@ Resources:
         ScheduledUpdate:
           Type: Schedule
           Properties:
-            Schedule: rate(5 minutes)
+            Schedule: rate(7 minutes)
 
   UpdaterErrorAlarm:
     Type: AWS::CloudWatch::Alarm
