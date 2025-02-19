@@ -1,15 +1,23 @@
 import json
 import os
+import asyncio
+import aiohttp
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Dict, List
 import logging
 import boto3
+from collections import defaultdict
 
-from api import getLeaderboardSnapshot
 from logger import setup_logger
 
 logger = setup_logger("dbUpdater")
+
+# Constants for API fetching
+REGIONS = ["US", "EU", "AP"]
+MODES = ["battlegrounds", "battlegroundsduo"]
+REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
+BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
 
 def get_dynamodb_resource():
     """Get DynamoDB resource based on environment"""
@@ -39,8 +47,98 @@ def is_local_dynamodb():
         return True
     if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
         return False
-    # If neither environment variable is set, assume local
     return True
+
+async def fetch_page(session: aiohttp.ClientSession, params: dict, sem: asyncio.Semaphore, retries=3):
+    """Fetch a single page with rate limiting"""
+    backoff = 1
+    async with sem:
+        for attempt in range(retries):
+            try:
+                async with session.get(BASE_URL, params=params) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    logger.error(f"Failed {params}: Status {response.status}")
+            except Exception as e:
+                logger.error(f"Error {params}: {str(e)}")
+            
+            if attempt < retries - 1:
+                await asyncio.sleep(backoff)
+                backoff *= 2
+        return None
+
+async def fetch_concurrent(max_pages: int):
+    """Concurrently fetch leaderboard data from all regions and modes"""
+    players = []
+    sem = asyncio.Semaphore(15)  # Rate limiting
+    
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=50)) as session:
+        tasks = []
+        for mode in MODES:
+            for api_region in REGIONS:
+                normalized_region = REGION_MAPPING[api_region]
+                for page in range(1, max_pages + 1):
+                    params = {
+                        "region": api_region,
+                        "leaderboardId": mode,
+                        "seasonId": "14",
+                        "page": page
+                    }
+                    tasks.append((
+                        normalized_region,
+                        mode,
+                        fetch_page(session, params, sem)
+                    ))
+
+        results = await asyncio.gather(*[t[2] for t in tasks])
+        
+        for (server, mode, _), result in zip(tasks, results):
+            if result and 'leaderboard' in result:
+                for row in result['leaderboard'].get('rows', []):
+                    if row and row.get('accountid'):
+                        players.append({
+                            "server": server,
+                            "mode": mode,
+                            "playername": row['accountid'].lower(),
+                            "rank": row['rank'],
+                            "rating": row['rating'],
+                            "timestamp": datetime.now(timezone.utc).timestamp()
+                        })
+    
+    return _make_names_unique(players)
+
+def _make_names_unique(players: List[Dict]) -> List[Dict]:
+    """Ensure unique player names within each server-mode combination"""
+    name_counts = {}
+    processed_players = []
+    
+    for player in players:
+        key = f"{player['server']}#{player['mode']}#{player['playername']}"
+        count = name_counts.get(key, 0) + 1
+        name_counts[key] = count
+        
+        new_player = player.copy()
+        if count > 1:
+            new_player['playername'] = f"{player['playername']}#{count}"
+        processed_players.append(new_player)
+    
+    return processed_players
+
+def _transform_to_leaderboard_data(players: List[Dict]) -> Dict:
+    """Convert flat player list into nested leaderboard structure"""
+    leaderboard_data = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+    
+    for player in players:
+        mode = player['mode']
+        server = player['server']
+        name = player['playername']
+        
+        leaderboard_data[mode][server][mode][name] = {
+            "rank": player['rank'],
+            "rating": player['rating']
+        }
+    
+    return leaderboard_data
 
 def batch_get_with_retry(table, keys, projection_expression, max_retries=3):
     """Batch get items with retry logic"""
@@ -351,37 +449,25 @@ def process_leaderboards(table, leaderboard_data: Dict[str, Dict[str, List[Dict]
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
-        # Get max_pages from event or use default (40 pages = 1000 players)
         max_pages = event.get("max_pages", 40) if event else 40
-        
-        # Initialize DynamoDB
         table = get_dynamodb_resource().Table(get_table_name())
-        
-        # Get current timestamp
         current_time = int(datetime.now(timezone.utc).timestamp())
         
-        # Fetch leaderboard data sequentially
-        bg_data = fetch_leaderboard_data("battlegrounds", max_pages)
-        duo_data = fetch_leaderboard_data("battlegroundsduo", max_pages)
+        # Fetch data concurrently
+        loop = asyncio.get_event_loop()
+        players = loop.run_until_complete(fetch_concurrent(max_pages))
+        leaderboard_data = _transform_to_leaderboard_data(players)
         
-        leaderboard_data = {
-            "battlegrounds": bg_data,
-            "battlegroundsduo": duo_data
-        }
-        
-        # Process all leaderboards
+        # Process data (existing logic)
         updates = process_leaderboards(table, leaderboard_data, current_time)
         
         return {
             "statusCode": 200,
-            "body": json.dumps(
-                {
-                    "message": "Successfully updated leaderboard data",
-                    "updates": updates,
-                }
-            ),
+            "body": json.dumps({
+                "message": "Successfully updated leaderboard data",
+                "updates": updates,
+            }),
         }
-
     except Exception as e:
         logger.error(f"Error updating leaderboard data: {str(e)}")
         return {
