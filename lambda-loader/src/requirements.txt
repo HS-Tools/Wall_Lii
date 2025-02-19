@@ -4,3 +4,4 @@ requests-futures
 moto[dynamodb]
 pytest
 pytz
+aiohttp
