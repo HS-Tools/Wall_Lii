@@ -449,7 +449,7 @@ def process_leaderboards(table, leaderboard_data: Dict[str, Dict[str, List[Dict]
 def lambda_handler(event, context):
     """AWS Lambda handler to fetch and store leaderboard data"""
     try:
-        max_pages = event.get("max_pages", 40) if event else 40
+        max_pages = event.get("max_pages", 10) if event else 10
         table = get_dynamodb_resource().Table(get_table_name())
         current_time = int(datetime.now(timezone.utc).timestamp())
         
