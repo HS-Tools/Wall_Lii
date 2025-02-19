@@ -85,7 +85,7 @@ Resources:
       CodeUri: src/
       Handler: dbUpdater.lambda_handler
       Runtime: python3.9
-      Timeout: 300
+      Timeout: 420
       MemorySize: 256
       Policies:
         - DynamoDBCrudPolicy:
