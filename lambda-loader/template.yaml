@@ -85,7 +85,7 @@ Resources:
       CodeUri: src/
       Handler: dbUpdater.lambda_handler
       Runtime: python3.9
-      Timeout: 420
+      Timeout: 300
       MemorySize: 256
       Policies:
         - DynamoDBCrudPolicy:
@@ -100,7 +100,7 @@ Resources:
         ScheduledUpdate:
           Type: Schedule
           Properties:
-            Schedule: rate(7 minutes)
+            Schedule: rate(5 minutes)
 
   UpdaterErrorAlarm:
     Type: AWS::CloudWatch::Alarm
