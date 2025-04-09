@@ -119,7 +119,7 @@ class LeaderboardBot(commands.Bot):
         # Set up cron jobs
         self.update_leaderboards_cron = aiocron.crontab('59 * * * *', func=self.update_leaderboards)
         self.channel_cron = aiocron.crontab("*/1 * * * *", func=self.update_live_channels)
-        
+            
     async def update_leaderboards(self):
         """Update daily leaderboards every hour"""
         try:
@@ -233,10 +233,29 @@ class LeaderboardBot(commands.Bot):
             await super().join_channels(batch)
             await asyncio.sleep(interval)  # Throttle to avoid rate limit
 
+    async def timed_messages(self):
+        while True:
+            try:
+                message = "Lii is hosting a tournament this saturday: https://x.com/Lii_HS/status/1909737080768377138"
+                for channel in self.connected_channels:
+                    if channel.name.lower() == "liihs":
+                        await channel.send(message)
+                        logger.info("✅ [Timed Loop] Sent test message to liihs")
+                    if channel.name.lower() == "beterbabbit":
+                        await channel.send(message)
+                        logger.info("✅ [Timed Loop] Sent test message to beterbabbit")
+
+            except Exception as e:
+                logger.error(f"❌ [Manual Loop] Error sending message: {e}")
+
+            await asyncio.sleep(60)  # Wait 60 seconds before next message
+
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
         # Initial channel update
         await self.update_live_channels()
+
+        self.loop.create_task(self.timed_messages())
 
     def _parse_rank_and_server(self, arg1, arg2):
         """
