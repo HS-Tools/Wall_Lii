@@ -78,6 +78,7 @@ class LeaderboardBot(commands.Bot):
         # Track all known channels and currently joined channels
         self.all_channels = set()
         self.joined_channels = set()
+        self.hearthstone_channels = set()  # Add hearthstone_channels as instance variable
         self.priority_channels = {"liihs", "jeefhs", "beterbabbit", "dogdog", "rdulive", "xqn_thesad", "superjj102"}  # These channels are always joined
         self._load_channels()
         
@@ -138,7 +139,11 @@ class LeaderboardBot(commands.Bot):
             self.all_channels = {"liihs"}
 
     async def _get_live_channels(self, channels: Set[str]) -> Set[str]:
-        """Get list of currently live channels"""
+        """
+        Get list of currently live channels and update hearthstone_channels
+        Returns:
+            Set[str]: all live channels
+        """
         if not channels:
             return set()
 
@@ -150,6 +155,7 @@ class LeaderboardBot(commands.Bot):
 
         async with aiohttp.ClientSession() as session:
             live_channels = set()
+            self.hearthstone_channels = set()  # Reset hearthstone channels
             channel_list = list(channels)
             
             # Process in smaller batches of 50 to be safer
@@ -162,7 +168,14 @@ class LeaderboardBot(commands.Bot):
                     async with session.get(url, headers=headers) as response:
                         if response.status == 200:
                             data = await response.json()
-                            live_channels.update(stream['user_login'].lower() for stream in data['data'])
+                            for stream in data['data']:
+                                channel_name = stream['user_login'].lower()
+                                live_channels.add(channel_name)
+                                
+                                # Check if the stream is in the Hearthstone category
+                                # Hearthstone game ID is 138585
+                                if stream.get('game_id') == '138585' or stream.get('game_name', '').lower() == 'hearthstone':
+                                    self.hearthstone_channels.add(channel_name)
                         else:
                             error_text = await response.text()
                             logger.error(f"API request failed with status {response.status}: {error_text}")
@@ -174,7 +187,13 @@ class LeaderboardBot(commands.Bot):
                                         if single_response.status == 200:
                                             data = await single_response.json()
                                             if data['data']:  # If stream is live
-                                                live_channels.add(channel.lower())
+                                                channel_name = channel.lower()
+                                                live_channels.add(channel_name)
+                                                
+                                                # Check if the stream is in the Hearthstone category
+                                                stream_data = data['data'][0]
+                                                if stream_data.get('game_id') == '138585' or stream_data.get('game_name', '').lower() == 'hearthstone':
+                                                    self.hearthstone_channels.add(channel_name)
                                 except Exception as e:
                                     logger.error(f"Error checking single channel {channel}: {e}")
                 except Exception as e:
@@ -198,6 +217,7 @@ class LeaderboardBot(commands.Bot):
             # Add priority channels to live channels
             channels_to_monitor = live_channels.union(self.priority_channels)
             logger.info(f"Channels to monitor: {channels_to_monitor}")
+            logger.info(f"Hearthstone channels: {self.hearthstone_channels}")
             
             # Determine which channels to join/leave
             channels_to_join = channels_to_monitor - self.joined_channels
@@ -237,18 +257,14 @@ class LeaderboardBot(commands.Bot):
         while True:
             try:
                 message = "Lii is hosting a tournament this saturday: https://x.com/Lii_HS/status/1909737080768377138"
-                for channel in self.connected_channels:
-                    if channel.name.lower() == "liihs":
-                        await channel.send(message)
-                        logger.info("✅ [Timed Loop] Sent test message to liihs")
-                    if channel.name.lower() == "beterbabbit":
-                        await channel.send(message)
-                        logger.info("✅ [Timed Loop] Sent test message to beterbabbit")
+                for channel_name in self.hearthstone_channels:
+                    channel = self.get_channel(channel_name)
+                    await channel.send(message)
 
             except Exception as e:
                 logger.error(f"❌ [Manual Loop] Error sending message: {e}")
 
-            await asyncio.sleep(60)  # Wait 60 seconds before next message
+            await asyncio.sleep(3600)  # Wait 60 minutes before next message
 
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
