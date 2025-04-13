@@ -6,6 +6,7 @@ from utils.queries import parse_rank_or_player_args
 from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
 from datetime import timedelta
+from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
@@ -23,7 +24,8 @@ class LeaderboardDB:
                 dbname=os.getenv("DB_NAME"),
                 user=os.getenv("DB_USER"),
                 password=os.getenv("DB_PASSWORD"),
-                sslmode="require"
+                sslmode="require",
+                cursor_factory=RealDictCursor
             )
 
     def close(self):
@@ -89,7 +91,7 @@ class LeaderboardDB:
                         """, (int(arg1), region, game_mode))
                         row = cur.fetchone()
                         if row:
-                            results.append(f"{row[0]} is rank {arg1} in {region} at {row[1]}")
+                            results.append(f"{row['player_name']} is rank {arg1} in {region} at {row['rating']}")
                     return " | ".join(results) if results else f"No players found at rank {arg1}"
 
                 elif is_rank:
@@ -104,7 +106,7 @@ class LeaderboardDB:
                     cur.execute(query, query_params)
                     row = cur.fetchone()
                     if row:
-                        return f"{row[0]} is rank {arg1} in {row[2]} at {row[1]}"
+                        return f"{row['player_name']} is rank {arg1} in {row['region']} at {row['rating']}"
                     return f"No player found at rank {arg1}"
 
                 else:
@@ -121,7 +123,7 @@ class LeaderboardDB:
                     primary_row = cur.fetchone()
                     
                     if primary_row:
-                        primary_rank, primary_rating, primary_region, player_name = primary_row
+                        primary_rank, primary_rating, primary_region, player_name = primary_row['rank'], primary_row['rating'], primary_row['region'], primary_row['player_name']
                         
                         # Now check if player exists on other regions
                         other_regions = []
@@ -136,7 +138,7 @@ class LeaderboardDB:
                                 """, (player_name, region, game_mode))
                                 other_row = cur.fetchone()
                                 if other_row:
-                                    other_rank, other_rating = other_row
+                                    other_rank, other_rating = other_row['rank'], other_row['rating']
                                     other_regions.append(f"rank {other_rank} {region} at {other_rating}")
                         
                         # Format the response
@@ -169,8 +171,8 @@ class LeaderboardDB:
                         """, (int(arg1), region, game_mode))
                         row = cur.fetchone()
                         if row:
-                            date_str = row[2].strftime("%b %d, %Y") if row[2] else "unknown date"
-                            results.append(f"{row[0]}'s peak rating in {region} this season: {row[1]} on {date_str}")
+                            date_str = row['snapshot_time'].strftime("%b %d, %Y") if row['snapshot_time'] else "unknown date"
+                            results.append(f"{row['player_name']}'s peak rating in {region} this season: {row['rating']} on {date_str}")
                     return " | ".join(results) if results else f"No players found at rank {arg1}"
 
                 elif is_rank:
@@ -184,8 +186,8 @@ class LeaderboardDB:
                     cur.execute(query, query_params)
                     row = cur.fetchone()
                     if row:
-                        date_str = row[3].strftime("%b %d, %Y") if row[3] else "unknown date"
-                        return f"{row[0]}'s peak rating in {row[2]} this season: {row[1]} on {date_str}"
+                        date_str = row['snapshot_time'].strftime("%b %d, %Y") if row['snapshot_time'] else "unknown date"
+                        return f"{row['player_name']}'s peak rating in {row['region']} this season: {row['rating']} on {date_str}"
                     return f"No data found for rank {arg1}"
 
                 else:
@@ -199,8 +201,8 @@ class LeaderboardDB:
                     cur.execute(query, query_params)
                     row = cur.fetchone()
                     if row:
-                        date_str = row[3].strftime("%b %d, %Y") if row[3] else "unknown date"
-                        return f"{row[0]}'s peak rating in {row[2]} this season: {row[1]} on {date_str}"
+                        date_str = row['snapshot_time'].strftime("%b %d, %Y") if row['snapshot_time'] else "unknown date"
+                        return f"{row['player_name']}'s peak rating in {row['region']} this season: {row['rating']} on {date_str}"
                     return f"{query_params[0]} has no recorded peak rating"
 
         except Exception as e:
@@ -208,102 +210,38 @@ class LeaderboardDB:
         
     def day(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params, is_rank = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
             with self.conn.cursor() as cur:
-                if is_rank and not arg2:
-                    # No region specified — fetch all regions for given rank
-                    results = []
-                    for region in REGIONS:
-                        cur.execute("""
-                            SELECT player_name, rating
-                            FROM leaderboard_snapshots
-                            WHERE rank = %s AND region = %s AND game_mode = %s
-                            AND snapshot_time >= %s AND snapshot_time < %s
-                            ORDER BY snapshot_time DESC
-                            LIMIT 1;
-                        """, (int(arg1), region, game_mode, start_time, end_time))
-                        row = cur.fetchone()
-                        if row:
-                            results.append(f"{row[0]} is rank {arg1} in {region} at {row[1]} (no recent games played)")
-                    return " | ".join(results) if results else f"No players found at rank {arg1}"
+                # Use the parsed where_clause and query_params directly
+                cur.execute(f"""
+                    SELECT rank, rating, player_name, snapshot_time, region
+                    FROM leaderboard_snapshots
+                    {where_clause}
+                    AND snapshot_time >= %s AND snapshot_time < %s
+                    ORDER BY snapshot_time ASC;
+                """, query_params + (start_time, end_time))
+                rows = cur.fetchall()
 
-                elif is_rank:
-                    # Specific region provided
-                    query = f"""
-                        SELECT player_name, rating, region
-                        FROM leaderboard_snapshots
-                        {where_clause}
-                        AND snapshot_time >= %s AND snapshot_time < %s
-                        ORDER BY snapshot_time DESC
-                        LIMIT 1;
-                    """
-                    cur.execute(query, query_params + (start_time, end_time))
-                    row = cur.fetchone()
-                    if row:
-                        return f"{row[0]} is rank {arg1} in {row[2]} at {row[1]} (no recent games played)"
-                    return f"No player found at rank {arg1}"
+                if not rows:
+                    return f"{query_params[0]} is not on any BG leaderboards."
+                elif len(rows) == 1 or len(set([row['rating'] for row in rows])) == 1:
+                    last_row = rows[0]
+                    suffix = " that day" if offset > 0 else " today"
+                    return f"{last_row['player_name']} is rank {last_row['rank']} in {last_row['region']} at {last_row['rating']} with no games played{suffix}"
 
-                # -- Player-based delta logic --
-                player_name = query_params[0].lower()
-                parsed_region = parse_server(arg2) if arg2 and not is_rank else None
-                target_regions = [parsed_region] if parsed_region else REGIONS
+                # Calculate deltas
+                ratings = [row['rating'] for row in rows]
+                last_row = rows[-1]
+                start_rating, end_rating = ratings[0], ratings[-1]
+                total_delta = end_rating - start_rating
+                deltas = [ratings[i+1] - ratings[i] for i in range(len(ratings)-1) if ratings[i+1] != ratings[i]]
+                deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
 
-                results = []
-
-                for reg in target_regions:
-                    cur.execute("""
-                        SELECT rating, snapshot_time
-                        FROM leaderboard_snapshots
-                        WHERE player_name = %s AND region = %s AND game_mode = %s
-                        AND snapshot_time >= %s AND snapshot_time < %s
-                        ORDER BY snapshot_time ASC;
-                    """, (player_name, reg, game_mode, start_time, end_time))
-                    rows = cur.fetchall()
-
-                    if len(rows) < 2:
-                        # Not enough data to show deltas
-                        cur.execute("""
-                            SELECT rank, rating
-                            FROM leaderboard_snapshots
-                            WHERE player_name = %s AND region = %s AND game_mode = %s
-                            ORDER BY snapshot_time DESC
-                            LIMIT 1;
-                        """, (player_name, reg, game_mode))
-                        last_row = cur.fetchone()
-                        if last_row:
-                            rank, rating = last_row
-                            results.append(f"{player_name} is rank {rank} in {reg} at {rating} with no games played")
-                        continue
-
-                    # Calculate deltas
-                    ratings = [row[0] for row in rows]
-                    raw_deltas = [ratings[i+1] - ratings[i] for i in range(len(ratings)-1)]
-                    deltas = [d for d in raw_deltas if d != 0]
-
-                    if not deltas:
-                        cur.execute("""
-                            SELECT rank, rating
-                            FROM leaderboard_snapshots
-                            WHERE player_name = %s AND region = %s AND game_mode = %s
-                            ORDER BY snapshot_time DESC
-                            LIMIT 1;
-                        """, (player_name, reg, game_mode))
-                        last_row = cur.fetchone()
-                        if last_row:
-                            rank, rating = last_row
-                            results.append(f"{player_name} is rank {rank} in {reg} at {rating} with no games played")
-                        continue
-
-                    start_rating, end_rating = ratings[0], ratings[-1]
-                    total_delta = end_rating - start_rating
-                    deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
-
-                    results.append(f"{player_name} climbed from {start_rating} to {end_rating} ({'+' if total_delta >= 0 else ''}{total_delta}) in {reg} over {len(deltas)} games: {deltas_str}")
-
-            return " | ".join(results) if results else f"{player_name} is not on any BG leaderboards."
+                player_name = rows[0]['player_name']
+                return f"{player_name} climbed from {start_rating} to {end_rating} ({'+' if total_delta >= 0 else ''}{total_delta}) in {last_row['region']} over {len(deltas)} games: {deltas_str}"
 
         except Exception as e:
             return f"Error fetching day stats: {e}"
@@ -322,7 +260,7 @@ class LeaderboardDB:
             with self.conn.cursor() as cur:
                 for reg in target_regions:
                     cur.execute("""
-                        SELECT rating, snapshot_time
+                        SELECT rank, rating, snapshot_time
                         FROM leaderboard_snapshots
                         WHERE player_name = %s AND region = %s AND game_mode = %s
                         AND snapshot_time >= %s AND snapshot_time < %s
@@ -330,7 +268,8 @@ class LeaderboardDB:
                     """, (player_name, reg, game_mode, day_boundaries[0], day_boundaries[-1]))
                     rows = cur.fetchall()
 
-                    if len(rows) < 2:
+                    if not rows:
+                        # Fallback to the latest rank and rating if no games were played
                         cur.execute("""
                             SELECT rank, rating
                             FROM leaderboard_snapshots
@@ -340,13 +279,13 @@ class LeaderboardDB:
                         """, (player_name, reg, game_mode))
                         last_row = cur.fetchone()
                         if last_row:
-                            rank, rating = last_row
+                            rank, rating = last_row['rank'], last_row['rating']
                             suffix = " last week" if offset > 0 else " this week"
                             results.append(f"{player_name} is rank {rank} in {reg} at {rating} with no games played{suffix}")
                         continue
 
-                    ratings = [row[0] for row in rows]
-                    timestamps = [row[1] for row in rows]
+                    ratings = [row['rating'] for row in rows]
+                    timestamps = [row['snapshot_time'] for row in rows]
                     raw_deltas = [ratings[i+1] - ratings[i] for i in range(len(ratings)-1)]
 
                     delta_by_day = defaultdict(int)
@@ -372,7 +311,7 @@ class LeaderboardDB:
                         """, (player_name, reg, game_mode))
                         last_row = cur.fetchone()
                         if last_row:
-                            rank, rating = last_row
+                            rank, rating = last_row['rank'], last_row['rating']
                             suffix = " last week" if offset > 0 else " this week"
                             results.append(f"{player_name} is rank {rank} in {reg} at {rating} with no games played{suffix}")
                         continue
