@@ -255,11 +255,13 @@ class LeaderboardBot(commands.Bot):
 
     async def timed_messages(self):
         while True:
+            await asyncio.sleep(1000)
             try:
                 message = "Missbowers is running a charity tournament on May 3: hsbgclub.com/TournamentInfo?TourneyId=901" 
                 for channel_name in self.hearthstone_channels:
-                    channel = self.get_channel(channel_name)
-                    await channel.send(message)
+                    if channel_name not in ['fritterus']:
+                        channel = self.get_channel(channel_name)
+                        await channel.send(message)
 
             except Exception as e:
                 logger.error(f"❌ [Manual Loop] Error sending message: {e}")
