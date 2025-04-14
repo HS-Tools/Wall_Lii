@@ -181,10 +181,12 @@ def process_milestones(cursor, players):
         
         # Insert new milestones
         if milestones_to_insert:
+            # Use ON CONFLICT DO NOTHING to handle duplicates gracefully
             milestone_insert_query = """
                 INSERT INTO milestone_tracking 
                 (season, game_mode, region, milestone, player_name, timestamp, rating)
                 VALUES %s
+                ON CONFLICT (season, game_mode, region, milestone) DO NOTHING
             """
             milestone_values = [
                 (
@@ -200,7 +202,7 @@ def process_milestones(cursor, players):
             ]
             
             execute_values(cursor, milestone_insert_query, milestone_values)
-            print(f"Inserted {len(milestones_to_insert)} new milestones.")
+            print(f"Processed {len(milestones_to_insert)} milestones.")
             
     except Exception as e:
         print(f"Error processing milestones: {e}")
