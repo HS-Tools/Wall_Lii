@@ -4,6 +4,7 @@ import aiocron
 import boto3
 from collections import defaultdict
 from dotenv import load_dotenv
+import requests
 from utils.queries import parse_rank_or_player_args
 from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
@@ -41,7 +42,9 @@ class LeaderboardDB:
             dynamodb = boto3.resource("dynamodb", **aws_kwargs)
             self.alias_table = dynamodb.Table("player-alias-table")
             self.aliases = self._load_aliases()
-            self.cron = aiocron.crontab("*/1 * * * *", func=self._load_aliases)
+            self.patch_link = "Currently fetching patch link..."
+            self.cron = aiocron.crontab("* * * * *", func=self._load_aliases)
+            self.fetch_patch_link_cron = aiocron.crontab('* * * * *', func=self.fetchPatchLink)
 
     def close(self):
         if self.conn:
@@ -368,6 +371,69 @@ class LeaderboardDB:
         except Exception as e:
             return f"Error fetching milestone data: {e}"
 
+    def region_stats(self, region: str = None, game_mode: str = "0") -> str:
+        try:
+            region = parse_server(region)
+            regions = REGIONS if region is None else [region.upper()]
+            results = []
+
+            for reg in regions:
+                with self.conn.cursor() as cur:
+                    # Count the number of players in the region
+                    cur.execute("""
+                        SELECT COUNT(DISTINCT player_name) AS player_count
+                        FROM current_leaderboard
+                        WHERE region = %s AND game_mode = %s
+                    """, (reg, game_mode))
+                    player_count = cur.fetchone()['player_count']
+
+                    # Calculate the average rating of the top 25 players
+                    cur.execute("""
+                        SELECT AVG(rating) AS avg_rating
+                        FROM (
+                            SELECT rating
+                            FROM current_leaderboard
+                            WHERE region = %s AND game_mode = %s
+                            ORDER BY rating DESC
+                            LIMIT 25
+                        ) AS top_25
+                    """, (reg, game_mode))
+                    avg_rating = cur.fetchone()['avg_rating']
+
+                    results.append(f"{reg} has {player_count} players and Top 25 avg is {int(avg_rating)}")
+
+            return " | ".join(results)
+
+        except Exception as e:
+            return f"Error fetching region stats: {e}"
+
+    async def fetchPatchLink(self):
+        # URL of the API
+        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+
+        # Send a request to fetch the JSON data from the API
+        response = requests.get(api_url)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            data = response.json()
+
+            # Loop through each article in the data
+            for article in data:
+                content = article.get("content", "")  # Extract the content field
+                # Check if 'battlegrounds' is mentioned in the content
+                if "battlegrounds" in content.lower():
+                    # Extract and print the article's 'defaultUrl'
+                    article_url = article.get("defaultUrl")
+                    title = article.get("title")
+                    self.patch_link = f"{title}: {article_url}"
+                    return
+            else:
+                print("Patch link not found")
+        else:
+            print(f"Failed to retrieve data. Status code: {response.status_code}")
+
 if __name__ == "__main__":
     db = LeaderboardDB()
 
@@ -428,5 +494,14 @@ if __name__ == "__main__":
     print(db.milestone("20k"))
     print(db.milestone("8k"))
     print(db.milestone("7k"))  # Should show error for being too low
+    
+    print("Region stats tests ---------------")
+    print(db.region_stats())
+    print(db.region_stats("NA"))
+    print(db.region_stats("EU"))
+    print(db.region_stats("AP"))
+    print(db.region_stats("NA", "0"))
+    print(db.region_stats("EU", "1"))
+    print(db.region_stats("AP", "0"))
     
     db.close()
