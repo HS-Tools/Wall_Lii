@@ -74,21 +74,21 @@ class LeaderboardDB:
             region = parse_server(region) if not is_global else None
 
         query = """
-        WITH latest_snapshots AS (
-            SELECT DISTINCT ON (player_name, game_mode, region)
-                player_name,
-                rating,
-                region,
-                snapshot_time
-            FROM leaderboard_snapshots
-            WHERE game_mode = %s {region_filter}
-            ORDER BY player_name, game_mode, region, snapshot_time DESC
-        )
-        SELECT player_name, rating, region
-        FROM latest_snapshots
-        ORDER BY rating DESC
-        LIMIT 10;
-        """
+            WITH latest_snapshots AS (
+                SELECT DISTINCT ON (player_name, game_mode, region)
+                    player_name,
+                    rating,
+                    region,
+                    snapshot_time
+                FROM leaderboard_snapshots
+                WHERE game_mode = %s {region_filter}
+                ORDER BY player_name, game_mode, region, snapshot_time DESC
+            )
+            SELECT player_name, rating, region
+            FROM latest_snapshots
+            ORDER BY rating DESC
+            LIMIT 10;
+            """
 
         region_filter = "" if is_global else "AND region = %s"
         query = query.format(region_filter=region_filter)
@@ -115,13 +115,17 @@ class LeaderboardDB:
                 exists_check=self.player_exists
             )
 
+            # Determine which table to use based on rank
+            table_name = "current_leaderboard" if (lambda x: int(x) > 1000 if str(x).isdigit() else False)(query_params[0]) else "leaderboard_snapshots"
+            snapshot_time = ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
+
             with self.conn.cursor() as cur:
                 query = f"""
                     SELECT DISTINCT ON (region)
                         player_name, rating, region, rank
-                    FROM leaderboard_snapshots
+                    FROM {table_name}
                     {where_clause}
-                    ORDER BY region, snapshot_time DESC
+                    ORDER BY region{snapshot_time} DESC
                 """
 
                 cur.execute(query, query_params)
@@ -383,6 +387,7 @@ if __name__ == "__main__":
     print(db.rank("lii", "afsdfasf"))
     print(db.rank("NA", "beterbabbit"))
     print(db.rank("NA", "safdewafzfeafeawfef"))
+    print(db.rank("2300"))
     print("Peak tests ---------------")
     print(db.peak("jeef"))
     print(db.peak("lii", "EU"))

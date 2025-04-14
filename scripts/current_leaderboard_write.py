@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import execute_values
+import time
 
 # Load environment
 load_dotenv()
@@ -116,10 +117,14 @@ def update_current_leaderboard(players):
             conn.close()
 
 async def main():
+    start_time = time.time()  # Record the start time
     print("Fetching current leaderboard data...")
     players = await fetch_current_leaderboards()
     print(f"Fetched {len(players)} players.")
     update_current_leaderboard(players)
+    end_time = time.time()  # Record the end time
+    elapsed_time = end_time - start_time  # Calculate the elapsed time
+    print(f"Execution time: {elapsed_time:.2f} seconds")  # Print the execution time
 
 if __name__ == "__main__":
     asyncio.run(main())
