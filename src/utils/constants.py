@@ -1,0 +1,2 @@
+REGIONS = ["NA", "EU", "AP"]
+STATS_LIMIT = 1000

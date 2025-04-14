@@ -10,10 +10,9 @@ from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
 from datetime import timedelta
 from psycopg2.extras import RealDictCursor
+from utils.constants import REGIONS, STATS_LIMIT
 
 load_dotenv()
-
-REGIONS = ["NA", "EU", "AP"]
 
 class LeaderboardDB:
     def __init__(self, use_local: bool = False):
@@ -112,14 +111,15 @@ class LeaderboardDB:
 
     def rank(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(
+            where_clause, query_params, rank = parse_rank_or_player_args(
                 arg1, arg2, game_mode, 
                 aliases=self.aliases, 
-                exists_check=self.player_exists
+                exists_check=self.player_exists,
+                db_cursor=self.conn.cursor()
             )
 
             # Determine which table to use based on rank
-            table_name = "current_leaderboard" if (lambda x: int(x) > 1000 if str(x).isdigit() else False)(query_params[0]) else "leaderboard_snapshots"
+            table_name = "current_leaderboard" if (rank and rank > STATS_LIMIT) else "leaderboard_snapshots"
             snapshot_time = ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
 
             with self.conn.cursor() as cur:
@@ -147,10 +147,11 @@ class LeaderboardDB:
 
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(
+            where_clause, query_params, _ = parse_rank_or_player_args(
                 arg1, arg2, game_mode, 
                 aliases=self.aliases, 
-                exists_check=self.player_exists
+                exists_check=self.player_exists,
+                db_cursor=self.conn.cursor()
             )
 
             with self.conn.cursor() as cur:
@@ -165,7 +166,7 @@ class LeaderboardDB:
                 rows = cur.fetchall()
 
                 if not rows:
-                    return f"{query_params[0]} has no recorded peak rating"
+                    return f"{query_params[0]} is not in the top {STATS_LIMIT}."
 
                 return " | ".join(
                     f"{row['player_name']}'s peak rating in {row['region']} this season: {row['rating']} on {row['snapshot_time'].astimezone(TimeRangeHelper.now_la().tzinfo).strftime('%b %d, %Y')}"
@@ -177,10 +178,11 @@ class LeaderboardDB:
         
     def day(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(
+            where_clause, query_params, _ = parse_rank_or_player_args(
                 arg1, arg2, game_mode, 
                 aliases=self.aliases, 
-                exists_check=self.player_exists
+                exists_check=self.player_exists,
+                db_cursor=self.conn.cursor()
             )
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
@@ -202,10 +204,11 @@ class LeaderboardDB:
 
     def week(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(
+            where_clause, query_params, _ = parse_rank_or_player_args(
                 arg1, arg2, game_mode, 
                 aliases=self.aliases, 
-                exists_check=self.player_exists
+                exists_check=self.player_exists,
+                db_cursor=self.conn.cursor()
             )
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
@@ -246,7 +249,7 @@ class LeaderboardDB:
                 fallback_rows = cur.fetchall()
             
             if not fallback_rows:
-                return f"{query_params[0]} can't be found."
+                return f"{query_params[0]} is not in the top {STATS_LIMIT}."
 
             results = []
             for row in fallback_rows:
@@ -454,6 +457,7 @@ if __name__ == "__main__":
     print(db.rank("NA", "beterbabbit"))
     print(db.rank("NA", "safdewafzfeafeawfef"))
     print(db.rank("2300"))
+    print(db.rank("19000"))
     print("Peak tests ---------------")
     print(db.peak("jeef"))
     print(db.peak("lii", "EU"))
@@ -472,6 +476,8 @@ if __name__ == "__main__":
     print(db.day("1", "na"))
     print(db.day("sevel"))
     print(db.day("beterbabbit"))
+    print(db.day("beter", "NA"))
+    print(db.day("1000"))
     print("Week tests ---------------")
     print(db.week("jeef", "NA", offset=0))  # today's progress
     print(db.week("jeef", "NA", offset=1))  # yesterday's progress
