@@ -79,6 +79,48 @@ Resources:
         - AttributeName: Milestone
           KeyType: RANGE
 
+  CurrentLeaderboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda-functions/current_leaderboard/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 900
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(12 hours)
+
+  LeaderboardSnapshotsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda-functions/leaderboard_snapshots/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+
+  PruneFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda-functions/prune/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(4 hours)
+
   LeaderboardUpdaterFunction:
     Type: AWS::Serverless::Function
     Properties:
