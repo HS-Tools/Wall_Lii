@@ -224,6 +224,82 @@ class TwitchBot(commands.Bot):
         response = self.db.patch_link
         await ctx.send(response)
 
+    @commands.command(name="help", aliases=["commands", "wall_lii"])
+    async def help_command(self, ctx, command_name=None):
+        """Display help information for commands"""
+
+        help_messages = {
+            "rank": (
+                "Use !rank [player] [server]: Get the rank of a player. "
+                "Use the optional 'duo' prefix for duos. "
+                "Defaults to the channel name if no player is specified. "
+                "Example: !rank lii NA or !duorank lii NA"
+            ),
+            "day": (
+                "Use !day [player] [server]: Get daily stats for a player. "
+                "Use the optional 'duo' prefix for duos. "
+                "Defaults to the channel name if no player is specified. "
+                "Example: !day lii NA or !duoday lii NA"
+            ),
+            "week": (
+                "Use !week [player] [server]: Get weekly stats for a player. "
+                "Use the optional 'duo' prefix for duos. "
+                "Defaults to the channel name if no player is specified. "
+                "Example: !week lii NA or !duoweek lii NA"
+            ),
+            "lastweek": (
+                "Use !lastweek [player] [server]: Get stats from the previous week for a player. "
+                "Use the optional 'duo' prefix for duos. "
+                "Defaults to the channel name if no player is specified. "
+                "Example: !lastweek lii NA or !duolastweek lii NA"
+            ),
+            "yday": (
+                "Use !yday [player] [server]: Get yesterday's stats for a player. "
+                "Use the optional 'duo' prefix for duos. "
+                "Defaults to the channel name if no player is specified. "
+                "Example: !yday lii NA or !duoyday lii NA"
+            ),
+            "peak": (
+                "Use !peak [player] [server]: Get the peak rating of a player. "
+                "Use the optional 'duo' prefix for duos. "
+                "Defaults to the channel name if no player is specified. "
+                "Example: !peak lii NA or !duopeak lii NA"
+            ),
+            "stats": (
+                "Use !stats [server]: Display server stats. "
+                "Use the optional 'duo' prefix for duos. "
+                "If no server is specified, stats for all servers are shown. "
+                "Example: !stats NA or !duostats NA"
+            ),
+            "top": (
+                "Use !top [server]: Display top players. "
+                "Use the optional 'duo' prefix for duos. "
+                "If no server is specified, top players globally are shown. "
+                "Example: !top NA or !duotop NA"
+            ),
+        }
+
+        command_key = (
+            self.clean_input(command_name).lower()
+            if self.clean_input(command_name)
+            else None
+        )
+
+        if not command_key:
+            base_help = (
+                "Available commands: !rank, !day, !week, !lastweek, !peak, !stats, !top, !origin, !yday\n"
+                "Use `!help <command>` for detailed information on a specific command.\n"
+                "A day resets at 00:00 PST. A week resets on Monday at 00:00 PST."
+            )
+            await ctx.send(base_help)
+        else:
+            await ctx.send(
+                help_messages.get(
+                    command_key,
+                    "Command not found. Use `!help` to see available commands.",
+                )
+            )
+
     @commands.command(name="goodbot")
     async def goodbot(self, ctx):
         """Respond to praise with a robotic acknowledgment"""
