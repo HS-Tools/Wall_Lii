@@ -1,5 +1,7 @@
 import os
 import psycopg2
+import aiocron
+import boto3
 from collections import defaultdict
 from dotenv import load_dotenv
 from utils.queries import parse_rank_or_player_args
@@ -28,9 +30,41 @@ class LeaderboardDB:
                 cursor_factory=RealDictCursor
             )
 
+            # Configure AWS client for alias table
+            aws_kwargs = {
+                "region_name": "us-east-1",
+                "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+                "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            }
+            
+            # Initialize DynamoDB resource for alias table
+            dynamodb = boto3.resource("dynamodb", **aws_kwargs)
+            self.alias_table = dynamodb.Table("player-alias-table")
+            self.aliases = self._load_aliases()
+            self.cron = aiocron.crontab("*/1 * * * *", func=self._load_aliases)
+
     def close(self):
         if self.conn:
             self.conn.close()
+
+    def _load_aliases(self):
+        """Load aliases from DynamoDB table"""
+        try:
+            response = self.alias_table.scan()
+            aliases = {item["Alias"].lower(): item["PlayerName"].lower() for item in response["Items"]}
+            return aliases
+        except Exception as e:
+            return {}
+        
+    def player_exists(self, name: str, region: str, game_mode: str = "0") -> bool:
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT 1
+                FROM leaderboard_snapshots
+                WHERE player_name = %s AND region = %s AND game_mode = %s
+                LIMIT 1;
+            """, (name.lower(), region, game_mode))
+            return cur.fetchone() is not None
 
     def top10(self, region: str = "global", game_mode: str = "0") -> str:
         is_global = region.lower() == "global"
@@ -75,7 +109,11 @@ class LeaderboardDB:
 
     def rank(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(
+                arg1, arg2, game_mode, 
+                aliases=self.aliases, 
+                exists_check=self.player_exists
+            )
 
             with self.conn.cursor() as cur:
                 query = f"""
@@ -102,7 +140,11 @@ class LeaderboardDB:
 
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(
+                arg1, arg2, game_mode, 
+                aliases=self.aliases, 
+                exists_check=self.player_exists
+            )
 
             with self.conn.cursor() as cur:
                 query = f"""
@@ -128,7 +170,11 @@ class LeaderboardDB:
         
     def day(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(
+                arg1, arg2, game_mode, 
+                aliases=self.aliases, 
+                exists_check=self.player_exists
+            )
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
@@ -149,7 +195,11 @@ class LeaderboardDB:
 
     def week(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(
+                arg1, arg2, game_mode, 
+                aliases=self.aliases, 
+                exists_check=self.player_exists
+            )
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
             labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
@@ -251,6 +301,69 @@ class LeaderboardDB:
 
         return " | ".join(results)
 
+    def milestone(self, milestone_str: str, region: str = None) -> str:
+        """
+        Get the first player to reach a milestone rating in solo and duos.
+        """
+        try:
+            # Parse milestone
+            milestone = (
+                int(float(milestone_str[:-1]) * 1000)
+                if milestone_str.lower().endswith('k')
+                else int(milestone_str)
+            )
+            milestone = (milestone // 1000) * 1000
+            if milestone < 8000:
+                return "Milestones start at 8000. Please try a higher value."
+
+            # Validate region
+            parsed_region = None
+            if region:
+                parsed_region = parse_server(region.upper())
+                if not parsed_region:
+                    return f"Invalid region '{region}'. Please use NA, EU, or AP."
+
+            # Shared query body - use TRIM to fix spacing issues
+            base_query = """
+                SELECT 
+                    m.*,
+                    TRIM(to_char(m.timestamp AT TIME ZONE 'America/Los_Angeles', 'Month')) || ' ' || 
+                    TRIM(to_char(m.timestamp AT TIME ZONE 'America/Los_Angeles', 'DD HH:MI PM')) as formatted_time
+                FROM milestone_tracking m
+                WHERE m.season = %s AND m.milestone = %s AND m.game_mode = %s
+            """
+            if parsed_region:
+                base_query += " AND m.region = %s"
+            base_query += " ORDER BY m.timestamp ASC LIMIT 1"
+
+            # Execute queries for solo and duos
+            with self.conn.cursor() as cur:
+                results = []
+                for mode in ("0", "1"):
+                    params = [14, milestone, mode]
+                    if parsed_region:
+                        params.append(parsed_region)
+                    cur.execute(base_query, params)
+                    result = cur.fetchone()
+                    if result:
+                        prefix = "In Duos: " if mode == "1" else ""
+                        response = (
+                            f"{prefix}{result['player_name']} was the first to reach {milestone_str} "
+                            f"in {result['region']}on {result['formatted_time']} PT"
+                        )
+                        results.append(response)
+
+            if not results:
+                target = f"in {parsed_region}" if parsed_region else "in any region"
+                return f"No players have reached {milestone_str} {target} yet."
+
+            return " | ".join(results)
+
+        except ValueError:
+            return "Invalid milestone format. Please use a number like '13000' or '13k'."
+        except Exception as e:
+            return f"Error fetching milestone data: {e}"
+
 if __name__ == "__main__":
     db = LeaderboardDB()
 
@@ -299,5 +412,16 @@ if __name__ == "__main__":
     print(db.week("beterbabbit"))
     print(db.week("234324324"))
     print(db.week("900"))
+    print(db.week("beter"))
 
+    print("Milestone tests ---------------")
+    print(db.milestone("13k"))
+    print(db.milestone("13000"))
+    print(db.milestone("13k", "NA"))
+    print(db.milestone("13k", "EU"))
+    print(db.milestone("13k", "AP"))
+    print(db.milestone("20k"))
+    print(db.milestone("8k"))
+    print(db.milestone("7k"))  # Should show error for being too low
+    
     db.close()
