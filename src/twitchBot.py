@@ -255,16 +255,16 @@ class LeaderboardBot(commands.Bot):
 
     async def timed_messages(self):
         while True:
+            await asyncio.sleep(1000)
             try:
-                message = "Lii is hosting a tournament this saturday: https://x.com/Lii_HS/status/1909737080768377138"
+                message = "Missbowers is running a charity tournament on May 3: hsbgclub.com/TournamentInfo?TourneyId=901" 
                 for channel_name in self.hearthstone_channels:
-                    channel = self.get_channel(channel_name)
-                    await channel.send(message)
-
+                    if channel_name not in ['fritterus']:
+                        channel = self.get_channel(channel_name)
+                        await channel.send(message)
             except Exception as e:
                 logger.error(f"❌ [Manual Loop] Error sending message: {e}")
-
-            await asyncio.sleep(3600)  # Wait 60 minutes before next message
+            await asyncio.sleep(7600)  # Wait 2 hours before next message
 
     async def event_ready(self):
         logger.info(f"Bot ready | {self.nick}")
