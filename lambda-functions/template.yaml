@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Supabase-only Lambda stack for HSBG automation
+
+Resources:
+
+  CurrentLeaderboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: current_leaderboard/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 900
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(12 hours)
+
+  LeaderboardSnapshotsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: leaderboard_snapshots/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+
+  PruneFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: prune/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(4 hours)

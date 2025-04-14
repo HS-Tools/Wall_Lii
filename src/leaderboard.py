@@ -176,17 +176,10 @@ class LeaderboardDB:
                 db_cursor=self.conn.cursor(),
             )
 
-            # Determine which table to use based on rank
-            table_name = (
-                "current_leaderboard"
-                if (rank and rank > STATS_LIMIT)
-                else "leaderboard_snapshots"
-            )
-            snapshot_time = (
-                ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
-            )
-
-            with self.conn.cursor() as cur:
+            def fetch_rank(cur, table_name: str) -> list:
+                snapshot_time = (
+                    ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
+                )
                 query = f"""
                     SELECT DISTINCT ON (region)
                         player_name, rating, region, rank
@@ -194,9 +187,21 @@ class LeaderboardDB:
                     {where_clause}
                     ORDER BY region{snapshot_time} DESC
                 """
-
                 cur.execute(query, query_params)
-                rows = cur.fetchall()
+                return cur.fetchall()
+
+            table_name = (
+                "current_leaderboard"
+                if (rank and rank > STATS_LIMIT)
+                else "leaderboard_snapshots"
+            )
+
+            with self.conn.cursor() as cur:
+                rows = fetch_rank(cur, table_name)
+
+                if not rows and table_name == "leaderboard_snapshots":
+                    # fallback to current_leaderboard
+                    rows = fetch_rank(cur, "current_leaderboard")
 
                 if not rows:
                     return f"{query_params[0].lower()} can't be found."

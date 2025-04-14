@@ -3,6 +3,7 @@ import asyncio
 from twitchio.ext import commands
 from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
+from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message
 
 
 class TwitchBot(commands.Bot):
@@ -217,6 +218,44 @@ class TwitchBot(commands.Bot):
             self.clean_input(milestone), self.clean_input(region)
         )
         await ctx.send(response)
+
+    @commands.command(name="buddy")
+    async def buddy(self, ctx):
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            return
+        result = get_buddy_text(args[1])
+        if result:
+            await ctx.send(result[1])
+
+    @commands.command(name="goldenbuddy")
+    async def goldenbuddy(self, ctx):
+        if ctx.channel.name == "dogdog":
+            return
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            return
+        result = get_buddy_text(args[1])
+        if result:
+            await ctx.send(result[2])
+
+    @commands.command(name="trinket")
+    async def trinket(self, ctx):
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            return
+        result = get_trinket_text(" ".join(args[1:]))
+        if result:
+            await ctx.send(result)
+
+    @commands.command(name="buddygold")
+    async def buddygold(self, ctx):
+        args = ctx.message.content.split(" ")
+        if len(args) < 2:
+            await ctx.send("Add a tier between 1 and 6 like !buddygold 3")
+            return
+        message = get_buddy_gold_tier_message(args[1])
+        await ctx.send(message)
 
     @commands.command(name="patch")
     async def patch_command(self, ctx):
