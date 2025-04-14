@@ -29,4 +29,4 @@ def parse_rank_or_player_args(arg1: str, arg2: str = None, game_mode: str = "0")
         where_clause += " AND region = %s"
         params += (region,)
 
-    return where_clause, params, is_rank
+    return where_clause, params

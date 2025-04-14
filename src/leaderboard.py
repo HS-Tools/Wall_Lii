@@ -75,7 +75,7 @@ class LeaderboardDB:
 
     def rank(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params, is_rank = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
 
             with self.conn.cursor() as cur:
                 query = f"""
@@ -102,7 +102,7 @@ class LeaderboardDB:
 
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params, is_rank = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
 
             with self.conn.cursor() as cur:
                 query = f"""
@@ -128,12 +128,11 @@ class LeaderboardDB:
         
     def day(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params, is_rank = parse_rank_or_player_args(arg1, arg2, game_mode)
+            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
             with self.conn.cursor() as cur:
-                # Use the parsed where_clause and query_params directly
                 cur.execute(f"""
                     SELECT rank, rating, player_name, snapshot_time, region
                     FROM leaderboard_snapshots
@@ -143,123 +142,114 @@ class LeaderboardDB:
                 """, query_params + (start_time, end_time))
                 rows = cur.fetchall()
 
-                if not rows:
-                    return f"{query_params[0]} can't be found."
-                
-                # Group rows by region
-                regions = {}
-                for row in rows:
-                    region = row['region']
-                    if region not in regions:
-                        regions[region] = []
-                    regions[region].append(row)
-                
-                # Process each region separately
-                results = []
-                for region, region_rows in regions.items():
-                    if len(region_rows) == 1 or len(set([row['rating'] for row in region_rows])) == 1:
-                        last_row = region_rows[0]
-                        suffix = " that day" if offset > 0 else " today"
-                        results.append(f"{last_row['player_name']} is rank {last_row['rank']} in {region} at {last_row['rating']} with no games played{suffix}")
-                    else:
-                        # Calculate deltas
-                        ratings = [row['rating'] for row in region_rows]
-                        last_row = region_rows[-1]
-                        start_rating, end_rating = ratings[0], ratings[-1]
-                        total_delta = end_rating - start_rating
-                        deltas = [ratings[i+1] - ratings[i] for i in range(len(ratings)-1) if ratings[i+1] != ratings[i]]
-                        deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
-
-                        player_name = region_rows[0]['player_name']
-                        adjective = "climbed" if total_delta >= 0 else "fell"
-                        emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
-                        results.append(f"{player_name} {adjective} from {start_rating} to {end_rating} ({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}")
-                
-                # Join results with pipe separator
-                return " | ".join(results)
+            return self._summarize_progress(rows, offset, fallback_query=(where_clause, query_params))
 
         except Exception as e:
             return f"Error fetching day stats: {e}"
-        
+
     def week(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
         try:
-            where_clause, query_params, is_rank = parse_rank_or_player_args(arg1, arg2, game_mode)
-            start_of_week = TimeRangeHelper.start_of_week_la(offset)
-            end_of_week = TimeRangeHelper.start_of_week_la(offset - 1)
-            weekday_labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
-            day_boundaries = [start_of_week + timedelta(days=i) for i in range(8)]  # 7 days + 1 for exclusive upper bound
+            where_clause, query_params = parse_rank_or_player_args(arg1, arg2, game_mode)
+            start = TimeRangeHelper.start_of_week_la(offset)
+            end = TimeRangeHelper.start_of_week_la(offset - 1)
+            labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
+            boundaries = [start + timedelta(days=i) for i in range(8)]
 
             with self.conn.cursor() as cur:
-                # Use the parsed where_clause and query_params directly
                 cur.execute(f"""
                     SELECT rank, rating, player_name, snapshot_time, region
                     FROM leaderboard_snapshots
                     {where_clause}
                     AND snapshot_time >= %s AND snapshot_time < %s
                     ORDER BY snapshot_time ASC;
-                """, query_params + (start_of_week, end_of_week))
+                """, query_params + (start, end))
                 rows = cur.fetchall()
 
-                if not rows:
-                    return f"{query_params[0]} can't be found."
-                
-                # Group rows by region
-                regions = {}
-                for row in rows:
-                    region = row['region']
-                    if region not in regions:
-                        regions[region] = []
-                    regions[region].append(row)
-                
-                # Process each region separately
-                results = []
-                for region, region_rows in regions.items():
-                    if len(region_rows) == 1 or len(set([row['rating'] for row in region_rows])) == 1:
-                        last_row = region_rows[0]
-                        suffix = " last week" if offset > 0 else " this week"
-                        results.append(f"{last_row['player_name']} is rank {last_row['rank']} in {region} at {last_row['rating']} with no games played{suffix}")
-                    else:
-                        # Calculate deltas by day
-                        ratings = [row['rating'] for row in region_rows]
-                        timestamps = [row['snapshot_time'] for row in region_rows]
-                        player_name = region_rows[0]['player_name']
-                        start_rating, end_rating = ratings[0], ratings[-1]
-                        total_delta = end_rating - start_rating
-                        
-                        # Calculate deltas by day
-                        delta_by_day = defaultdict(int)
-                        valid_deltas = 0
-                        
-                        for i in range(len(ratings) - 1):
-                            delta = ratings[i+1] - ratings[i]
-                            ts = timestamps[i+1]
-                            if delta != 0:
-                                for d in range(7):
-                                    if day_boundaries[d] <= ts < day_boundaries[d + 1]:
-                                        delta_by_day[d] += delta
-                                        valid_deltas += 1
-                                        break
-                        
-                        day_deltas_str = ", ".join(
-                            f"{weekday_labels[i]}: {'+' if delta_by_day[i] > 0 else ''}{delta_by_day[i]}"
-                            for i in range(7) if delta_by_day[i] != 0
-                        )
-                        
-                        # If no day deltas, show a message about no games played
-                        if not day_deltas_str:
-                            suffix = " last week" if offset > 0 else " this week"
-                            results.append(f"{player_name} is rank {region_rows[-1]['rank']} in {region} at {end_rating} with no games played{suffix}")
-                        else:
-                            suffix = " last week" if offset > 0 else ""
-                            adjective = "climbed" if total_delta >= 0 else "fell"
-                            emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
-                            results.append(f"{player_name} {adjective} from {start_rating} to {end_rating} ({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {valid_deltas} games{suffix}: {day_deltas_str} {emote}")
-                
-                # Join results with pipe separator
-                return " | ".join(results)
+            return self._summarize_progress(rows, offset, is_week=True, day_boundaries=boundaries, labels=labels, fallback_query=(where_clause, query_params))
 
         except Exception as e:
             return f"Error fetching week stats: {e}"
+
+    def _summarize_progress(self, rows, offset, is_week=False, day_boundaries=None, labels=None, fallback_query=None):
+        regions = defaultdict(list)
+        for row in rows:
+            regions[row['region']].append(row)
+
+        # If no regions and we have a fallback query, fetch latest snapshot
+        if not regions and fallback_query:
+            where_clause, query_params = fallback_query
+            with self.conn.cursor() as cur:
+                cur.execute(f"""
+                    SELECT DISTINCT ON (region)
+                        rank, rating, player_name, region
+                    FROM leaderboard_snapshots
+                    {where_clause}
+                    ORDER BY region, snapshot_time DESC;
+                """, query_params)
+                fallback_rows = cur.fetchall()
+            
+            if not fallback_rows:
+                return f"{query_params[0]} can't be found."
+
+            results = []
+            for row in fallback_rows:
+                suffix = " last week" if is_week and offset > 0 else (" this week" if is_week else (" that day" if offset > 0 else " today"))
+                results.append(f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}")
+            return " | ".join(results)
+
+        results = []
+        for region, region_rows in regions.items():
+            ratings = [r["rating"] for r in region_rows]
+            timestamps = [r["snapshot_time"] for r in region_rows]
+            player_name = region_rows[0]["player_name"]
+            rank = region_rows[-1]["rank"]
+            start_rating, end_rating = ratings[0], ratings[-1]
+            total_delta = end_rating - start_rating
+
+            if len(region_rows) == 1 or len(set(ratings)) <= 1:
+                time_suffix = " last week" if is_week and offset > 0 else (" this week" if is_week else (" that day" if offset > 0 else " today"))
+                results.append(f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}")
+                continue
+
+            adjective = "climbed" if total_delta >= 0 else "fell"
+            emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
+
+            if is_week:
+                delta_by_day = defaultdict(int)
+                delta_count = 0
+                for i in range(len(ratings) - 1):
+                    delta = ratings[i + 1] - ratings[i]
+                    ts = timestamps[i + 1]
+                    if delta != 0:
+                        for d in range(7):
+                            if day_boundaries[d] <= ts < day_boundaries[d + 1]:
+                                delta_by_day[d] += delta
+                                delta_count += 1
+                                break
+
+                day_deltas_str = ", ".join(
+                    f"{labels[d]}: {'+' if delta_by_day[d] > 0 else ''}{delta_by_day[d]}"
+                    for d in range(7) if delta_by_day[d] != 0
+                )
+
+                if not day_deltas_str:
+                    suffix = " last week" if offset > 0 else " this week"
+                    results.append(f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}")
+                else:
+                    suffix = " last week" if offset > 0 else ""
+                    results.append(
+                        f"{player_name} {adjective} from {start_rating} to {end_rating} "
+                        f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}: {day_deltas_str} {emote}"
+                    )
+            else:
+                deltas = [ratings[i + 1] - ratings[i] for i in range(len(ratings) - 1) if ratings[i + 1] != ratings[i]]
+                deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
+                results.append(
+                    f"{player_name} {adjective} from {start_rating} to {end_rating} "
+                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}"
+                )
+
+        return " | ".join(results)
 
 if __name__ == "__main__":
     db = LeaderboardDB()
@@ -307,5 +297,7 @@ if __name__ == "__main__":
     print(db.week("lii"))
     print(db.week("lii", offset=1))
     print(db.week("beterbabbit"))
+    print(db.week("234324324"))
+    print(db.week("900"))
 
     db.close()
