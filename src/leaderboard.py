@@ -1,6 +1,6 @@
 import os
 import psycopg2
-import aiocron
+import asyncio
 import boto3
 from collections import defaultdict
 from dotenv import load_dotenv
@@ -14,10 +14,11 @@ from utils.constants import REGIONS, STATS_LIMIT
 
 load_dotenv()
 
+
 class LeaderboardDB:
     def __init__(self, use_local: bool = False):
         if use_local:
-            #TODO implement local db
+            # TODO implement local db
             pass
         else:
             self.conn = psycopg2.connect(
@@ -27,7 +28,7 @@ class LeaderboardDB:
                 user=os.getenv("DB_USER"),
                 password=os.getenv("DB_PASSWORD"),
                 sslmode="require",
-                cursor_factory=RealDictCursor
+                cursor_factory=RealDictCursor,
             )
 
             # Configure AWS client for alias table
@@ -36,40 +37,91 @@ class LeaderboardDB:
                 "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
                 "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
             }
-            
+
             # Initialize DynamoDB resource for alias table
             dynamodb = boto3.resource("dynamodb", **aws_kwargs)
             self.alias_table = dynamodb.Table("player-alias-table")
-            self.aliases = self._load_aliases()
+
+            # Initialize with empty values that will be populated later
+            self.aliases = {}
             self.patch_link = "Currently fetching patch link..."
-            self.cron = aiocron.crontab("* * * * *", func=self._load_aliases)
-            self.fetch_patch_link_cron = aiocron.crontab('* * * * *', func=self.fetchPatchLink)
+
+            # Load aliases synchronously for initial setup
+            self._load_aliases_sync()
+            self._fetch_patch_link_sync()
+
+    def _load_aliases_sync(self):
+        """Load aliases synchronously for initial setup"""
+        try:
+            response = self.alias_table.scan()
+            self.aliases = {
+                item["Alias"].lower(): item["PlayerName"].lower()
+                for item in response["Items"]
+            }
+        except Exception as e:
+            print(f"Error loading aliases synchronously: {e}")
+            self.aliases = {}
+
+    def _fetch_patch_link_sync(self):
+        """Fetch patch link synchronously for initial setup"""
+        try:
+            # URL of the API
+            api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+
+            # Send a request to fetch the JSON data from the API
+            response = requests.get(api_url)
+
+            # Check if the request was successful
+            if response.status_code == 200:
+                # Parse the JSON response
+                data = response.json()
+
+                # Loop through each article in the data
+                for article in data:
+                    content = article.get("content", "")  # Extract the content field
+                    # Check if 'battlegrounds' is mentioned in the content
+                    if "battlegrounds" in content.lower():
+                        # Extract and print the article's 'defaultUrl'
+                        article_url = article.get("defaultUrl")
+                        title = article.get("title")
+                        self.patch_link = f"{title}: {article_url}"
+                        return
+        except Exception as e:
+            print(f"Error fetching patch link synchronously: {e}")
 
     def close(self):
         if self.conn:
             self.conn.close()
 
-    def _load_aliases(self):
+    async def _load_aliases(self):
         """Load aliases from DynamoDB table"""
         try:
             response = self.alias_table.scan()
-            aliases = {item["Alias"].lower(): item["PlayerName"].lower() for item in response["Items"]}
+            aliases = {
+                item["Alias"].lower(): item["PlayerName"].lower()
+                for item in response["Items"]
+            }
             return aliases
         except Exception as e:
+            print(f"Error loading aliases: {e}")
             return {}
-        
+
     def player_exists(self, name: str, region: str, game_mode: str = "0") -> bool:
         with self.conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT 1
                 FROM leaderboard_snapshots
                 WHERE player_name = %s AND region = %s AND game_mode = %s
                 LIMIT 1;
-            """, (name.lower(), region, game_mode))
+            """,
+                (name.lower(), region, game_mode),
+            )
             return cur.fetchone() is not None
 
     def top10(self, region: str = "global", game_mode: str = "0") -> str:
-        is_global = region.lower() == "global"
+        is_global = not parse_server(region)
+
         if not is_global:
             if parse_server(region) is None:
                 return "Invalid region specified. Please use a valid region or no region for global."
@@ -103,7 +155,11 @@ class LeaderboardDB:
                 results = cur.fetchall()
 
             return title + ", ".join(
-                f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})" if is_global else f"{i+1}. {row['player_name']}: {row['rating']}"
+                (
+                    f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})"
+                    if is_global
+                    else f"{i+1}. {row['player_name']}: {row['rating']}"
+                )
                 for i, row in enumerate(results)
             )
         except Exception as e:
@@ -112,15 +168,23 @@ class LeaderboardDB:
     def rank(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
             where_clause, query_params, rank = parse_rank_or_player_args(
-                arg1, arg2, game_mode, 
-                aliases=self.aliases, 
+                arg1,
+                arg2,
+                game_mode,
+                aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor()
+                db_cursor=self.conn.cursor(),
             )
 
             # Determine which table to use based on rank
-            table_name = "current_leaderboard" if (rank and rank > STATS_LIMIT) else "leaderboard_snapshots"
-            snapshot_time = ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
+            table_name = (
+                "current_leaderboard"
+                if (rank and rank > STATS_LIMIT)
+                else "leaderboard_snapshots"
+            )
+            snapshot_time = (
+                ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
+            )
 
             with self.conn.cursor() as cur:
                 query = f"""
@@ -148,10 +212,12 @@ class LeaderboardDB:
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
             where_clause, query_params, _ = parse_rank_or_player_args(
-                arg1, arg2, game_mode, 
-                aliases=self.aliases, 
+                arg1,
+                arg2,
+                game_mode,
+                aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor()
+                db_cursor=self.conn.cursor(),
             )
 
             with self.conn.cursor() as cur:
@@ -175,40 +241,53 @@ class LeaderboardDB:
 
         except Exception as e:
             return f"Error fetching peak: {e}"
-        
-    def day(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
+
+    def day(
+        self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0
+    ) -> str:
         try:
             where_clause, query_params, _ = parse_rank_or_player_args(
-                arg1, arg2, game_mode, 
-                aliases=self.aliases, 
+                arg1,
+                arg2,
+                game_mode,
+                aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor()
+                db_cursor=self.conn.cursor(),
             )
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
             with self.conn.cursor() as cur:
-                cur.execute(f"""
+                cur.execute(
+                    f"""
                     SELECT rank, rating, player_name, snapshot_time, region
                     FROM leaderboard_snapshots
                     {where_clause}
                     AND snapshot_time >= %s AND snapshot_time < %s
                     ORDER BY snapshot_time ASC;
-                """, query_params + (start_time, end_time))
+                """,
+                    query_params + (start_time, end_time),
+                )
                 rows = cur.fetchall()
 
-            return self._summarize_progress(rows, offset, fallback_query=(where_clause, query_params))
+            return self._summarize_progress(
+                rows, offset, fallback_query=(where_clause, query_params)
+            )
 
         except Exception as e:
             return f"Error fetching day stats: {e}"
 
-    def week(self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0) -> str:
+    def week(
+        self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0
+    ) -> str:
         try:
             where_clause, query_params, _ = parse_rank_or_player_args(
-                arg1, arg2, game_mode, 
-                aliases=self.aliases, 
+                arg1,
+                arg2,
+                game_mode,
+                aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor()
+                db_cursor=self.conn.cursor(),
             )
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
@@ -216,45 +295,76 @@ class LeaderboardDB:
             boundaries = [start + timedelta(days=i) for i in range(8)]
 
             with self.conn.cursor() as cur:
-                cur.execute(f"""
+                cur.execute(
+                    f"""
                     SELECT rank, rating, player_name, snapshot_time, region
                     FROM leaderboard_snapshots
                     {where_clause}
                     AND snapshot_time >= %s AND snapshot_time < %s
                     ORDER BY snapshot_time ASC;
-                """, query_params + (start, end))
+                """,
+                    query_params + (start, end),
+                )
                 rows = cur.fetchall()
 
-            return self._summarize_progress(rows, offset, is_week=True, day_boundaries=boundaries, labels=labels, fallback_query=(where_clause, query_params))
+            return self._summarize_progress(
+                rows,
+                offset,
+                is_week=True,
+                day_boundaries=boundaries,
+                labels=labels,
+                fallback_query=(where_clause, query_params),
+            )
 
         except Exception as e:
             return f"Error fetching week stats: {e}"
 
-    def _summarize_progress(self, rows, offset, is_week=False, day_boundaries=None, labels=None, fallback_query=None):
+    def _summarize_progress(
+        self,
+        rows,
+        offset,
+        is_week=False,
+        day_boundaries=None,
+        labels=None,
+        fallback_query=None,
+    ):
         regions = defaultdict(list)
         for row in rows:
-            regions[row['region']].append(row)
+            regions[row["region"]].append(row)
 
         # If no regions and we have a fallback query, fetch latest snapshot
         if not regions and fallback_query:
             where_clause, query_params = fallback_query
             with self.conn.cursor() as cur:
-                cur.execute(f"""
+                cur.execute(
+                    f"""
                     SELECT DISTINCT ON (region)
                         rank, rating, player_name, region
                     FROM leaderboard_snapshots
                     {where_clause}
                     ORDER BY region, snapshot_time DESC;
-                """, query_params)
+                """,
+                    query_params,
+                )
                 fallback_rows = cur.fetchall()
-            
+
             if not fallback_rows:
                 return f"{query_params[0]} is not in the top {STATS_LIMIT}."
 
             results = []
             for row in fallback_rows:
-                suffix = " last week" if is_week and offset > 0 else (" this week" if is_week else (" that day" if offset > 0 else " today"))
-                results.append(f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}")
+                suffix = (
+                    " last week"
+                    if is_week and offset > 0
+                    else (
+                        " this week"
+                        if is_week
+                        else (" that day" if offset > 0 else " today")
+                    )
+                )
+                results.append(
+                    f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}"
+                )
             return " | ".join(results)
 
         results = []
@@ -267,8 +377,18 @@ class LeaderboardDB:
             total_delta = end_rating - start_rating
 
             if len(region_rows) == 1 or len(set(ratings)) <= 1:
-                time_suffix = " last week" if is_week and offset > 0 else (" this week" if is_week else (" that day" if offset > 0 else " today"))
-                results.append(f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}")
+                time_suffix = (
+                    " last week"
+                    if is_week and offset > 0
+                    else (
+                        " this week"
+                        if is_week
+                        else (" that day" if offset > 0 else " today")
+                    )
+                )
+                results.append(
+                    f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}"
+                )
                 continue
 
             adjective = "climbed" if total_delta >= 0 else "fell"
@@ -289,12 +409,15 @@ class LeaderboardDB:
 
                 day_deltas_str = ", ".join(
                     f"{labels[d]}: {'+' if delta_by_day[d] > 0 else ''}{delta_by_day[d]}"
-                    for d in range(7) if delta_by_day[d] != 0
+                    for d in range(7)
+                    if delta_by_day[d] != 0
                 )
 
                 if not day_deltas_str:
                     suffix = " last week" if offset > 0 else " this week"
-                    results.append(f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}")
+                    results.append(
+                        f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}"
+                    )
                 else:
                     suffix = " last week" if offset > 0 else ""
                     results.append(
@@ -302,7 +425,11 @@ class LeaderboardDB:
                         f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}: {day_deltas_str} {emote}"
                     )
             else:
-                deltas = [ratings[i + 1] - ratings[i] for i in range(len(ratings) - 1) if ratings[i + 1] != ratings[i]]
+                deltas = [
+                    ratings[i + 1] - ratings[i]
+                    for i in range(len(ratings) - 1)
+                    if ratings[i + 1] != ratings[i]
+                ]
                 deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
                 results.append(
                     f"{player_name} {adjective} from {start_rating} to {end_rating} "
@@ -319,7 +446,7 @@ class LeaderboardDB:
             # Parse milestone
             milestone = (
                 int(float(milestone_str[:-1]) * 1000)
-                if milestone_str.lower().endswith('k')
+                if milestone_str.lower().endswith("k")
                 else int(milestone_str)
             )
             milestone = (milestone // 1000) * 1000
@@ -370,7 +497,9 @@ class LeaderboardDB:
             return " | ".join(results)
 
         except ValueError:
-            return "Invalid milestone format. Please use a number like '13000' or '13k'."
+            return (
+                "Invalid milestone format. Please use a number like '13000' or '13k'."
+            )
         except Exception as e:
             return f"Error fetching milestone data: {e}"
 
@@ -383,15 +512,19 @@ class LeaderboardDB:
             for reg in regions:
                 with self.conn.cursor() as cur:
                     # Count the number of players in the region
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT COUNT(DISTINCT player_name) AS player_count
                         FROM current_leaderboard
                         WHERE region = %s AND game_mode = %s
-                    """, (reg, game_mode))
-                    player_count = cur.fetchone()['player_count']
+                    """,
+                        (reg, game_mode),
+                    )
+                    player_count = cur.fetchone()["player_count"]
 
                     # Calculate the average rating of the top 25 players
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT AVG(rating) AS avg_rating
                         FROM (
                             SELECT rating
@@ -400,10 +533,14 @@ class LeaderboardDB:
                             ORDER BY rating DESC
                             LIMIT 25
                         ) AS top_25
-                    """, (reg, game_mode))
-                    avg_rating = cur.fetchone()['avg_rating']
+                    """,
+                        (reg, game_mode),
+                    )
+                    avg_rating = cur.fetchone()["avg_rating"]
 
-                    results.append(f"{reg} has {player_count} players and Top 25 avg is {int(avg_rating)}")
+                    results.append(
+                        f"{reg} has {player_count} players and Top 25 avg is {int(avg_rating)}"
+                    )
 
             return " | ".join(results)
 
@@ -436,6 +573,7 @@ class LeaderboardDB:
                 print("Patch link not found")
         else:
             print(f"Failed to retrieve data. Status code: {response.status_code}")
+
 
 if __name__ == "__main__":
     db = LeaderboardDB()
@@ -500,7 +638,7 @@ if __name__ == "__main__":
     print(db.milestone("20k"))
     print(db.milestone("8k"))
     print(db.milestone("7k"))  # Should show error for being too low
-    
+
     print("Region stats tests ---------------")
     print(db.region_stats())
     print(db.region_stats("NA"))
@@ -509,5 +647,5 @@ if __name__ == "__main__":
     print(db.region_stats("NA", "0"))
     print(db.region_stats("EU", "1"))
     print(db.region_stats("AP", "0"))
-    
+
     db.close()
