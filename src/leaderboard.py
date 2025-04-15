@@ -265,7 +265,7 @@ class LeaderboardDB:
                     return f"{query_params[0]} is not in the top {STATS_LIMIT}."
 
                 return " | ".join(
-                    f"{row['player_name']}'s peak rating in {row['region']} this season: {row['rating']} on {row['snapshot_time'].astimezone(TimeRangeHelper.now_la().tzinfo).strftime('%b %d, %Y')}"
+                    f"{row['player_name']}'s peak rating in {row['region']} this season: {row['rating']} on {row['snapshot_time'].astimezone(TimeRangeHelper.now_la().tzinfo).strftime('%B %d, %Y %I:%M %p')} PT"
                     for row in rows
                 )
 
