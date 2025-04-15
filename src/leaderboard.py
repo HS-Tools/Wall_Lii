@@ -171,6 +171,37 @@ class LeaderboardDB:
                 db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
 
+            # Special handling when rank is explicitly provided
+            if rank and isinstance(rank, int):
+                regions = REGIONS
+                results = []
+
+                for region in regions:
+                    with self._get_connection().cursor(
+                        cursor_factory=RealDictCursor
+                    ) as cur:
+                        cur.execute(
+                            """
+                            SELECT player_name, rating, region, rank
+                            FROM leaderboard_snapshots
+                            WHERE rank = %s AND region = %s AND game_mode = %s
+                            ORDER BY snapshot_time DESC
+                            LIMIT 1;
+                            """,
+                            (rank, region, game_mode),
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            results.append(
+                                f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
+                            )
+
+                if results:
+                    return " | ".join(results)
+                else:
+                    return f"No players found with rank {rank}."
+
+            # Default case: fetch by player name or alias
             def fetch_rank(cur, table_name: str) -> list:
                 snapshot_time = (
                     ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
@@ -195,7 +226,6 @@ class LeaderboardDB:
                 rows = fetch_rank(cur, table_name)
 
                 if not rows and table_name == "leaderboard_snapshots":
-                    # fallback to current_leaderboard
                     rows = fetch_rank(cur, "current_leaderboard")
 
                 if not rows:
@@ -254,6 +284,10 @@ class LeaderboardDB:
                 exists_check=self.player_exists,
                 db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
+
+            if len(query_params) > 3:
+                return "Enter a valid region with your command: like !day 1 NA"
+
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
@@ -289,6 +323,11 @@ class LeaderboardDB:
                 exists_check=self.player_exists,
                 db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
+
+            if len(query_params) > 3:
+                return "Enter a valid region with your command: like !week 1 NA"
+
+            print(query_params)
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
             labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
@@ -540,9 +579,10 @@ class LeaderboardDB:
                     )
                     avg_rating = cur.fetchone()["avg_rating"]
 
-                    results.append(
-                        f"{reg} has {player_count} players and Top 25 avg is {int(avg_rating)}"
-                    )
+                    if avg_rating is not None:
+                        results.append(
+                            f"{reg} has {player_count} players and Top 25 avg is {int(avg_rating)}"
+                        )
 
             return " | ".join(results)
 

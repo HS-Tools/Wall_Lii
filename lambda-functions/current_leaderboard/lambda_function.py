@@ -67,6 +67,46 @@ async def fetch_all_pages(session, region, mode_api, mode_short, sem):
     return players
 
 
+async def fetch_cn_pages(session, mode_short, sem):
+    """Fetch leaderboard data from CN region"""
+    players = []
+    cn_pages = 4  # Only need 4 pages for CN region (100 players total)
+    url = "https://webapi.blizzard.cn/hs-rank-api-server/api/game/ranks"
+
+    for page in range(1, cn_pages + 1):
+        params = {
+            "page": page,
+            "page_size": 25,
+            "mode_name": "battlegrounds" if mode_short == 0 else "battlegroundsduo",
+            "season_id": str(CURRENT_SEASON),
+        }
+        async with sem:
+            try:
+                async with session.get(url, params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if (
+                            data.get("code") == 0
+                            and "data" in data
+                            and "list" in data["data"]
+                        ):
+                            for row in data["data"]["list"]:
+                                players.append(
+                                    {
+                                        "player_name": row["battle_tag"].lower(),
+                                        "game_mode": mode_short,
+                                        "region": "CN",
+                                        "rank": row["position"],
+                                        "rating": row["score"],
+                                    }
+                                )
+                    else:
+                        logger.warning(f"Failed CN {params}: Status {response.status}")
+            except Exception as e:
+                logger.error(f"Error CN {params}: {e}")
+    return players
+
+
 async def fetch_current_leaderboards():
     """Fetch current leaderboard data from all regions and modes"""
     sem = asyncio.Semaphore(10)
@@ -77,6 +117,8 @@ async def fetch_current_leaderboards():
                 tasks.append(
                     fetch_all_pages(session, region, mode_api, mode_short, sem)
                 )
+            # Add CN region tasks
+            tasks.append(fetch_cn_pages(session, mode_short, sem))
 
         results = await asyncio.gather(*tasks)
         players = [p for sublist in results for p in sublist]
