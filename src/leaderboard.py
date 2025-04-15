@@ -409,92 +409,93 @@ class LeaderboardDB:
             if not fallback_rows:
                 return f"{query_params[0]} is not in the top {STATS_LIMIT}."
 
-            results = []
-            for row in fallback_rows:
-                suffix = (
-                    " last week"
-                    if is_week and offset > 0
-                    else (
-                        " this week"
-                        if is_week
-                        else (" that day" if offset > 0 else " today")
-                    )
+            # Just use the first row since we only need one result
+            row = fallback_rows[0]
+            suffix = (
+                " last week"
+                if is_week and offset > 0
+                else (
+                    " this week"
+                    if is_week
+                    else (" that day" if offset > 0 else " today")
                 )
-                results.append(
-                    f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}"
+            )
+
+            player_name = row["player_name"]
+            region_code = row["region"].lower()
+            view_link = f" | View: https://wall-lii.vercel.app/{player_name}/{region_code}/{'week' if is_week else 'day'}/{offset}"
+
+            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}{view_link}"
+
+        # Just use the first region since we only need one result
+        region = next(iter(regions.keys()))
+        region_rows = regions[region]
+
+        ratings = [r["rating"] for r in region_rows]
+        timestamps = [r["snapshot_time"] for r in region_rows]
+        player_name = region_rows[0]["player_name"]
+        rank = region_rows[-1]["rank"]
+        start_rating, end_rating = ratings[0], ratings[-1]
+        total_delta = end_rating - start_rating
+
+        # Add view link
+        region_code = region.lower()
+        view_link = f" | View: https://wall-lii.vercel.app/{player_name}/{region_code}/{'week' if is_week else 'day'}/{offset}"
+
+        if len(region_rows) == 1 or len(set(ratings)) <= 1:
+            time_suffix = (
+                " last week"
+                if is_week and offset > 0
+                else (
+                    " this week"
+                    if is_week
+                    else (" that day" if offset > 0 else " today")
                 )
-            return " | ".join(results)
+            )
+            return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}"
 
-        results = []
-        for region, region_rows in regions.items():
-            ratings = [r["rating"] for r in region_rows]
-            timestamps = [r["snapshot_time"] for r in region_rows]
-            player_name = region_rows[0]["player_name"]
-            rank = region_rows[-1]["rank"]
-            start_rating, end_rating = ratings[0], ratings[-1]
-            total_delta = end_rating - start_rating
+        adjective = "climbed" if total_delta >= 0 else "fell"
+        emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
 
-            if len(region_rows) == 1 or len(set(ratings)) <= 1:
-                time_suffix = (
-                    " last week"
-                    if is_week and offset > 0
-                    else (
-                        " this week"
-                        if is_week
-                        else (" that day" if offset > 0 else " today")
-                    )
-                )
-                results.append(
-                    f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}"
-                )
-                continue
+        if is_week:
+            delta_by_day = defaultdict(int)
+            delta_count = 0
+            for i in range(len(ratings) - 1):
+                delta = ratings[i + 1] - ratings[i]
+                ts = timestamps[i + 1]
+                if delta != 0:
+                    for d in range(7):
+                        if day_boundaries[d] <= ts < day_boundaries[d + 1]:
+                            delta_by_day[d] += delta
+                            delta_count += 1
+                            break
 
-            adjective = "climbed" if total_delta >= 0 else "fell"
-            emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
+            day_deltas_str = ", ".join(
+                f"{labels[d]}: {'+' if delta_by_day[d] > 0 else ''}{delta_by_day[d]}"
+                for d in range(7)
+                if delta_by_day[d] != 0
+            )
 
-            if is_week:
-                delta_by_day = defaultdict(int)
-                delta_count = 0
-                for i in range(len(ratings) - 1):
-                    delta = ratings[i + 1] - ratings[i]
-                    ts = timestamps[i + 1]
-                    if delta != 0:
-                        for d in range(7):
-                            if day_boundaries[d] <= ts < day_boundaries[d + 1]:
-                                delta_by_day[d] += delta
-                                delta_count += 1
-                                break
-
-                day_deltas_str = ", ".join(
-                    f"{labels[d]}: {'+' if delta_by_day[d] > 0 else ''}{delta_by_day[d]}"
-                    for d in range(7)
-                    if delta_by_day[d] != 0
-                )
-
-                if not day_deltas_str:
-                    suffix = " last week" if offset > 0 else " this week"
-                    results.append(
-                        f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}"
-                    )
-                else:
-                    suffix = " last week" if offset > 0 else ""
-                    results.append(
-                        f"{player_name} {adjective} from {start_rating} to {end_rating} "
-                        f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}: {day_deltas_str} {emote}"
-                    )
+            if not day_deltas_str:
+                suffix = " last week" if offset > 0 else " this week"
+                return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}"
             else:
-                deltas = [
-                    ratings[i + 1] - ratings[i]
-                    for i in range(len(ratings) - 1)
-                    if ratings[i + 1] != ratings[i]
-                ]
-                deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
-                results.append(
+                suffix = " last week" if offset > 0 else ""
+                return (
                     f"{player_name} {adjective} from {start_rating} to {end_rating} "
-                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}"
+                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}: {day_deltas_str} {emote}{view_link}"
                 )
-
-        return " | ".join(results)
+        else:
+            deltas = [
+                ratings[i + 1] - ratings[i]
+                for i in range(len(ratings) - 1)
+                if ratings[i + 1] != ratings[i]
+            ]
+            deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
+            return (
+                f"{player_name} {adjective} from {start_rating} to {end_rating} "
+                f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}{view_link}"
+            )
 
     def milestone(self, milestone_str: str, region: str = None) -> str:
         """
