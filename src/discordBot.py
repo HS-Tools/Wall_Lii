@@ -1,410 +1,330 @@
-# import asyncio
-from dis import disco
 import os
+import asyncio
 from datetime import datetime
-
-# import aiocron
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from pytz import timezone, utc
-from leaderboard_queries import LeaderboardDB
+from pytz import timezone
+from leaderboard import LeaderboardDB
+from utils.aws_dynamodb import DynamoDBClient
+from logger import setup_logger
 
+# Load environment variables
 load_dotenv()
 
+# Setup logger
+logger = setup_logger("DiscordBot")
+
+# Configure intents
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
-
-channelIds = {
+# Discord IDs and channel configurations
+CHANNEL_IDS = {
     "wall_lii": 811468284394209300,
     "wall-lii-requests": 846867129834930207,
     "test": 730782280674443327,
 }
 
-liiDiscordId = 729524538559430670
-compHSDiscordId = 939711967134887998
-compHSDiscordChannelId = 1242140313242566708
-frontpage_channel_id = 1096490528947851304
-frontpage_message_id = 1096514937813217370
+LII_DISCORD_ID = 729524538559430670
+COMP_HS_DISCORD_ID = 939711967134887998
+COMP_HS_DISCORD_CHANNEL_ID = 1242140313242566708
+FRONTPAGE_CHANNEL_ID = 1096490528947851370
+FRONTPAGE_MESSAGE_ID = 1096514937813217370
 
-emotes = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
+EMOTES = ["liiHappyCat", "liiCat", "ninaisFEESH", "liiWait"]
 
 
-@bot.event
-async def on_ready():
-    print(f"We have logged in as {bot.user}")
+class DiscordBot(commands.Bot):
+    def __init__(self):
+        # Disable the default help command before creating the bot instance
+        super().__init__(command_prefix="!", intents=intents, help_command=None)
+        self.db = LeaderboardDB()
+        self.dynamo_client = DynamoDBClient()
 
-async def process_bgrank(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    player_name,
-    region=None,
-    game_mode="0"
-):
-    try:
-        # If a region is specified
-        if region:
-            response = db.format_player_stats(player_name, region, game_mode)
-            await responder(response)
-        else:
-            # Handle case where no region is provided
-            if player_name.isdigit():
-                servers = ["NA", "EU", "AP"]
-                responses = []
-                for srv in servers:
-                    response = db.format_player_stats(player_name, srv, game_mode)
-                    if "No player found" not in response:
-                        responses.append(response)
-                if responses:
-                    await responder(" | ".join(responses))
-                else:
-                    await responder("No player found across all regions.")
+        # Add event handlers
+        self.add_event_handlers()
+
+        # Register commands
+        self.add_commands()
+
+    def add_event_handlers(self):
+        """Add event handlers for the bot"""
+
+        @self.event
+        async def on_ready():
+            logger.info(f"Logged in as {self.user.name} ({self.user.id})")
+            logger.info(f"Connected to {len(self.guilds)} guilds")
+
+            # ❗ Clear global slash commands
+            self.tree.clear_commands(guild=None)
+            await self.tree.sync(guild=None)
+            logger.info("Cleared global slash commands")
+
+            # ❗ Clear slash commands for each guild the bot is in
+            for guild in self.guilds:
+                self.tree.clear_commands(guild=guild)
+                await self.tree.sync(guild=guild)
+                logger.info(f"Cleared slash commands for guild: {guild.name}")
+
+        @self.event
+        async def on_command_error(ctx, error):
+            """Handle command errors"""
+            if isinstance(error, commands.CommandNotFound):
+                return
+
+            logger.error(f"Command error: {error}")
+            await ctx.send(f"Error: {error}")
+
+    def add_commands(self):
+        """Register all command handlers"""
+
+        # Text commands
+        @self.command(name="bgrank", aliases=["rank"])
+        async def bgrank_command(ctx, *args):
+            await self.process_bgrank(ctx.send, args, game_mode="0")
+
+        @self.command(name="duorank")
+        async def duorank_command(ctx, *args):
+            await self.process_bgrank(ctx.send, args, game_mode="1")
+
+        @self.command(name="bgdaily", aliases=["daily", "day"])
+        async def bgdaily_command(ctx, *args):
+            await self.process_bgdaily(ctx.send, args, game_mode="0")
+
+        @self.command(name="duodaily", aliases=["duoday"])
+        async def duodaily_command(ctx, *args):
+            await self.process_bgdaily(ctx.send, args, game_mode="1")
+
+        @self.command(name="yesterday", aliases=["yday"])
+        async def yesterday_command(ctx, *args):
+            await self.process_bgyday(ctx.send, args, game_mode="0")
+
+        @self.command(name="duoyesterday", aliases=["duoyday"])
+        async def duoyesterday_command(ctx, *args):
+            await self.process_bgyday(ctx.send, args, game_mode="1")
+
+        @self.command(name="bgweekly", aliases=["weekly", "week"])
+        async def bgweekly_command(ctx, *args):
+            await self.process_bgweekly(ctx.send, args, game_mode="0")
+
+        @self.command(name="duoweekly", aliases=["duoweek"])
+        async def duoweekly_command(ctx, *args):
+            await self.process_bgweekly(ctx.send, args, game_mode="1")
+
+        @self.command(name="peak")
+        async def peak_command(ctx, *args):
+            await self.process_peak(ctx.send, args, game_mode="0")
+
+        @self.command(name="duopeak")
+        async def duopeak_command(ctx, *args):
+            await self.process_peak(ctx.send, args, game_mode="1")
+
+        @self.command(name="stats", aliases=["bgstats"])
+        async def stats_command(ctx, *args):
+            await self.process_stats(ctx.send, args, game_mode="0")
+
+        @self.command(name="duostats")
+        async def duostats_command(ctx, *args):
+            await self.process_stats(ctx.send, args, game_mode="1")
+
+        @self.command(name="top", aliases=["bgtop"])
+        async def top_command(ctx, *args):
+            await self.process_top(ctx.send, args, game_mode="0")
+
+        @self.command(name="duotop")
+        async def duotop_command(ctx, *args):
+            await self.process_top(ctx.send, args, game_mode="1")
+
+        @self.command(name="patch")
+        async def patch_command(ctx):
+            await ctx.send(self.db.patch_link)
+
+        # Renamed from 'help' to 'commands' to avoid conflict
+        @self.command(name="commands", aliases=["cmds", "commandlist"])
+        async def commands_command(ctx):
+            await ctx.send(
+                "Available commands with !:\n"
+                "!bgrank <player_name or rank> [region]\n"
+                "!daily <player_name or rank> [region]\n"
+                "!weekly <player_name or rank> [region]\n"
+                "!peak <player_name or rank> [region]\n"
+                "!stats [region]\n"
+                "!top [region]\n"
+                "!patch\n"
+                "Add 'duo' prefix for duo mode (e.g., !duorank)"
+            )
+
+        # Admin commands for alias and channel management
+        @self.command(name="addalias")
+        async def addalias_command(ctx, alias=None, player_name=None):
+            if not alias or not player_name:
+                await ctx.send("Usage: !addalias <alias> <player_name>")
+                return
+
+            # Check if user has permission
+            if ctx.guild and ctx.guild.id == LII_DISCORD_ID:
+                response = self.dynamo_client.add_alias(alias, player_name)
+                await ctx.send(response)
             else:
-                response = db.format_player_stats(player_name, "", game_mode)
-                if "No player found" not in response:
-                    await responder(response)
-                else:
-                    await responder("Invalid input. Please provide a valid player name or rank.")
-    except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_bgrank: {e}")
+                await ctx.send("You don't have permission to use this command.")
 
-async def process_bgdaily(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    player_name,
-    region=None,
-    game_mode="0"
-):
+        @self.command(name="deletealias")
+        async def deletealias_command(ctx, alias=None):
+            if not alias:
+                await ctx.send("Usage: !deletealias <alias>")
+                return
+
+            # Check if user has permission
+            if ctx.guild and ctx.guild.id == LII_DISCORD_ID:
+                response = self.dynamo_client.delete_alias(alias)
+                await ctx.send(response)
+            else:
+                await ctx.send("You don't have permission to use this command.")
+
+        @self.command(name="addchannel")
+        async def addchannel_command(ctx, channel=None, player_name=None):
+            if not channel:
+                await ctx.send("Usage: !addchannel <channel> [player_name]")
+                return
+
+            # Check if user has permission
+            if ctx.guild and ctx.guild.id == LII_DISCORD_ID:
+                response = self.dynamo_client.add_channel(channel, player_name)
+                await ctx.send(response)
+            else:
+                await ctx.send("You don't have permission to use this command.")
+
+        @self.command(name="deletechannel")
+        async def deletechannel_command(ctx, channel=None):
+            if not channel:
+                await ctx.send("Usage: !deletechannel <channel>")
+                return
+
+            # Check if user has permission
+            if ctx.guild and ctx.guild.id == LII_DISCORD_ID:
+                response = self.dynamo_client.delete_channel(channel)
+                await ctx.send(response)
+            else:
+                await ctx.send("You don't have permission to use this command.")
+
+    # Command processing methods
+    async def process_bgrank(self, responder, args, game_mode="0"):
+        """Process bgrank command"""
+        try:
+            player_name = args[0] if args else None
+            region = args[1] if len(args) > 1 else None
+
+            if not player_name:
+                await responder("Usage: !rank <player_name or rank> [region]")
+                return
+
+            response = self.db.rank(player_name, region, game_mode)
+            await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_bgrank: {e}")
+
+    async def process_bgdaily(self, responder, args, game_mode="0"):
+        """Process bgdaily command"""
+        try:
+            player_name = args[0] if args else None
+            region = args[1] if len(args) > 1 else None
+
+            if not player_name:
+                await responder("Usage: !daily <player_name or rank> [region]")
+                return
+
+            response = self.db.day(player_name, region, game_mode)
+            await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_bgdaily: {e}")
+
+    async def process_bgyday(self, responder, args, game_mode="0"):
+        """Process yesterday command"""
+        try:
+            player_name = args[0] if args else None
+            region = args[1] if len(args) > 1 else None
+
+            if not player_name:
+                await responder("Usage: !yesterday <player_name or rank> [region]")
+                return
+
+            response = self.db.day(player_name, region, game_mode, offset=1)
+            await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_bgyday: {e}")
+
+    async def process_bgweekly(self, responder, args, game_mode="0"):
+        """Process weekly command"""
+        try:
+            player_name = args[0] if args else None
+            region = args[1] if len(args) > 1 else None
+
+            if not player_name:
+                await responder("Usage: !weekly <player_name or rank> [region]")
+                return
+
+            response = self.db.week(player_name, region, game_mode)
+            await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_bgweekly: {e}")
+
+    async def process_peak(self, responder, args, game_mode="0"):
+        """Process peak command"""
+        try:
+            player_name = args[0] if args else None
+            region = args[1] if len(args) > 1 else None
+
+            if not player_name:
+                await responder("Usage: !peak <player_name or rank> [region]")
+                return
+
+            response = self.db.peak(player_name, region, game_mode)
+            await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_peak: {e}")
+
+    async def process_stats(self, responder, args, game_mode="0"):
+        """Process stats command"""
+        try:
+            server = args[0] if args else None
+
+            response = self.db.region_stats(server, game_mode)
+            await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_stats: {e}")
+
+    async def process_top(self, responder, args, game_mode="0"):
+        """Process top command"""
+        try:
+            server = args[0] if args else None
+
+            if server is None or server == "":
+                response = self.db.top10(game_mode=game_mode)
+                await responder(response)
+            else:
+                response = self.db.top10(server, game_mode)
+                await responder(response)
+        except Exception as e:
+            await responder("An error occurred while processing the command.")
+            logger.error(f"Error in process_top: {e}")
+
+
+def main():
+    """Main function to run the Discord bot"""
     try:
-        # If a region is specified
-        if player_name.isdigit() and region is None:
-            await responder("Server needs to be specified with rank lookups.")
-        else:
-            response = db.format_daily_stats(player_name, region, game_mode)
-            await responder(response)
+        bot = DiscordBot()
+        logger.info("Starting Discord bot...")
+        bot.run(os.environ["DISCORD_TOKEN"])
     except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_bgdaily: {e}")
+        logger.error(f"Error starting Discord bot: {e}")
 
-async def process_bgyday(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    player_name,
-    region=None,
-    game_mode="0"
-):
-    try:
-        # If a region is specified
-        if player_name.isdigit() and region is None:
-            await responder("Server needs to be specified with rank lookups.")
-        else:
-            response = db.format_yesterday_stats(player_name, region, game_mode)
-            await responder(response)
-    except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_bgyday: {e}")
-
-async def process_bgweekly(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    player_name,
-    region=None,
-    game_mode="0"
-):
-    try:
-        # If a region is specified
-        if player_name.isdigit() and region is None:
-            await responder("Server needs to be specified with rank lookups.")
-        else:
-            response = db.format_weekly_stats(player_name, region, game_mode)
-            await responder(response)
-    except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_bgweekly: {e}")
-
-async def process_peak(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    player_name,
-    region=None,
-    game_mode="0"
-):
-    try:
-        # If a region is specified
-        if player_name.isdigit() and region is None:
-            await responder("Server needs to be specified with rank lookups.")
-        else:
-            response = db.format_peak_stats(player_name, region, game_mode)
-            await responder(response)
-    except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_peak: {e}")
-
-async def process_stats(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    server=None,
-    game_mode="0"
-):
-    try:
-        if server is None or server == "":
-            servers = ["NA", "EU", "AP"]
-            responses = []
-            for srv in servers:
-                response = db.format_region_stats(srv, game_mode)
-                if "No stats available" not in response:
-                    # Omit the maximum MMR part
-                    response = response.split(". The highest rating is")[0]
-                    responses.append(response)
-            await responder(" | ".join(responses))
-        else:
-            response = db.format_region_stats(server, game_mode)
-            await responder(response)
-    except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_stats: {e}")
-
-async def process_top(
-    responder,  # Function to handle the response (e.g., ctx.respond or channel.send)
-    server=None,
-    game_mode="0"
-):
-    try:
-        if server is None or server == "":
-            response = db.format_top_players_global(game_mode)
-            await responder(response)
-        else:
-            response = db.format_top_players(server, game_mode)
-            await responder(response)
-    except Exception as e:
-        await responder("An error occurred while processing the command.")
-        print(f"Error in process_top: {e}")
-
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    if message.content.startswith("!bgrank") or message.content.startswith("!rank") or message.content.startswith("!duorank"):
-        args = message.content.split()
-        if len(args) > 1:
-            player_name = args[1]
-            region = args[2] if len(args) > 2 else None
-            game_mode = "1" if message.content.startswith("!duorank") else "0"
-            await process_bgrank(message.channel.send, player_name, region, game_mode)
-        else:
-            await message.channel.send("Usage: !bgrank <player_name or rank> [region]")
-
-    if message.content.startswith("!bgdaily") or message.content.startswith("!daily") or message.content.startswith("!day") or message.content.startswith("!duodaily") or message.content.startswith("!duoday"):
-        args = message.content.split()
-        if len(args) > 1:
-            player_name = args[1]
-            region = args[2] if len(args) > 2 else None
-            game_mode = "1" if message.content.startswith("!duodaily" or message.content.startswith("!duoday")) else "0"
-            await process_bgdaily(message.channel.send, player_name, region, game_mode)
-        else:
-            await message.channel.send("Usage: !daily <player_name or rank> [region]")
-
-    if message.content.startswith("!yday") or message.content.startswith("!yesterday") or message.content.startswith("!duoyday") or message.content.startswith("!duoyesterday"):
-        args = message.content.split()
-        if len(args) > 1:
-            player_name = args[1]
-            region = args[2] if len(args) > 2 else None
-            game_mode = "1" if message.content.startswith("!duoyday" or message.content.startswith("!duoyesterday")) else "0"
-            await process_bgyday(message.channel.send, player_name, region, game_mode)
-        else:
-            await message.channel.send("Usage: !yesterday <player_name or rank> [region]")
-
-    if message.content.startswith("!bgweekly") or message.content.startswith("!weekly") or message.content.startswith("!week") or message.content.startswith("!duoweek") or message.content.startswith("!duoweekly"):
-        args = message.content.split()
-        if len(args) > 1:
-            player_name = args[1]
-            region = args[2] if len(args) > 2 else None
-            game_mode = "1" if message.content.startswith("!duoweekly" or message.content.startswith("!duoweek")) else "0"
-            await process_bgweekly(message.channel.send, player_name, region, game_mode)
-        else:
-            await message.channel.send("Usage: !weekly <player_name or rank> [region]")
-
-    if message.content.startswith("!peak") or message.content.startswith("!duopeak"):
-        args = message.content.split()
-        if len(args) > 1:
-            player_name = args[1]
-            region = args[2] if len(args) > 2 else None
-            game_mode = "1" if message.content.startswith("!duopeak") else "0"
-            await process_peak(message.channel.send, player_name, region, game_mode)
-        else:
-            await message.channel.send("Usage: !peak <player_name or rank> [region]")
-
-    if message.content.startswith("!stats") or message.content.startswith("!bgstats") or message.content.startswith("!duostats"):
-        args = message.content.split()
-        region = args[1] if len(args) > 1 else None
-        game_mode = "1" if message.content.startswith("!duostats") else "0"
-        await process_stats(message.channel.send, region, game_mode)
-
-    if message.content.startswith("!top") or message.content.startswith("!bgtop") or message.content.startswith("!duotop"):
-        args = message.content.split()
-        region = args[1] if len(args) > 1 else None
-        game_mode = "1" if message.content.startswith("!duotop") else "0"
-        await process_top(message.channel.send, region, game_mode)
-
-    if message.content.startswith("!patch"):
-        await message.channel.send(db.get_patch_link())
-
-    if message.content.startswith("!help"):
-        await message.channel.send("Available commands: !bgrank, !bgdaily, !bgweekly, !peak, !stats, !top, !duorank, !duodaily, !duoweekly, !duopeak, !duostats, !duotop, !patch")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's rank"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def bgrank(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgrank(ctx.respond, player_name, region, game_mode="0")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's duo rank"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def duorank(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgrank(ctx.respond, player_name, region, game_mode="1")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's daily stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def daily(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgdaily(ctx.respond, player_name, region, game_mode="0")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's yesterday stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def yesterday(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgyday(ctx.respond, player_name, region, game_mode="0")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's duo daily stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def duodaily(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgdaily(ctx.respond, player_name, region, game_mode="1")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's weekly stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def weekly(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgweekly(ctx.respond, player_name, region, game_mode="0")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's duo weekly stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def duoweekly(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_bgweekly(ctx.respond, player_name, region, game_mode="1")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's peak stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def peak(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_peak(ctx.respond, player_name, region, game_mode="0")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a player's duo peak stats"
-)
-@discord.option("player_name", description="Enter the player's name or rank")
-@discord.option("region", description="Enter the player's region", default=None)
-async def duopeak(ctx: discord.ApplicationContext, player_name: str, region: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_peak(ctx.respond, player_name, region, game_mode="1")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get a region's stats"
-)
-@discord.option("server", description="Enter the server", default=None)
-async def stats(ctx: discord.ApplicationContext, server: str):
-    await ctx.defer()  # Optional, if processing might take longer than 3 seconds
-    await process_stats(ctx.respond, server, game_mode="0")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId],
-    description="Add alias"
-)
-@discord.option("alias", description="The alias for the player name")
-async def addalias(ctx: discord.ApplicationContext, alias: str, player_name: str):
-    await ctx.respond(db.add_alias(alias, player_name))
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId],
-    description="Delete alias"
-)
-@discord.option("alias", description="The alias for the player name")
-async def deletealias(ctx: discord.ApplicationContext, alias: str):
-    await ctx.respond(db.delete_alias(alias))
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId],
-    description="Add channel"
-)
-@discord.option("channel", description="The channel name")
-@discord.option("player_name", description="The channel's player name", default=None)
-async def addchannel(ctx: discord.ApplicationContext, channel: str, player_name: str):
-    await ctx.respond(db.add_channel(channel, player_name))
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId],
-    description="Delete channel"
-)
-@discord.option("channel", description="The channel name")
-async def deletechannel(ctx: discord.ApplicationContext, channel: str):
-    await ctx.respond(db.delete_channel(channel))
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get wall_lii commands"
-)
-async def help(ctx: discord.ApplicationContext):
-    await ctx.respond(
-        "Available commands with ! or /:\n"
-        "!bgrank <player_name or rank> [region]\n"
-        "!daily <player_name or rank> [region]\n"
-        "!weekly <player_name or rank> [region]\n"
-        "!peak <player_name or rank> [region]\n"
-        "!stats [region]\n"
-        "!top [region]\n"
-        "!patch\n")
-
-@bot.slash_command(
-    guild_ids=[liiDiscordId, compHSDiscordId],
-    description="Get the latest battlegrounds patch notes link"
-)
-async def patch(ctx: discord.ApplicationContext):
-    patch_link = db.get_patch_link()
-    await ctx.respond(patch_link)
 
 if __name__ == "__main__":
-  db = LeaderboardDB(table_name="HearthstoneLeaderboardV2")
-  bot.run(os.environ["DISCORD_TOKEN"])
+    main()

@@ -46,6 +46,9 @@ class ChannelManager:
             self.all_channels = {"liihs"}
 
     async def get_live_channels(self, channels: Set[str]) -> Set[str]:
+        # Reload channels from DynamoDB to get any new additions
+        self.load_channels()
+
         if not channels:
             return set()
 
@@ -94,8 +97,3 @@ class ChannelManager:
 
         logger.info(f"Live channels: {live_channels}")
         return live_channels
-
-    async def update_live_channels(self, bot_instance):
-        """This method is no longer used - channel joining is handled in TwitchBot"""
-        logger.warning("update_live_channels called but is deprecated")
-        pass
