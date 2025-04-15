@@ -1,4 +1,5 @@
-SERVERS = ["NA", "EU", "AP"]
+from utils.constants import REGIONS
+
 REGION_ALIASES = {
     "US": "NA",
     "AMERICA": "NA",
@@ -22,7 +23,7 @@ def parse_server(server):
         return REGION_ALIASES[server]
 
     # Check if it's already a valid server name
-    if server in SERVERS:
+    if server in REGIONS:
         return server
 
     return None
@@ -35,4 +36,4 @@ def is_server(server):
 
     server = server.upper()
 
-    return server in REGION_ALIASES or server in SERVERS
+    return server in REGION_ALIASES or server in REGIONS
