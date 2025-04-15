@@ -43,6 +43,8 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
     """Fetch leaderboard data from all regions and modes"""
     players = []
     sem = asyncio.Semaphore(10)
+
+    # Fetch data from global regions (US, EU, AP)
     async with aiohttp.ClientSession() as session:
         tasks = []
         for mode_api, mode_short in MODES:
@@ -78,7 +80,63 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
                             }
                         )
 
+    # Fetch data from China region
+    async with aiohttp.ClientSession() as session:
+        cn_tasks = []
+        cn_pages = 4  # Only need 4 pages for CN region (100 players total)
+
+        for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
+            for page in range(1, cn_pages + 1):
+                url = f"https://webapi.blizzard.cn/hs-rank-api-server/api/game/ranks"
+                params = {
+                    "page": page,
+                    "page_size": 25,
+                    "mode_name": mode_name,
+                    "season_id": str(CURRENT_SEASON),
+                }
+                cn_tasks.append((mode_short, fetch_cn_page(session, url, params, sem)))
+
+        cn_results = await asyncio.gather(*[t[1] for t in cn_tasks])
+
+        for (mode, _), result in zip(cn_tasks, cn_results):
+            if (
+                result
+                and result.get("code") == 0
+                and "data" in result
+                and "list" in result["data"]
+            ):
+                for row in result["data"]["list"]:
+                    players.append(
+                        {
+                            "player_name": row["battle_tag"].lower(),
+                            "game_mode": mode,
+                            "region": "CN",
+                            "rank": row["position"],
+                            "rating": row["score"],
+                            "snapshot_time": datetime.now(timezone.utc).isoformat(),
+                        }
+                    )
+
+    logger.info(f"Fetched {len(players)} players from all regions including CN")
     return _make_names_unique(players)
+
+
+async def fetch_cn_page(session, url, params, sem, retries=3):
+    """Fetch a single page of leaderboard data from CN API with retries"""
+    backoff = 1
+    async with sem:
+        for attempt in range(retries):
+            try:
+                async with session.get(url, params=params) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    logger.warning(f"Failed CN {params}: Status {response.status}")
+            except Exception as e:
+                logger.error(f"Error CN {params}: {str(e)}")
+            if attempt < retries - 1:
+                await asyncio.sleep(backoff)
+                backoff *= 2
+        return None
 
 
 def _make_names_unique(players):
