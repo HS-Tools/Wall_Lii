@@ -21,16 +21,6 @@ class LeaderboardDB:
             # TODO implement local db
             pass
         else:
-            self.conn = psycopg2.connect(
-                host=os.getenv("DB_HOST"),
-                port=os.getenv("DB_PORT", "5432"),
-                dbname=os.getenv("DB_NAME"),
-                user=os.getenv("DB_USER"),
-                password=os.getenv("DB_PASSWORD"),
-                sslmode="require",
-                cursor_factory=RealDictCursor,
-            )
-
             # Configure AWS client for alias table
             aws_kwargs = {
                 "region_name": "us-east-1",
@@ -49,6 +39,15 @@ class LeaderboardDB:
             # Load aliases synchronously for initial setup
             self._load_aliases_sync()
             self._fetch_patch_link_sync()
+
+    def _get_connection(self):
+        return psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT", "5432"),
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+        )
 
     def _load_aliases_sync(self):
         """Load aliases synchronously for initial setup"""
@@ -89,10 +88,6 @@ class LeaderboardDB:
         except Exception as e:
             print(f"Error fetching patch link synchronously: {e}")
 
-    def close(self):
-        if self.conn:
-            self.conn.close()
-
     async def _load_aliases(self):
         """Load aliases from DynamoDB table"""
         try:
@@ -107,7 +102,7 @@ class LeaderboardDB:
             return {}
 
     def player_exists(self, name: str, region: str, game_mode: str = "0") -> bool:
-        with self.conn.cursor() as cur:
+        with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 """
                 SELECT 1
@@ -150,7 +145,7 @@ class LeaderboardDB:
         title = "Top 10 globally: " if is_global else f"Top 10 {region.upper()}: "
 
         try:
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query, query_params)
                 results = cur.fetchall()
 
@@ -173,7 +168,7 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor(),
+                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
 
             def fetch_rank(cur, table_name: str) -> list:
@@ -196,7 +191,7 @@ class LeaderboardDB:
                 else "leaderboard_snapshots"
             )
 
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 rows = fetch_rank(cur, table_name)
 
                 if not rows and table_name == "leaderboard_snapshots":
@@ -222,10 +217,10 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor(),
+                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
 
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 query = f"""
                     SELECT DISTINCT ON (region)
                         player_name, rating, region, snapshot_time
@@ -257,12 +252,12 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor(),
+                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     f"""
                     SELECT rank, rating, player_name, snapshot_time, region
@@ -292,14 +287,14 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self.conn.cursor(),
+                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
             labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
             boundaries = [start + timedelta(days=i) for i in range(8)]
 
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     f"""
                     SELECT rank, rating, player_name, snapshot_time, region
@@ -340,7 +335,7 @@ class LeaderboardDB:
         # If no regions and we have a fallback query, fetch latest snapshot
         if not regions and fallback_query:
             where_clause, query_params = fallback_query
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     f"""
                     SELECT DISTINCT ON (region)
@@ -479,7 +474,7 @@ class LeaderboardDB:
             base_query += " ORDER BY m.timestamp ASC LIMIT 1"
 
             # Execute queries for solo and duos
-            with self.conn.cursor() as cur:
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 results = []
                 for mode in ("0", "1"):
                     params = [14, milestone, mode]
@@ -515,7 +510,9 @@ class LeaderboardDB:
             results = []
 
             for reg in regions:
-                with self.conn.cursor() as cur:
+                with self._get_connection().cursor(
+                    cursor_factory=RealDictCursor
+                ) as cur:
                     # Count the number of players in the region
                     cur.execute(
                         """
@@ -652,5 +649,3 @@ if __name__ == "__main__":
     print(db.region_stats("NA", "0"))
     print(db.region_stats("EU", "1"))
     print(db.region_stats("AP", "0"))
-
-    db.close()
