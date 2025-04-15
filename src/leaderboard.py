@@ -162,7 +162,7 @@ class LeaderboardDB:
 
     def rank(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params, rank = parse_rank_or_player_args(
+            where_clause, query_params, rank, region = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
@@ -171,37 +171,6 @@ class LeaderboardDB:
                 db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
 
-            # Special handling when rank is explicitly provided
-            if rank and isinstance(rank, int):
-                regions = REGIONS
-                results = []
-
-                for region in regions:
-                    with self._get_connection().cursor(
-                        cursor_factory=RealDictCursor
-                    ) as cur:
-                        cur.execute(
-                            """
-                            SELECT player_name, rating, region, rank
-                            FROM leaderboard_snapshots
-                            WHERE rank = %s AND region = %s AND game_mode = %s
-                            ORDER BY snapshot_time DESC
-                            LIMIT 1;
-                            """,
-                            (rank, region, game_mode),
-                        )
-                        row = cur.fetchone()
-                        if row:
-                            results.append(
-                                f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
-                            )
-
-                if results:
-                    return " | ".join(results)
-                else:
-                    return f"No players found with rank {rank}."
-
-            # Default case: fetch by player name or alias
             def fetch_rank(cur, table_name: str) -> list:
                 snapshot_time = (
                     ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
@@ -216,6 +185,57 @@ class LeaderboardDB:
                 cur.execute(query, query_params)
                 return cur.fetchall()
 
+            # Handle rank-based lookup
+            if rank is not None:
+                with self._get_connection().cursor(
+                    cursor_factory=RealDictCursor
+                ) as cur:
+                    if region:
+                        # Only query specified region
+                        cur.execute(
+                            """
+                            SELECT player_name, rating, region, rank
+                            FROM leaderboard_snapshots
+                            WHERE rank = %s AND region = %s AND game_mode = %s
+                            ORDER BY snapshot_time DESC
+                            LIMIT 1;
+                            """,
+                            (rank, region, game_mode),
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            return (
+                                f"{row['player_name']} is rank {row['rank']} in "
+                                f"{row['region']} at {row['rating']}"
+                            )
+                        else:
+                            return f"No player found with rank {rank} in {region}."
+                    else:
+                        # No region: return top player per region
+                        results = []
+                        for reg in REGIONS:
+                            cur.execute(
+                                """
+                                SELECT player_name, rating, region, rank
+                                FROM leaderboard_snapshots
+                                WHERE rank = %s AND region = %s AND game_mode = %s
+                                ORDER BY snapshot_time DESC
+                                LIMIT 1;
+                                """,
+                                (rank, reg, game_mode),
+                            )
+                            row = cur.fetchone()
+                            if row:
+                                results.append(
+                                    f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
+                                )
+                        return (
+                            " | ".join(results)
+                            if results
+                            else f"No players found with rank {rank}."
+                        )
+
+            # Handle name-based lookup
             table_name = (
                 "current_leaderboard"
                 if (rank and rank > STATS_LIMIT)
@@ -241,7 +261,7 @@ class LeaderboardDB:
 
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         try:
-            where_clause, query_params, _ = parse_rank_or_player_args(
+            where_clause, query_params, _, _ = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
@@ -276,7 +296,7 @@ class LeaderboardDB:
         self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0
     ) -> str:
         try:
-            where_clause, query_params, _ = parse_rank_or_player_args(
+            where_clause, query_params, _, _ = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
@@ -315,7 +335,7 @@ class LeaderboardDB:
         self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0
     ) -> str:
         try:
-            where_clause, query_params, _ = parse_rank_or_player_args(
+            where_clause, query_params, _, _ = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
@@ -327,7 +347,6 @@ class LeaderboardDB:
             if len(query_params) > 3:
                 return "Enter a valid region with your command: like !week 1 NA"
 
-            print(query_params)
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
             labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]

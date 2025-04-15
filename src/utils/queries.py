@@ -2,10 +2,19 @@ from .regions import parse_server, is_server
 from typing import Optional, List, Tuple, Union, Callable
 from utils.constants import REGIONS, STATS_LIMIT
 
-def resolve_players_from_rank(rank: int, region: Optional[str], game_mode: str, db_cursor) -> List[str]:
-    table_name = "current_leaderboard" if rank > STATS_LIMIT else "leaderboard_snapshots"
-    snapshot_query = "ORDER BY snapshot_time DESC" if table_name == "leaderboard_snapshots" else ""
-    optional_snapshot_time = ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
+
+def resolve_players_from_rank(
+    rank: int, region: Optional[str], game_mode: str, db_cursor
+) -> List[str]:
+    table_name = (
+        "current_leaderboard" if rank > STATS_LIMIT else "leaderboard_snapshots"
+    )
+    snapshot_query = (
+        "ORDER BY snapshot_time DESC" if table_name == "leaderboard_snapshots" else ""
+    )
+    optional_snapshot_time = (
+        ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
+    )
     if region:
         db_cursor.execute(
             f"""
@@ -15,7 +24,7 @@ def resolve_players_from_rank(rank: int, region: Optional[str], game_mode: str, 
             {snapshot_query}
             LIMIT 1;
             """,
-            (game_mode, rank, region)
+            (game_mode, rank, region),
         )
         row = db_cursor.fetchone()
         return [row["player_name"]] if row else []
@@ -27,9 +36,10 @@ def resolve_players_from_rank(rank: int, region: Optional[str], game_mode: str, 
             WHERE game_mode = %s AND rank = %s
             ORDER BY region{optional_snapshot_time} DESC;
             """,
-            (game_mode, rank)
+            (game_mode, rank),
         )
         return [r["player_name"] for r in db_cursor.fetchall()]
+
 
 def parse_rank_or_player_args(
     arg1: str,
@@ -37,7 +47,7 @@ def parse_rank_or_player_args(
     game_mode: str = "0",
     aliases: Optional[dict] = None,
     exists_check: Optional[Callable] = None,
-    db_cursor=None
+    db_cursor=None,
 ):
     region = None
     search_term = None
@@ -60,7 +70,9 @@ def parse_rank_or_player_args(
     if is_rank:
         if db_cursor is None:
             raise ValueError("db_cursor required to resolve rank")
-        player_names = resolve_players_from_rank(int(search_term), region, game_mode, db_cursor)
+        player_names = resolve_players_from_rank(
+            int(search_term), region, game_mode, db_cursor
+        )
         if not player_names:
             raise ValueError(f"No players found at rank {search_term}")
 
@@ -70,11 +82,11 @@ def parse_rank_or_player_args(
         if region:
             where_clause += " AND region = %s"
             params += (region,)
-        return where_clause, params, rank
+        return where_clause, params, rank, region
 
     if aliases and search_term and not is_rank:
         raw_term = search_term.lower()
-        
+
         # Check if this is an alias
         if raw_term in aliases:
             # If we have an exists_check function, verify if the original name exists
@@ -99,4 +111,4 @@ def parse_rank_or_player_args(
     if region:
         where_clause += " AND region = %s"
         params += (region,)
-    return where_clause, params, rank
+    return where_clause, params, rank, region
