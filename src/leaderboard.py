@@ -160,7 +160,7 @@ class LeaderboardDB:
                     for i, row in enumerate(results)
                 )
                 + (
-                    f" https://wall-lii.vercel.app/"
+                    f" https://wall-lii.vercel.app/all"
                     if is_global
                     else f" https://wall-lii.vercel.app/{region.lower()}"
                 )
