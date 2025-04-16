@@ -149,13 +149,21 @@ class LeaderboardDB:
                 cur.execute(query, query_params)
                 results = cur.fetchall()
 
-            return title + ", ".join(
-                (
-                    f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})"
-                    if is_global
-                    else f"{i+1}. {row['player_name']}: {row['rating']}"
+            return (
+                title
+                + ", ".join(
+                    (
+                        f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})"
+                        if is_global
+                        else f"{i+1}. {row['player_name']}: {row['rating']}"
+                    )
+                    for i, row in enumerate(results)
                 )
-                for i, row in enumerate(results)
+                + (
+                    f" https://wall-lii.vercel.app/"
+                    if is_global
+                    else f" https://wall-lii.vercel.app/{region.lower()}"
+                )
             )
         except Exception as e:
             return f"Error fetching leaderboard: {e}"
@@ -204,10 +212,7 @@ class LeaderboardDB:
                         )
                         row = cur.fetchone()
                         if row:
-                            return (
-                                f"{row['player_name']} is rank {row['rank']} in "
-                                f"{row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['region'].lower()}/{row['player_name']}"
-                            )
+                            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['player_name']}"
                         else:
                             return f"No player found with rank {rank} in {region}."
                     else:
@@ -251,11 +256,14 @@ class LeaderboardDB:
                 if not rows:
                     return f"{query_params[0].lower()} can't be found."
 
-                return " | ".join(
-                    (
-                        f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['region'].lower()}/{row['player_name']}"
+                return (
+                    " | ".join(
+                        (
+                            f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
+                        )
+                        for row in rows
                     )
-                    for row in rows
+                    + f" https://wall-lii.vercel.app/{rows[0]['player_name']}"
                 )
 
         except Exception as e:
@@ -425,7 +433,7 @@ class LeaderboardDB:
 
             player_name = row["player_name"]
             region_code = row["region"].lower()
-            view_link = f" https://wall-lii.vercel.app/{region_code}/{player_name}/{'w' if is_week else 'd'}/{offset}"
+            view_link = f" https://wall-lii.vercel.app/{player_name}/{'w' if is_week else 'd'}/{offset}"
 
             return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}{view_link}"
 
@@ -441,8 +449,7 @@ class LeaderboardDB:
         total_delta = end_rating - start_rating
 
         # Add view link
-        region_code = region.lower()
-        view_link = f" https://wall-lii.vercel.app/{region_code}/{player_name}/{'week' if is_week else 'day'}/{offset}"
+        view_link = f" https://wall-lii.vercel.app/{player_name}/{'w' if is_week else 'd'}/{offset}"
 
         if len(region_rows) == 1 or len(set(ratings)) <= 1:
             time_suffix = (
