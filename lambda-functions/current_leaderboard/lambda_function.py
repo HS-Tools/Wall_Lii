@@ -135,7 +135,7 @@ def _make_names_unique(players):
         seen[key] = count
         p = p.copy()
         if count > 1:
-            p["player_name"] = f"{p['player_name']}#{count}"
+            p["player_name"] = f"{p['player_name']}_{count}"
         final.append(p)
     return final
 
