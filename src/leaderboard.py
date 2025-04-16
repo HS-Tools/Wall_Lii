@@ -206,7 +206,7 @@ class LeaderboardDB:
                         if row:
                             return (
                                 f"{row['player_name']} is rank {row['rank']} in "
-                                f"{row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['player_name']}/{row['region'].lower()}"
+                                f"{row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['region'].lower()}/{row['player_name']}"
                             )
                         else:
                             return f"No player found with rank {rank} in {region}."
@@ -253,7 +253,7 @@ class LeaderboardDB:
 
                 return " | ".join(
                     (
-                        f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['player_name']}/{row['region'].lower()}"
+                        f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['region'].lower()}/{row['player_name']}"
                     )
                     for row in rows
                 )
