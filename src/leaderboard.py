@@ -425,7 +425,7 @@ class LeaderboardDB:
 
             player_name = row["player_name"]
             region_code = row["region"].lower()
-            view_link = f" https://wall-lii.vercel.app/{player_name}/{region_code}/{'w' if is_week else 'd'}/{offset}"
+            view_link = f" https://wall-lii.vercel.app/{region_code}/{player_name}/{'w' if is_week else 'd'}/{offset}"
 
             return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}{view_link}"
 
@@ -442,7 +442,7 @@ class LeaderboardDB:
 
         # Add view link
         region_code = region.lower()
-        view_link = f" https://wall-lii.vercel.app/{player_name}/{region_code}/{'week' if is_week else 'day'}/{offset}"
+        view_link = f" https://wall-lii.vercel.app/{region_code}/{player_name}/{'week' if is_week else 'day'}/{offset}"
 
         if len(region_rows) == 1 or len(set(ratings)) <= 1:
             time_suffix = (
