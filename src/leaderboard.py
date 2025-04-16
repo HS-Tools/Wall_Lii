@@ -183,12 +183,17 @@ class LeaderboardDB:
                 snapshot_time = (
                     ", snapshot_time" if table_name == "leaderboard_snapshots" else ""
                 )
+                snapshot_order = (
+                    "snapshot_time DESC, "
+                    if table_name == "leaderboard_snapshots"
+                    else ""
+                )
                 query = f"""
                     SELECT DISTINCT ON (region)
                         player_name, rating, region, rank
                     FROM {table_name}
                     {where_clause}
-                    ORDER BY region{snapshot_time} DESC
+                    ORDER BY region, {snapshot_order}rank DESC
                 """
                 cur.execute(query, query_params)
                 return cur.fetchall()
@@ -200,12 +205,17 @@ class LeaderboardDB:
                 ) as cur:
                     if region:
                         # Only query specified region
+                        table_name = (
+                            "current_leaderboard"
+                            if rank > 1000
+                            else "leaderboard_snapshots"
+                        )
                         cur.execute(
-                            """
+                            f"""
                             SELECT player_name, rating, region, rank
-                            FROM leaderboard_snapshots
+                            FROM {table_name}
                             WHERE rank = %s AND region = %s AND game_mode = %s
-                            ORDER BY snapshot_time DESC
+                            {" ORDER BY snapshot_time DESC" if table_name == "leaderboard_snapshots" else ""}
                             LIMIT 1;
                             """,
                             (rank, region, game_mode),
@@ -219,12 +229,17 @@ class LeaderboardDB:
                         # No region: return top player per region
                         results = []
                         for reg in REGIONS:
+                            table_name = (
+                                "current_leaderboard"
+                                if rank > 1000
+                                else "leaderboard_snapshots"
+                            )
                             cur.execute(
-                                """
+                                f"""
                                 SELECT player_name, rating, region, rank
-                                FROM leaderboard_snapshots
+                                FROM {table_name}
                                 WHERE rank = %s AND region = %s AND game_mode = %s
-                                ORDER BY snapshot_time DESC
+                                {" ORDER BY snapshot_time DESC" if table_name == "leaderboard_snapshots" else ""}
                                 LIMIT 1;
                                 """,
                                 (rank, reg, game_mode),
@@ -256,15 +271,16 @@ class LeaderboardDB:
                 if not rows:
                     return f"{query_params[0].lower()} can't be found."
 
-                return (
-                    " | ".join(
-                        (
-                            f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
-                        )
-                        for row in rows
-                    )
-                    + f" https://wall-lii.vercel.app/{rows[0]['player_name']}"
+                base_message = " | ".join(
+                    f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
+                    for row in rows
                 )
+                # Only add vercel link if any player in the results has rank <= 1000
+                if any(row["rank"] <= 1000 for row in rows):
+                    base_message += (
+                        f" https://wall-lii.vercel.app/{rows[0]['player_name']}"
+                    )
+                return base_message
 
         except Exception as e:
             return f"Error fetching rank: {e}"
