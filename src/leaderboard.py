@@ -206,7 +206,7 @@ class LeaderboardDB:
                         if row:
                             return (
                                 f"{row['player_name']} is rank {row['rank']} in "
-                                f"{row['region']} at {row['rating']}"
+                                f"{row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['player_name']}/{row['region'].lower()}/s/0"
                             )
                         else:
                             return f"No player found with rank {rank} in {region}."
@@ -252,7 +252,9 @@ class LeaderboardDB:
                     return f"{query_params[0].lower()} can't be found."
 
                 return " | ".join(
-                    f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
+                    (
+                        f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} https://wall-lii.vercel.app/{row['player_name']}/{row['region'].lower()}/s/0"
+                    )
                     for row in rows
                 )
 
@@ -423,7 +425,7 @@ class LeaderboardDB:
 
             player_name = row["player_name"]
             region_code = row["region"].lower()
-            view_link = f" | View: https://wall-lii.vercel.app/{player_name}/{region_code}/{'week' if is_week else 'day'}/{offset}"
+            view_link = f" https://wall-lii.vercel.app/{player_name}/{region_code}/{'w' if is_week else 'd'}/{offset}"
 
             return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}{view_link}"
 
@@ -440,7 +442,7 @@ class LeaderboardDB:
 
         # Add view link
         region_code = region.lower()
-        view_link = f" | View: https://wall-lii.vercel.app/{player_name}/{region_code}/{'week' if is_week else 'day'}/{offset}"
+        view_link = f" https://wall-lii.vercel.app/{player_name}/{region_code}/{'week' if is_week else 'day'}/{offset}"
 
         if len(region_rows) == 1 or len(set(ratings)) <= 1:
             time_suffix = (
