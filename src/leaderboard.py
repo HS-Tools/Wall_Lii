@@ -11,6 +11,8 @@ from utils.time_range import TimeRangeHelper
 from datetime import timedelta
 from psycopg2.extras import RealDictCursor
 from utils.constants import REGIONS, STATS_LIMIT
+from typing import Optional
+import aiohttp
 
 load_dotenv()
 
@@ -35,10 +37,23 @@ class LeaderboardDB:
             # Initialize with empty values that will be populated later
             self.aliases = {}
             self.patch_link = "Currently fetching patch link..."
+            self._refresh_task: Optional[asyncio.Task] = None
 
-            # Load aliases synchronously for initial setup
-            self._load_aliases_sync()
-            self._fetch_patch_link_sync()
+            # Initial sync load
+            try:
+                loop = asyncio.get_event_loop()
+                self.aliases = loop.run_until_complete(self._load_aliases())
+                self.patch_link = loop.run_until_complete(self._fetch_patch_link())
+                # Start background tasks
+                loop.run_until_complete(self.start_background_tasks())
+            except RuntimeError:
+                # If no event loop is available, fall back to sync methods
+                response = self.alias_table.scan()
+                self.aliases = {
+                    item["Alias"].lower(): item["PlayerName"].lower()
+                    for item in response["Items"]
+                }
+                self.patch_link = requests.get(api_url).json()
 
     def _get_connection(self):
         return psycopg2.connect(
@@ -49,57 +64,77 @@ class LeaderboardDB:
             password=os.getenv("DB_PASSWORD"),
         )
 
-    def _load_aliases_sync(self):
-        """Load aliases synchronously for initial setup"""
+    async def _fetch_patch_link(self) -> str:
+        """Fetch patch link from Blizzard API"""
+        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+
         try:
-            response = self.alias_table.scan()
-            self.aliases = {
-                item["Alias"].lower(): item["PlayerName"].lower()
-                for item in response["Items"]
-            }
+            if asyncio.get_running_loop():
+                # Async context
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(api_url) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                        else:
+                            print(
+                                f"Failed to retrieve data. Status code: {response.status}"
+                            )
+                            return self.patch_link
+            else:
+                # Sync context
+                response = requests.get(api_url)
+                if response.status_code == 200:
+                    data = response.json()
+                else:
+                    print(
+                        f"Failed to retrieve data. Status code: {response.status_code}"
+                    )
+                    return self.patch_link
+
+            # Process the data
+            for article in data:
+                content = article.get("content", "")
+                if "battlegrounds" in content.lower():
+                    article_url = article.get("defaultUrl")
+                    title = article.get("title")
+                    return f"{title}: {article_url}"
+
+            print("No battlegrounds patch link found")
+            return self.patch_link
+
         except Exception as e:
-            print(f"Error loading aliases synchronously: {e}")
-            self.aliases = {}
+            print(f"Error fetching patch link: {e}")
+            return self.patch_link
 
-    def _fetch_patch_link_sync(self):
-        """Fetch patch link synchronously for initial setup"""
-        try:
-            # URL of the API
-            api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
-
-            # Send a request to fetch the JSON data from the API
-            response = requests.get(api_url)
-
-            # Check if the request was successful
-            if response.status_code == 200:
-                # Parse the JSON response
-                data = response.json()
-
-                # Loop through each article in the data
-                for article in data:
-                    content = article.get("content", "")  # Extract the content field
-                    # Check if 'battlegrounds' is mentioned in the content
-                    if "battlegrounds" in content.lower():
-                        # Extract and print the article's 'defaultUrl'
-                        article_url = article.get("defaultUrl")
-                        title = article.get("title")
-                        self.patch_link = f"{title}: {article_url}"
-                        return
-        except Exception as e:
-            print(f"Error fetching patch link synchronously: {e}")
-
-    async def _load_aliases(self):
+    async def _load_aliases(self) -> dict:
         """Load aliases from DynamoDB table"""
         try:
             response = self.alias_table.scan()
-            aliases = {
+            return {
                 item["Alias"].lower(): item["PlayerName"].lower()
                 for item in response["Items"]
             }
-            return aliases
         except Exception as e:
             print(f"Error loading aliases: {e}")
             return {}
+
+    async def _periodic_refresh(self):
+        """Periodically refresh aliases and patch link"""
+        while True:
+            try:
+                # Refresh aliases
+                self.aliases = await self._load_aliases()
+                print("Refreshed aliases")
+
+                # Refresh patch link
+                self.patch_link = await self._fetch_patch_link()
+                print("Refreshed patch link")
+
+            except Exception as e:
+                print(f"Error in periodic refresh: {e}")
+
+            # Wait for 1 minute before next refresh
+            await asyncio.sleep(60)
 
     def player_exists(self, name: str, region: str, game_mode: str = "0") -> bool:
         with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
@@ -634,32 +669,22 @@ class LeaderboardDB:
         except Exception as e:
             return f"Error fetching region stats: {e}"
 
-    async def fetchPatchLink(self):
-        # URL of the API
-        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
+    async def start_background_tasks(self):
+        """Start background refresh tasks"""
+        if self._refresh_task is None:
+            self._refresh_task = asyncio.create_task(self._periodic_refresh())
+            print("Started background refresh tasks")
 
-        # Send a request to fetch the JSON data from the API
-        response = requests.get(api_url)
-
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Parse the JSON response
-            data = response.json()
-
-            # Loop through each article in the data
-            for article in data:
-                content = article.get("content", "")  # Extract the content field
-                # Check if 'battlegrounds' is mentioned in the content
-                if "battlegrounds" in content.lower():
-                    # Extract and print the article's 'defaultUrl'
-                    article_url = article.get("defaultUrl")
-                    title = article.get("title")
-                    self.patch_link = f"{title}: {article_url}"
-                    return
-            else:
-                print("Patch link not found")
-        else:
-            print(f"Failed to retrieve data. Status code: {response.status_code}")
+    async def stop_background_tasks(self):
+        """Stop background refresh tasks"""
+        if self._refresh_task is not None:
+            self._refresh_task.cancel()
+            try:
+                await self._refresh_task
+            except asyncio.CancelledError:
+                pass
+            self._refresh_task = None
+            print("Stopped background refresh tasks")
 
 
 if __name__ == "__main__":
