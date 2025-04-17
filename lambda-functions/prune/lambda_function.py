@@ -10,34 +10,42 @@ PRUNE_QUERY = """
 WITH recent_rows AS (
   SELECT *
   FROM leaderboard_snapshots
-  WHERE snapshot_time > NOW() - interval '24 hours'
+  WHERE snapshot_time > NOW() - interval '30 days'
+),
+
+with_lag AS (
+  SELECT *,
+         LAG(rating) OVER (
+           PARTITION BY player_name, game_mode, region
+           ORDER BY snapshot_time
+         ) AS previous_rating
+  FROM recent_rows
+),
+
+with_blocks AS (
+  SELECT *,
+         SUM(CASE WHEN rating != previous_rating OR previous_rating IS NULL THEN 1 ELSE 0 END)
+           OVER (PARTITION BY player_name, game_mode, region ORDER BY snapshot_time)
+         AS rating_block
+  FROM with_lag
 ),
 
 ranked AS (
   SELECT *,
          ROW_NUMBER() OVER (
-           PARTITION BY player_name, game_mode, region, rating
-           ORDER BY snapshot_time ASC
-         ) AS row_asc,
-         ROW_NUMBER() OVER (
-           PARTITION BY player_name, game_mode, region, rating
-           ORDER BY snapshot_time DESC
-         ) AS row_desc,
-         RANK() OVER (
-           PARTITION BY player_name, game_mode, region
-           ORDER BY snapshot_time DESC
-         ) AS rating_rank
-  FROM recent_rows
+           PARTITION BY player_name, game_mode, region, rating_block
+           ORDER BY snapshot_time
+         ) AS row_in_block,
+         COUNT(*) OVER (
+           PARTITION BY player_name, game_mode, region, rating_block
+         ) AS block_size
+  FROM with_blocks
 ),
 
 to_delete AS (
   SELECT *
   FROM ranked
-  WHERE
-    -- Not the oldest row for this rating
-    row_asc > 1
-    -- AND not the most recent version of the most recent rating
-    AND NOT (rating_rank = 1 AND row_desc = 1)
+  WHERE block_size > 2 AND row_in_block NOT IN (1, block_size)
 )
 
 DELETE FROM leaderboard_snapshots
