@@ -36,11 +36,16 @@ class DynamoDBClient:
     # ---------- Alias Table ----------
     def add_alias(self, alias, player_name):
         try:
-            self.alias_table.put_item(Item={"Alias": alias, "PlayerName": player_name})
-            return f"Alias {alias} added for {player_name}"
+            self.alias_table.update_item(
+                Key={"Alias": alias},
+                UpdateExpression="SET PlayerName = :player_name",
+                ExpressionAttributeValues={":player_name": player_name},
+                ReturnValues="UPDATED_NEW",
+            )
+            return f"{alias} now maps to {player_name}"
         except Exception as e:
-            logger.error(f"Error adding alias: {e}")
-            return f"Error adding alias: {e}"
+            logger.error(f"Error updating alias: {e}")
+            return f"Error updating alias: {e}"
 
     def delete_alias(self, alias):
         try:
@@ -57,7 +62,10 @@ class DynamoDBClient:
             self.channel_table.put_item(
                 Item={"ChannelName": channel, "PlayerName": player_name}
             )
-            return f"Channel {channel} added successfully with the player_name:{player_name}"
+
+            if player_name != channel:
+                self.add_alias(channel, player_name)
+            return f"Channel {channel} added successfully with the player name: {player_name}"
         except Exception as e:
             logger.error(f"Error adding channel: {e}")
             return f"Error adding channel: {e}"

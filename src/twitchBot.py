@@ -4,11 +4,13 @@ from twitchio.ext import commands
 from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
 from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message
+from utils.aws_dynamodb import DynamoDBClient
 
 
 class TwitchBot(commands.Bot):
     priority_channels = {
         "liihs",
+        "waliibot",
         "jeefhs",
         "beterbabbit",
         "dogdog",
@@ -28,6 +30,7 @@ class TwitchBot(commands.Bot):
         self.channel_manager = ChannelManager(self.priority_channels)
         self.db = LeaderboardDB()
         self.bg_task = None
+        self.dynamo_client = DynamoDBClient()
 
         # Track joined channels to avoid duplicate join/leave attempts
         self.currently_joined = set(self.priority_channels)
@@ -261,6 +264,43 @@ class TwitchBot(commands.Bot):
     async def patch_command(self, ctx):
         """Get the current patch link"""
         response = self.db.patch_link
+        await ctx.send(response)
+
+    @commands.command(name="addchannel")
+    async def addchannel_command(self, ctx, player_name=None):
+        """Add the current channel to the channel list with optional player name"""
+        if ctx.channel.name != "waliibot":
+            return
+
+        username = ctx.author.name.lower()
+        if not player_name:
+            player_name = username
+
+        response = self.dynamo_client.add_channel(username, player_name)
+        await ctx.send(response)
+
+    @commands.command(name="addname")
+    async def addname_command(self, ctx, player_name=None):
+        """Add an alias for the current channel name"""
+        if ctx.channel.name != "waliibot":
+            return
+
+        if not player_name:
+            await ctx.send("Usage: !addname <player_name>")
+            return
+
+        username = ctx.author.name.lower()
+        response = self.dynamo_client.add_alias(username, player_name)
+        await ctx.send(response)
+
+    @commands.command(name="deletechannel")
+    async def deletechannel_command(self, ctx):
+        """Delete the current channel from the channel list"""
+        if ctx.channel.name != "waliibot":
+            return
+
+        username = ctx.author.name.lower()
+        response = self.dynamo_client.delete_channel(username)
         await ctx.send(response)
 
     @commands.command(name="help", aliases=["commands", "wall_lii"])
