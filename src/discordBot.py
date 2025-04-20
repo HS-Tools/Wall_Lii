@@ -144,7 +144,7 @@ class DiscordBot(commands.Bot):
         @self.command(name="commands", aliases=["cmds", "commandlist"])
         async def commands_command(ctx):
             await ctx.send(
-                "Use !rank, !day, !week, !top, !patch + more — day resets on 00:00 PST, week resets on Mon. More info: wallii.gg/help"
+                "Use !rank, !day, !week, !top, !patch + more — day resets on 00:00 PST, week resets on Mon. More info: https://wallii.gg/help"
             )
 
         # Admin commands for alias and channel management
@@ -244,6 +244,7 @@ class DiscordBot(commands.Bot):
                 return
 
             response = self.db.day(player_name, region, game_mode, offset=1)
+            response = response.replace("wallii.gg", "https://wallii.gg")
             await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
@@ -260,6 +261,7 @@ class DiscordBot(commands.Bot):
                 return
 
             response = self.db.week(player_name, region, game_mode)
+            response = response.replace("wallii.gg", "https://wallii.gg")
             await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
@@ -276,6 +278,7 @@ class DiscordBot(commands.Bot):
                 return
 
             response = self.db.peak(player_name, region, game_mode)
+            response = response.replace("wallii.gg", "https://wallii.gg")
             await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
@@ -287,6 +290,7 @@ class DiscordBot(commands.Bot):
             server = args[0] if args else None
 
             response = self.db.region_stats(server, game_mode)
+            response = response.replace("wallii.gg", "https://wallii.gg")
             await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
@@ -299,9 +303,11 @@ class DiscordBot(commands.Bot):
 
             if server is None or server == "":
                 response = self.db.top10(game_mode=game_mode)
+                response = response.replace("wallii.gg", "https://wallii.gg")
                 await responder(response)
             else:
                 response = self.db.top10(server, game_mode)
+                response = response.replace("wallii.gg", "https://wallii.gg")
                 await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
