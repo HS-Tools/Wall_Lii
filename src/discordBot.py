@@ -212,6 +212,7 @@ class DiscordBot(commands.Bot):
                 return
 
             response = self.db.rank(player_name, region, game_mode)
+            response = response.replace("wallii.gg", "https://wallii.gg")
             await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
@@ -228,6 +229,7 @@ class DiscordBot(commands.Bot):
                 return
 
             response = self.db.day(player_name, region, game_mode)
+            response = response.replace("wallii.gg", "https://wallii.gg")
             await responder(response)
         except Exception as e:
             await responder("An error occurred while processing the command.")
