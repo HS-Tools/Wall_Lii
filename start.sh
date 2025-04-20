@@ -3,6 +3,7 @@
 # Remove all images
 git pull
 
+docker system prune -f
 docker rmi $(docker images -a -q)
 
 docker build -t hs_leaderboards_twitch -f ./twitch.Dockerfile .
