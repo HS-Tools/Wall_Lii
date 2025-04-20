@@ -305,96 +305,10 @@ class TwitchBot(commands.Bot):
 
     @commands.command(name="help", aliases=["commands", "wall_lii"])
     async def help_command(self, ctx, command_name=None):
-        """Display help information for commands"""
-
-        help_messages = {
-            "rank": (
-                "Use !rank [player] [server]: Get the rank of a player. "
-                "Use the optional 'duo' prefix for duos. "
-                "Defaults to the channel name if no player is specified. "
-                "Example: !rank lii NA or !duorank lii NA"
-            ),
-            "day": (
-                "Use !day [player] [server]: Get daily stats for a player. "
-                "Use the optional 'duo' prefix for duos. "
-                "Defaults to the channel name if no player is specified. "
-                "Example: !day lii NA or !duoday lii NA"
-            ),
-            "week": (
-                "Use !week [player] [server]: Get weekly stats for a player. "
-                "Use the optional 'duo' prefix for duos. "
-                "Defaults to the channel name if no player is specified. "
-                "Example: !week lii NA or !duoweek lii NA"
-            ),
-            "lastweek": (
-                "Use !lastweek [player] [server]: Get stats from the previous week for a player. "
-                "Use the optional 'duo' prefix for duos. "
-                "Defaults to the channel name if no player is specified. "
-                "Example: !lastweek lii NA or !duolastweek lii NA"
-            ),
-            "yday": (
-                "Use !yday [player] [server]: Get yesterday's stats for a player. "
-                "Use the optional 'duo' prefix for duos. "
-                "Defaults to the channel name if no player is specified. "
-                "Example: !yday lii NA or !duoyday lii NA"
-            ),
-            "peak": (
-                "Use !peak [player] [server]: Get the peak rating of a player. "
-                "Use the optional 'duo' prefix for duos. "
-                "Defaults to the channel name if no player is specified. "
-                "Example: !peak lii NA or !duopeak lii NA"
-            ),
-            "stats": (
-                "Use !stats [server]: Display server stats. "
-                "Use the optional 'duo' prefix for duos. "
-                "If no server is specified, stats for all servers are shown. "
-                "Example: !stats NA or !duostats NA"
-            ),
-            "top": (
-                "Use !top [server]: Display top players. "
-                "Use the optional 'duo' prefix for duos. "
-                "If no server is specified, top players globally are shown. "
-                "Example: !top NA or !duotop NA"
-            ),
-            "buddy": (
-                "Use !buddy [player]: Get the buddy of a hero or player. "
-                "Example: !buddy lii"
-            ),
-            "goldenbuddy": (
-                "Use !goldenbuddy [player]: Get the golden buddy of a hero or player. "
-                "Example: !goldenbuddy lii"
-            ),
-            "trinket": (
-                "Use !trinket [trinket name]: Get the trinket description"
-                "Example: !trinket ship in a bottle"
-            ),
-            "buddygold": (
-                "Use !buddygold [tier]: Get how much base gold a buddy of that tier costs"
-                "Example: !buddygold 3"
-            ),
-            "patch": ("Use !patch: Get the current patch link" "Example: !patch"),
-        }
-
-        command_key = (
-            self.clean_input(command_name).lower()
-            if self.clean_input(command_name)
-            else None
+        """Display help info"""
+        await ctx.send(
+            "Use !rank, !day, !week, !top, !patch + more — day resets on 00:00 PST, week resets on Mon. More info: wallii.gg/help"
         )
-
-        if not command_key:
-            base_help = (
-                "Available commands: !rank, !day, !week, !lastweek, !peak, !stats, !top, !yday, !milestone, !buddy, !goldenbuddy, !trinket, !buddygold, !patch\n"
-                "Use `!help <command>` for detailed information on a specific command.\n"
-                "A day resets at 00:00 PST. A week resets on Monday at 00:00 PST."
-            )
-            await ctx.send(base_help)
-        else:
-            await ctx.send(
-                help_messages.get(
-                    command_key,
-                    "Command not found. Use `!help` to see available commands.",
-                )
-            )
 
     @commands.command(name="goodbot")
     async def goodbot(self, ctx):

@@ -144,15 +144,7 @@ class DiscordBot(commands.Bot):
         @self.command(name="commands", aliases=["cmds", "commandlist"])
         async def commands_command(ctx):
             await ctx.send(
-                "Available commands with !:\n"
-                "!bgrank <player_name or rank> [region]\n"
-                "!daily <player_name or rank> [region]\n"
-                "!weekly <player_name or rank> [region]\n"
-                "!peak <player_name or rank> [region]\n"
-                "!stats [region]\n"
-                "!top [region]\n"
-                "!patch\n"
-                "Add 'duo' prefix for duo mode (e.g., !duorank)"
+                "Use !rank, !day, !week, !top, !patch + more — day resets on 00:00 PST, week resets on Mon. More info: wallii.gg/help"
             )
 
         # Admin commands for alias and channel management
