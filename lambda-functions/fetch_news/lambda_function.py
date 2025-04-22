@@ -205,8 +205,7 @@ def extract_first_image(html):
     return match.group(1) if match else None
 
 
-# Run both
-if __name__ == "__main__":
+def lambda_handler(event, context):
     recent_urls = get_recent_urls()
     blog_posts = get_blog_patch_notes()
     forum_posts = get_forum_patch_notes()
@@ -226,3 +225,5 @@ if __name__ == "__main__":
             continue
         relevant = check_battlegrounds_relevance(forum_post.get("body", ""))
         insert_patch_to_supabase(forum_post, relevant)
+
+    return {"statusCode": 200, "body": json.dumps("Patch processing complete")}

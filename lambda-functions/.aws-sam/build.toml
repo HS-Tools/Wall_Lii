@@ -27,4 +27,13 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["PruneFunction"]
 
+[function_build_definitions.04cf6b03-586a-4b20-aacc-7abb1d04d46e]
+codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/fetch_news"
+runtime = "python3.9"
+architecture = "x86_64"
+handler = "lambda_function.lambda_handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["FetchNewsFunction"]
+
 [layer_build_definitions]
