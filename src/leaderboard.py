@@ -65,46 +65,32 @@ class LeaderboardDB:
         )
 
     async def _fetch_patch_link(self) -> str:
-        """Fetch patch link from Blizzard API"""
-        api_url = "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4"
-
+        """Fetch patch link from Supabase news_posts table"""
         try:
-            if asyncio.get_running_loop():
-                # Async context
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(api_url) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                        else:
-                            print(
-                                f"Failed to retrieve data. Status code: {response.status}"
-                            )
-                            return self.patch_link
-            else:
-                # Sync context
-                response = requests.get(api_url)
-                if response.status_code == 200:
-                    data = response.json()
-                else:
-                    print(
-                        f"Failed to retrieve data. Status code: {response.status_code}"
-                    )
-                    return self.patch_link
+            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT title, slug
+                    FROM news_posts
+                    WHERE battlegrounds_relevant = true
+                    ORDER BY created_at DESC
+                    LIMIT 2;
+                    """
+                )
+                rows = cur.fetchall()
 
-            # Process the data
-            for article in data:
-                content = article.get("content", "")
-                if "battlegrounds" in content.lower():
-                    article_url = article.get("defaultUrl")
-                    title = article.get("title")
-                    return f"{title}: {article_url}"
+                if not rows:
+                    return "Currently fetching patch link..."
 
-            print("No battlegrounds patch link found")
-            return self.patch_link
+                links = []
+                for row in rows:
+                    links.append(f"{row['title']} wallii.gg/news/{row['slug']}")
+
+                return " | ".join(links)
 
         except Exception as e:
             print(f"Error fetching patch link: {e}")
-            return self.patch_link
+            return "Currently fetching patch link..."
 
     async def _load_aliases(self) -> dict:
         """Load aliases from DynamoDB table"""
@@ -478,10 +464,10 @@ class LeaderboardDB:
 
             player_name = row["player_name"]
             view_link = (
-                f" wallii.gg/stats/{player_name}/{'w' if is_week else 'd'}/{offset}"
+                f" wallii.gg/stats/{player_name}?v={'w' if is_week else 'd'}&o={offset}"
             )
 
-            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix} wallii.gg/stats/{player_name}"
+            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix}{view_link}"
 
         # Just use the first region since we only need one result
         region = next(iter(regions.keys()))
@@ -495,7 +481,9 @@ class LeaderboardDB:
         total_delta = end_rating - start_rating
 
         # Add view link
-        view_link = f" wallii.gg/stats/{player_name}/{'w' if is_week else 'd'}/{offset}"
+        view_link = (
+            f" wallii.gg/stats/{player_name}?v={'w' if is_week else 'd'}&o={offset}"
+        )
 
         if len(region_rows) == 1 or len(set(ratings)) <= 1:
             time_suffix = (
@@ -507,7 +495,7 @@ class LeaderboardDB:
                     else (" that day" if offset > 0 else " today")
                 )
             )
-            return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix} wallii.gg/stats/{player_name}"
+            return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}{view_link}"
 
         adjective = "climbed" if total_delta >= 0 else "fell"
         emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
@@ -533,7 +521,7 @@ class LeaderboardDB:
 
             if not day_deltas_str:
                 suffix = " last week" if offset > 0 else " this week"
-                return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}"
+                return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}{view_link}"
             else:
                 suffix = " last week" if offset > 0 else ""
                 return (
