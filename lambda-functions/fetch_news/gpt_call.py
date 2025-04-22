@@ -22,8 +22,7 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
 
     1. Write a one-sentence summary highlighting the most important Battlegrounds gameplay changes.
     2. Extract and format all gameplay-relevant Battlegrounds updates into clean, structured HTML using the tags specified below.
-    3. When mentioning new cards, heroes, anomalies, trinkets, buddies, or quests, embed their image links directly beneath their mention using the following format:
-    <p><img src="IMAGE_URL" alt="CARD_NAME"></p>
+    3. Only embed images for newly added cards, heroes, anomalies, trinkets, buddies, or quests. Do not embed images for minions or heroes that are only receiving stat or tier adjustments. Embed them like this:<p><img src="IMAGE_URL" alt="CARD_NAME"></p>
 
     Output Format:
     Summary:
@@ -103,3 +102,27 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
         print(f"Error in GPT processing: {e}")
         # Return original content if GPT processing fails
         return patch_notes[:200] + "...", f"<p>{patch_notes}</p>"
+
+
+def check_battlegrounds_relevance(content: str) -> bool:
+    prompt = f"""
+    Does the following Hearthstone patch note or blog post contain any specific Battlegrounds gameplay updates such as changes to minions, heroes, anomalies, quests, buddies, trinkets, armor, or other gameplay mechanics? 
+    Answer "Yes" or "No" only.
+
+    Content:
+    {content}
+    """
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+        )
+        result = response.choices[0].message.content.strip().lower()
+        return result == "yes"
+    except Exception as e:
+        print(f"Error in relevance check: {e}")
+        return False

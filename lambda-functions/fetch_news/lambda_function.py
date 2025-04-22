@@ -3,17 +3,27 @@ import re
 import html2text
 import json
 from db_utils import get_db_connection
-from gpt_call import summarize_and_format_patch
+from gpt_call import summarize_and_format_patch, check_battlegrounds_relevance
 
 BASE_FORUM_URL = "https://us.forums.blizzard.com/en/hearthstone"
 BLOG_APIS = (
-    "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=1",
+    "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=2&pageSize=2",
 )
-TRACKER_APIS = [
+
+TRACKER_APIS = (
     "https://us.forums.blizzard.com/en/hearthstone/groups/blizzard-tracker/posts.json",
-    # "https://us.forums.blizzard.com/en/hearthstone/groups/blizzard-tracker/posts.json?before=2025-04-01T22%3A14%3A04.003Z",
-    # "https://us.forums.blizzard.com/en/hearthstone/groups/blizzard-tracker/posts.json?before=2025-03-22T22%3A14%3A04.003Z",
-]
+)
+
+
+def get_recent_urls(limit=10):
+    conn = get_db_connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT source FROM news_posts ORDER BY created_at DESC LIMIT %s",
+                (limit,),
+            )
+            return [row[0] for row in cur.fetchall()]
 
 
 def get_blog_patch_notes():
@@ -118,7 +128,7 @@ def get_forum_patch_notes():
     return relevant
 
 
-def insert_patch_to_supabase(post, table_name="news_posts"):
+def insert_patch_to_supabase(post, relevant, table_name="news_posts"):
     # Generate slug (normalize topic_slug)
     slug = post["slug"].lower().replace("–", "-").replace(" ", "-")
 
@@ -136,11 +146,12 @@ def insert_patch_to_supabase(post, table_name="news_posts"):
         "created_at": post["date"],
         "updated_at": "now()",
         "is_published": True,
+        "source": post["url"],
         "metadata": {
-            "source": post["url"],
             "header_image": post.get("header_url"),
             "publish_date": post.get("publish_details", {}).get("time"),
         },
+        "battlegrounds_relevant": relevant,
     }
 
     conn = get_db_connection()
@@ -150,9 +161,9 @@ def insert_patch_to_supabase(post, table_name="news_posts"):
                 """
                 INSERT INTO news_posts (
                     title, slug, type, content, summary, image_url, 
-                    author, created_at, updated_at, is_published, metadata
+                    author, created_at, updated_at, is_published, source, metadata, battlegrounds_relevant
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
                 ON CONFLICT (slug) DO UPDATE SET
                     title = EXCLUDED.title,
                     type = EXCLUDED.type,
@@ -163,7 +174,9 @@ def insert_patch_to_supabase(post, table_name="news_posts"):
                     created_at = EXCLUDED.created_at,
                     updated_at = EXCLUDED.updated_at,
                     is_published = EXCLUDED.is_published,
-                    metadata = EXCLUDED.metadata
+                    source = EXCLUDED.source,
+                    metadata = EXCLUDED.metadata,
+                    battlegrounds_relevant = EXCLUDED.battlegrounds_relevant
                 """,
                 (
                     data["title"],
@@ -176,7 +189,9 @@ def insert_patch_to_supabase(post, table_name="news_posts"):
                     data["created_at"],
                     data["updated_at"],
                     data["is_published"],
+                    data["source"],
                     json.dumps(data["metadata"]),
+                    data["battlegrounds_relevant"],
                 ),
             )
 
@@ -192,10 +207,22 @@ def extract_first_image(html):
 
 # Run both
 if __name__ == "__main__":
+    recent_urls = get_recent_urls()
     blog_posts = get_blog_patch_notes()
     forum_posts = get_forum_patch_notes()
-    for blog_post in blog_posts:
-        insert_patch_to_supabase(blog_post)
 
-    # for forum_post in forum_posts:
-    #     insert_patch_to_supabase(forum_post)
+    for blog_post in blog_posts:
+        if blog_post["url"] in recent_urls:
+            continue
+        if "battlegrounds" not in blog_post.get("body", "").lower():
+            continue
+        relevant = check_battlegrounds_relevance(blog_post.get("body", ""))
+        insert_patch_to_supabase(blog_post, relevant)
+
+    for forum_post in forum_posts:
+        if forum_post["url"] in recent_urls:
+            continue
+        if "battlegrounds" not in forum_post.get("body", "").lower():
+            continue
+        relevant = check_battlegrounds_relevance(forum_post.get("body", ""))
+        insert_patch_to_supabase(forum_post, relevant)
