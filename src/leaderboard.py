@@ -253,7 +253,7 @@ class LeaderboardDB:
                         )
                         row = cur.fetchone()
                         if row:
-                            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} wallii.gg/{row['player_name']}"
+                            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} wallii.gg/stats/{row['player_name']}"
                         else:
                             return f"No player found with rank {rank} in {region}."
                     else:
@@ -308,7 +308,7 @@ class LeaderboardDB:
                 )
                 # Only add link if any player in the results has rank <= 1000
                 if any(row["rank"] <= 1000 for row in rows):
-                    base_message += f" wallii.gg/{rows[0]['player_name']}"
+                    base_message += f" wallii.gg/stats/{rows[0]['player_name']}"
                 return base_message
 
         except Exception as e:
@@ -477,9 +477,11 @@ class LeaderboardDB:
             )
 
             player_name = row["player_name"]
-            view_link = f" wallii.gg/{player_name}/{'w' if is_week else 'd'}/{offset}"
+            view_link = (
+                f" wallii.gg/stats/{player_name}/{'w' if is_week else 'd'}/{offset}"
+            )
 
-            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix} wallii.gg/{player_name}"
+            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} with no games played{suffix} wallii.gg/stats/{player_name}"
 
         # Just use the first region since we only need one result
         region = next(iter(regions.keys()))
@@ -493,7 +495,7 @@ class LeaderboardDB:
         total_delta = end_rating - start_rating
 
         # Add view link
-        view_link = f" wallii.gg/{player_name}/{'w' if is_week else 'd'}/{offset}"
+        view_link = f" wallii.gg/stats/{player_name}/{'w' if is_week else 'd'}/{offset}"
 
         if len(region_rows) == 1 or len(set(ratings)) <= 1:
             time_suffix = (
@@ -505,7 +507,7 @@ class LeaderboardDB:
                     else (" that day" if offset > 0 else " today")
                 )
             )
-            return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix} wallii.gg/{player_name}"
+            return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix} wallii.gg/stats/{player_name}"
 
         adjective = "climbed" if total_delta >= 0 else "fell"
         emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
