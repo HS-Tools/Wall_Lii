@@ -315,6 +315,11 @@ class TwitchBot(commands.Bot):
         """Respond to praise with a robotic acknowledgment"""
         await ctx.send("MrDestructoid Just doing my job MrDestructoid")
 
+    @commands.command(name="bgdailii")
+    async def bgdailii(self, ctx):
+        """Respond to criticism with a robotic acknowledgment"""
+        await ctx.send(self.db.day("lii", None, "0"))
+
 
 def main():
     bot = TwitchBot()

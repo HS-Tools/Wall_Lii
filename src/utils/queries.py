@@ -52,8 +52,8 @@ def parse_rank_or_player_args(
     region = None
     search_term = None
 
-    a1 = arg1.strip() if arg1 else ""
-    a2 = arg2.strip() if arg2 else None
+    a1 = arg1.lower().strip() if arg1 else ""
+    a2 = arg2.lower().strip() if arg2 else None
 
     if is_server(a1.upper()):
         region = parse_server(a1.upper())
