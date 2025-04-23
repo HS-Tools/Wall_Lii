@@ -138,7 +138,9 @@ class DiscordBot(commands.Bot):
 
         @self.command(name="patch")
         async def patch_command(ctx):
-            await ctx.send(self.db.patch_link)
+            response = self.db.patch_link
+            response = response.replace("wallii.gg", "https://wallii.gg")
+            await ctx.send(response)
 
         # Renamed from 'help' to 'commands' to avoid conflict
         @self.command(name="commands", aliases=["cmds", "commandlist"])
