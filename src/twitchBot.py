@@ -8,6 +8,17 @@ from utils.aws_dynamodb import DynamoDBClient
 
 
 class TwitchBot(commands.Bot):
+    async def event_message(self, message):
+        await self.handle_commands(message)
+
+        # Check for "patch" keyword in "dogdog" channel
+        if (
+            message.channel.name == "dogdog"
+            and not message.content.lower().startswith("!patch")
+            and "patch" in message.content.lower().split()
+        ):
+            await message.channel.send(self.db.patch_link)
+
     priority_channels = {
         "liihs",
         "waliibot",
