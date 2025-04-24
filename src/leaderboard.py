@@ -86,7 +86,7 @@ class LeaderboardDB:
                 for row in rows:
                     links.append(f"{row['title']} wallii.gg/news/{row['slug']}")
 
-                return " | ".join(links)
+                return " | ".join(links) + " | All news: wallii.gg/news"
 
         except Exception as e:
             print(f"Error fetching patch link: {e}")
