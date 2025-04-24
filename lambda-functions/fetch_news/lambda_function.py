@@ -7,7 +7,7 @@ from gpt_call import summarize_and_format_patch, check_battlegrounds_relevance
 
 BASE_FORUM_URL = "https://us.forums.blizzard.com/en/hearthstone"
 BLOG_APIS = (
-    "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=2&pageSize=2",
+    "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=2",
 )
 
 TRACKER_APIS = (
