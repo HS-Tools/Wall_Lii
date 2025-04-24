@@ -1,5 +1,6 @@
 import os
 import asyncio
+import time
 from twitchio.ext import commands
 from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
@@ -11,13 +12,16 @@ class TwitchBot(commands.Bot):
     async def event_message(self, message):
         await self.handle_commands(message)
 
-        # Check for "patch" keyword in "dogdog" channel
-        if (
-            message.channel.name == "dogdog"
-            and not message.content.lower().startswith("!patch")
-            and "patch" in message.content.lower().split()
+        if message.channel.name == "dogdog" and not message.content.lower().startswith(
+            "!patch"
         ):
-            await message.channel.send(self.db.patch_link)
+            words = message.content.lower().split()
+            if "patch" in words:
+                now = time.time()
+                last_trigger = self.last_patch_trigger.get(message.channel.name, 0)
+                if now - last_trigger >= 30:
+                    await message.channel.send(self.db.patch_link)
+                    self.last_patch_trigger[message.channel.name] = now
 
     priority_channels = {
         "liihs",
@@ -45,6 +49,7 @@ class TwitchBot(commands.Bot):
 
         # Track joined channels to avoid duplicate join/leave attempts
         self.currently_joined = set(self.priority_channels)
+        self.last_patch_trigger = {}
 
     async def event_ready(self):
         print(f"Logged in as | {self.nick}")
