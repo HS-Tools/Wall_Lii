@@ -14,7 +14,8 @@ REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-CURRENT_SEASON = 14
+CURRENT_SEASON = 15
+
 
 def get_db_connection():
     return psycopg2.connect(
@@ -23,8 +24,9 @@ def get_db_connection():
         dbname=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
-        sslmode="require"
+        sslmode="require",
     )
+
 
 async def fetch_all_pages(session, region, mode_api, mode_short, sem):
     players = []
@@ -34,33 +36,36 @@ async def fetch_all_pages(session, region, mode_api, mode_short, sem):
             "region": region,
             "leaderboardId": mode_api,
             "seasonId": str(CURRENT_SEASON),
-            "page": page
+            "page": page,
         }
         async with sem:
             try:
                 async with session.get(BASE_URL, params=params) as response:
                     if response.status == 403 or response.status == 429:
-                      print(f"Rate limited for {params}. Backing off.")
-                      await asyncio.sleep(60)  # wait 1 minute
-                      continue  # retry same request
+                        print(f"Rate limited for {params}. Backing off.")
+                        await asyncio.sleep(60)  # wait 1 minute
+                        continue  # retry same request
                     data = await response.json()
-                    rows = data.get('leaderboard', {}).get('rows', [])
+                    rows = data.get("leaderboard", {}).get("rows", [])
                     if not rows:
                         break
                     for row in rows:
-                        if row.get('accountid'):
-                            players.append({
-                                "player_name": row['accountid'].lower(),
-                                "game_mode": mode_short,
-                                "region": REGION_MAPPING[region],
-                                "rank": row['rank'],
-                                "rating": row['rating']
-                            })
+                        if row.get("accountid"):
+                            players.append(
+                                {
+                                    "player_name": row["accountid"].lower(),
+                                    "game_mode": mode_short,
+                                    "region": REGION_MAPPING[region],
+                                    "rank": row["rank"],
+                                    "rating": row["rating"],
+                                }
+                            )
                     page += 1
             except Exception as e:
                 print(f"Error fetching {params}: {e}")
                 break
     return players
+
 
 async def fetch_current_leaderboards():
     sem = asyncio.Semaphore(10)
@@ -68,11 +73,14 @@ async def fetch_current_leaderboards():
         tasks = []
         for mode_api, mode_short in MODES:
             for region in REGIONS:
-                tasks.append(fetch_all_pages(session, region, mode_api, mode_short, sem))
+                tasks.append(
+                    fetch_all_pages(session, region, mode_api, mode_short, sem)
+                )
 
         results = await asyncio.gather(*tasks)
         players = [p for sublist in results for p in sublist]
         return _make_names_unique(players)
+
 
 def _make_names_unique(players):
     seen = {}
@@ -83,9 +91,10 @@ def _make_names_unique(players):
         seen[key] = count
         p = p.copy()
         if count > 1:
-            p['player_name'] = f"{p['player_name']}#{count}"
+            p["player_name"] = f"{p['player_name']}#{count}"
         final.append(p)
     return final
+
 
 def update_current_leaderboard(players):
     conn = None
@@ -93,9 +102,9 @@ def update_current_leaderboard(players):
         conn = get_db_connection()
         with conn:
             with conn.cursor() as cur:
-                cur.execute("TRUNCATE TABLE current_leaderboard;")
+                cur.execute("TRUNCATE TABLE current_leaderboard_season15;")
                 insert_query = """
-                    INSERT INTO current_leaderboard (player_name, game_mode, region, rank, rating)
+                    INSERT INTO current_leaderboard_season15(player_name, game_mode, region, rank, rating)
                     VALUES %s
                 """
                 values = [
@@ -104,7 +113,7 @@ def update_current_leaderboard(players):
                         p["game_mode"],
                         p["region"],
                         p["rank"],
-                        p["rating"]
+                        p["rating"],
                     )
                     for p in players
                 ]
@@ -116,6 +125,7 @@ def update_current_leaderboard(players):
         if conn:
             conn.close()
 
+
 async def main():
     start_time = time.time()  # Record the start time
     print("Fetching current leaderboard data...")
@@ -125,6 +135,7 @@ async def main():
     end_time = time.time()  # Record the end time
     elapsed_time = end_time - start_time  # Calculate the elapsed time
     print(f"Execution time: {elapsed_time:.2f} seconds")  # Print the execution time
+
 
 if __name__ == "__main__":
     asyncio.run(main())
