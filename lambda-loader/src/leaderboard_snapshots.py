@@ -161,7 +161,7 @@ def process_milestones(cursor, players):
         cursor.execute(
             """
             SELECT region, game_mode, milestone 
-            FROM milestone_tracking 
+            FROM milestone_tracking
             WHERE season = %s
         """,
             (CURRENT_SEASON,),

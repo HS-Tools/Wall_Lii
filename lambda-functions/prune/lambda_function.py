@@ -2,14 +2,15 @@ import os
 import json
 from logger import setup_logger
 from db_utils import get_db_connection
+from config import TABLES
 
 # Set up logger
 logger = setup_logger("prune_supabase")
 
-PRUNE_QUERY = """
+PRUNE_QUERY = f"""
 WITH recent_rows AS (
   SELECT *
-  FROM leaderboard_snapshots
+  FROM {TABLES['leaderboard_snapshots']}
   WHERE snapshot_time > NOW() - interval '30 days'
 ),
 
@@ -48,12 +49,12 @@ to_delete AS (
   WHERE block_size > 2 AND row_in_block NOT IN (1, block_size)
 )
 
-DELETE FROM leaderboard_snapshots
+DELETE FROM {TABLES['leaderboard_snapshots']}
 USING to_delete
-WHERE leaderboard_snapshots.player_name = to_delete.player_name
-  AND leaderboard_snapshots.game_mode = to_delete.game_mode
-  AND leaderboard_snapshots.region = to_delete.region
-  AND leaderboard_snapshots.snapshot_time = to_delete.snapshot_time;
+WHERE {TABLES['leaderboard_snapshots']}.player_name = to_delete.player_name
+  AND {TABLES['leaderboard_snapshots']}.game_mode = to_delete.game_mode
+  AND {TABLES['leaderboard_snapshots']}.region = to_delete.region
+  AND {TABLES['leaderboard_snapshots']}.snapshot_time = to_delete.snapshot_time;
 """
 
 

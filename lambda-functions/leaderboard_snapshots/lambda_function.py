@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from psycopg2.extras import execute_values
 from logger import setup_logger
 from db_utils import get_db_connection
+from config import TABLES
 
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
@@ -15,7 +16,7 @@ REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "14"))
+CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "15"))
 MILESTONE_START = int(os.environ.get("MILESTONE_START", "8000"))
 MILESTONE_INCREMENT = int(os.environ.get("MILESTONE_INCREMENT", "1000"))
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "40"))
@@ -156,8 +157,8 @@ def _make_names_unique(players):
 
 def write_to_postgres(players):
     """Write player data to the database and process milestones"""
-    insert_query = """
-        INSERT INTO leaderboard_snapshots (player_name, game_mode, region, rank, rating, snapshot_time)
+    insert_query = f"""
+        INSERT INTO {TABLES['leaderboard_snapshots']} (player_name, game_mode, region, rank, rating, snapshot_time)
         VALUES %s
     """
     values = [
@@ -195,9 +196,9 @@ def process_milestones(cursor, players):
     try:
         # Get existing milestones
         cursor.execute(
-            """
+            f"""
             SELECT region, game_mode, milestone 
-            FROM milestone_tracking 
+            FROM {TABLES['milestone_tracking']} 
             WHERE season = %s
         """,
             (CURRENT_SEASON,),
@@ -257,8 +258,8 @@ def process_milestones(cursor, players):
         # Insert new milestones
         if milestones_to_insert:
             # Use ON CONFLICT DO NOTHING to handle duplicates gracefully
-            milestone_insert_query = """
-                INSERT INTO milestone_tracking 
+            milestone_insert_query = f"""
+                INSERT INTO {TABLES['milestone_tracking']}
                 (season, game_mode, region, milestone, player_name, timestamp, rating)
                 VALUES %s
                 ON CONFLICT (season, game_mode, region, milestone) DO NOTHING

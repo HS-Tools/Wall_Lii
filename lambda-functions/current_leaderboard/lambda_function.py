@@ -7,6 +7,7 @@ from psycopg2.extras import execute_values
 import time
 from logger import setup_logger
 from db_utils import get_db_connection
+from config import TABLES
 
 # Set up logger
 logger = setup_logger("current_leaderboard")
@@ -16,7 +17,7 @@ REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "14"))
+CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "15"))
 
 
 async def fetch_all_pages(session, region, mode_api, mode_short, sem):
@@ -147,9 +148,9 @@ def update_current_leaderboard(players):
         conn = get_db_connection()
         with conn:
             with conn.cursor() as cur:
-                cur.execute("TRUNCATE TABLE current_leaderboard;")
-                insert_query = """
-                    INSERT INTO current_leaderboard (player_name, game_mode, region, rank, rating)
+                cur.execute(f"TRUNCATE TABLE {TABLES['current_leaderboard']};")
+                insert_query = f"""
+                    INSERT INTO {TABLES['current_leaderboard']} (player_name, game_mode, region, rank, rating)
                     VALUES %s
                 """
                 values = [
