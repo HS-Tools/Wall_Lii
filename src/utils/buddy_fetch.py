@@ -170,9 +170,9 @@ def get_trinkets_dict():
             and "cost" in trinket
             and "text" in trinket
         ):
-            trinkets[
-                trinket["name"]
-            ] = f"{trinket['name']} is a {trinket['spellSchool']} that costs {trinket['cost']}: {filterText(trinket['text'])}"
+            trinkets[trinket["name"]] = (
+                f"{trinket['name']} is a {trinket['spellSchool']} that costs {trinket['cost']}: {filterText(trinket['text'])}"
+            )
 
     return trinkets
 

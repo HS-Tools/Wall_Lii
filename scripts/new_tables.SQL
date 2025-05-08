@@ -30,3 +30,17 @@ CREATE TABLE milestone_tracking_seasonXX (
   rating INTEGER NOT NULL,
   PRIMARY KEY (season, game_mode, region, milestone)
 );
+
+-- 4. bg entities
+create table bg_entities (
+  id uuid primary key default gen_random_uuid(),
+  entity_name text not null,
+  entity_slug text generated always as (regexp_replace(lower(entity_name), '[^a-z0-9]', '', 'g')) stored,
+  entity_id text not null,
+  entity_type text check (entity_type in ('hero', 'minion', 'buddy', 'spell', 'trinket', 'anomaly')) not null,
+  image_url text not null,
+  created_at timestamp with time zone default now()
+);
+
+-- Optional: index for faster lookup during hover replacement
+create index on bg_entities(entity_slug);
