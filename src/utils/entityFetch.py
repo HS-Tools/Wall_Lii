@@ -10,12 +10,31 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 HEARTHSTONE_JSON_URL = "https://api.hearthstonejson.com/v1/latest/enUS/cards.json"
 
 
-def get_image_url(card_id):
-    return f"https://cards.hearthpwn.com/enUS/bgs/{card_id}_bg.png"
+def get_image_url(card_id, entity_type, card=None):
+    if entity_type == "hero":
+        return f"https://hearthstone.wiki.gg/images/{card_id}.png"
+    if entity_type == "quest_requirement":
+        return f"https://hearthstone.wiki.gg/images/{card_id}.png"
+    if entity_type == "quest_reward":
+        return f"https://hearthstone.wiki.gg/images/{card_id}_Battlegrounds.png"
+    if card_id.startswith("BG_") or (card and card.get("set") == "BATTLEGROUNDS"):
+        if entity_type in ("minion", "spell"):
+            return f"https://cards.hearthpwn.com/enUS/bgs/{card_id}_bg.png"
+        else:
+            return f"https://cards.hearthpwn.com/enUS/{card_id}.png"
+    elif card and card.get("dbfId"):
+        return (
+            f"https://www.hearthpwn.com/cards/{card['dbfId']}-{slugify(card['name'])}"
+        )
+    return ""
 
 
 def get_entity_type(card):
-    if card.get("battlegrounds", {}).get("hero"):
+    if (
+        card.get("type") == "HERO"
+        and card.get("set") == "BATTLEGROUNDS"
+        and not card.get("battlegroundsSkinParentId")
+    ):
         return "hero"
     if card.get("isBattlegroundsBuddy"):
         return "buddy"
@@ -25,6 +44,12 @@ def get_entity_type(card):
         return "spell"
     if card.get("type") == "BATTLEGROUND_TRINKET":
         return "trinket"
+    if card.get("type") == "BATTLEGROUND_QUEST_REWARD":
+        return "quest_reward"
+    if "QUEST" in card.get("mechanics", []):
+        return "quest_requirement"
+    if card.get("id", "").startswith("BGS_Treasures_"):
+        return "darkmoon_prize"
     if card.get("type") == "ENCHANTMENT" and "anomaly" in card.get("id", "").lower():
         return "anomaly"
     return None
@@ -68,7 +93,7 @@ def fetch_and_upsert_entities():
             "entity_name": name,
             "entity_id": entity_id,
             "entity_type": entity_type,
-            "image_url": get_image_url(entity_id),
+            "image_url": get_image_url(entity_id, entity_type, card),
             "entity_slug": slugify(name),
         }
         entities.append(entity)
@@ -77,6 +102,29 @@ def fetch_and_upsert_entities():
     cursor = conn.cursor()
 
     for entity in entities:
+        try:
+            r = requests.head(entity["image_url"], allow_redirects=True, timeout=1)
+            if r.status_code != 200:
+                print(
+                    "BROKEN IMAGE URL:",
+                    (
+                        entity["entity_id"],
+                        entity["entity_name"],
+                        entity["image_url"],
+                        r.status_code,
+                    ),
+                )
+        except Exception as e:
+            print(
+                "BROKEN IMAGE URL:",
+                (
+                    entity["entity_id"],
+                    entity["entity_name"],
+                    entity["image_url"],
+                    str(e),
+                ),
+            )
+
         cursor.execute(
             """
             INSERT INTO bg_entities (entity_id, entity_name, entity_type, image_url)
