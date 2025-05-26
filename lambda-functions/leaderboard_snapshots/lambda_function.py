@@ -84,7 +84,7 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
     # Fetch data from China region
     async with aiohttp.ClientSession() as session:
         cn_tasks = []
-        cn_pages = 4  # Only need 4 pages for CN region (100 players total)
+        cn_pages = 20  # Only need 4 pages for CN region (500 players total)
 
         for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
             for page in range(1, cn_pages + 1):

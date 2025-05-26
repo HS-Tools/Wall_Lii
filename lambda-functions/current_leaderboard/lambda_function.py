@@ -71,7 +71,7 @@ async def fetch_all_pages(session, region, mode_api, mode_short, sem):
 async def fetch_cn_pages(session, mode_short, sem):
     """Fetch leaderboard data from CN region"""
     players = []
-    cn_pages = 4  # Only need 4 pages for CN region (100 players total)
+    cn_pages = 20  # Only need 20 pages for CN region (500 players total)
     url = "https://webapi.blizzard.cn/hs-rank-api-server/api/game/ranks"
 
     for page in range(1, cn_pages + 1):

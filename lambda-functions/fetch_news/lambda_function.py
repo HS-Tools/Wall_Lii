@@ -75,7 +75,8 @@ def get_forum_post_body(url):
     data = res.json()
 
     first_post = data["post_stream"]["posts"][0]
-    title = data["title"]
+    # Remove any emoji-style codes like :fire:, :sparkles:, etc.
+    title = re.sub(r":.*?:", "", data["title"]).strip()
     created_at = first_post["created_at"]
     html_body = first_post["cooked"]
     markdown = html2text.html2text(html_body)
@@ -227,3 +228,8 @@ def lambda_handler(event, context):
         insert_patch_to_supabase(forum_post, relevant)
 
     return {"statusCode": 200, "body": json.dumps("Patch processing complete")}
+
+
+# For local testing
+if __name__ == "__main__":
+    print(lambda_handler({}, None))
