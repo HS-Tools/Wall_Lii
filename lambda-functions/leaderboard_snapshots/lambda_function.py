@@ -6,10 +6,13 @@ from datetime import datetime, timezone
 from psycopg2.extras import execute_values
 from logger import setup_logger
 from db_utils import get_db_connection
-from config import TABLES
 
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
+
+# Table names
+LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
+MILESTONE_TRACKING = "milestone_tracking"
 
 # Configs
 REGIONS = ["US", "EU", "AP"]
@@ -84,7 +87,7 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
     # Fetch data from China region
     async with aiohttp.ClientSession() as session:
         cn_tasks = []
-        cn_pages = 20  # Only need 4 pages for CN region (500 players total)
+        cn_pages = 20  # Only need 20 pages for CN region (500 players total)
 
         for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
             for page in range(1, cn_pages + 1):
@@ -158,7 +161,7 @@ def _make_names_unique(players):
 def write_to_postgres(players):
     """Write player data to the database and process milestones"""
     insert_query = f"""
-        INSERT INTO {TABLES['leaderboard_snapshots']} (player_name, game_mode, region, rank, rating, snapshot_time)
+        INSERT INTO {LEADERBOARD_SNAPSHOTS} (player_name, game_mode, region, rank, rating, snapshot_time)
         VALUES %s
     """
     values = [
@@ -198,7 +201,7 @@ def process_milestones(cursor, players):
         cursor.execute(
             f"""
             SELECT region, game_mode, milestone 
-            FROM {TABLES['milestone_tracking']} 
+            FROM {MILESTONE_TRACKING} 
             WHERE season = %s
         """,
             (CURRENT_SEASON,),
@@ -259,7 +262,7 @@ def process_milestones(cursor, players):
         if milestones_to_insert:
             # Use ON CONFLICT DO NOTHING to handle duplicates gracefully
             milestone_insert_query = f"""
-                INSERT INTO {TABLES['milestone_tracking']}
+                INSERT INTO {MILESTONE_TRACKING}
                 (season, game_mode, region, milestone, player_name, timestamp, rating)
                 VALUES %s
                 ON CONFLICT (season, game_mode, region, milestone) DO NOTHING

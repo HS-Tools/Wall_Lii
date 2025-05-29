@@ -17,9 +17,14 @@ import aiohttp
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from config import TABLES, SEASON
+from config import SEASON
 
 load_dotenv()
+
+# Table names
+CURRENT_LEADERBOARD = "current_leaderboard"
+LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
+MILESTONE_TRACKING = "milestone_tracking"
 
 
 class LeaderboardDB:
@@ -132,7 +137,7 @@ class LeaderboardDB:
             cur.execute(
                 f"""
                 SELECT 1
-                FROM {TABLES['leaderboard_snapshots']}
+                FROM {LEADERBOARD_SNAPSHOTS}
                 WHERE player_name = %s AND region = %s AND game_mode = %s
                 LIMIT 1;
             """,
@@ -155,7 +160,7 @@ class LeaderboardDB:
                     rating,
                     region,
                     snapshot_time
-                FROM {TABLES['leaderboard_snapshots']}
+                FROM {LEADERBOARD_SNAPSHOTS}
                 WHERE game_mode = %s {{region_filter}}
                 ORDER BY player_name, game_mode, region, snapshot_time DESC
             )
@@ -203,13 +208,11 @@ class LeaderboardDB:
 
             def fetch_rank(cur, table_name: str) -> list:
                 snapshot_time = (
-                    ", snapshot_time"
-                    if table_name == TABLES["leaderboard_snapshots"]
-                    else ""
+                    ", snapshot_time" if table_name == LEADERBOARD_SNAPSHOTS else ""
                 )
                 snapshot_order = (
                     "snapshot_time DESC, "
-                    if table_name == TABLES["leaderboard_snapshots"]
+                    if table_name == LEADERBOARD_SNAPSHOTS
                     else ""
                 )
                 query = f"""
@@ -230,16 +233,16 @@ class LeaderboardDB:
                     if region:
                         # Only query specified region
                         table_name = (
-                            TABLES["current_leaderboard"]
+                            CURRENT_LEADERBOARD
                             if rank > 1000
-                            else TABLES["leaderboard_snapshots"]
+                            else LEADERBOARD_SNAPSHOTS
                         )
                         cur.execute(
                             f"""
                             SELECT player_name, rating, region, rank
                             FROM {table_name}
                             WHERE rank = %s AND region = %s AND game_mode = %s
-                            {" ORDER BY snapshot_time DESC" if table_name == TABLES['leaderboard_snapshots'] else ""}
+                            {" ORDER BY snapshot_time DESC" if table_name == LEADERBOARD_SNAPSHOTS else ""}
                             LIMIT 1;
                             """,
                             (rank, region, game_mode),
@@ -254,16 +257,16 @@ class LeaderboardDB:
                         results = []
                         for reg in REGIONS:
                             table_name = (
-                                TABLES["current_leaderboard"]
+                                CURRENT_LEADERBOARD
                                 if rank > 1000
-                                else TABLES["leaderboard_snapshots"]
+                                else LEADERBOARD_SNAPSHOTS
                             )
                             cur.execute(
                                 f"""
                                 SELECT player_name, rating, region, rank
                                 FROM {table_name}
                                 WHERE rank = %s AND region = %s AND game_mode = %s
-                                {" ORDER BY snapshot_time DESC" if table_name == TABLES['leaderboard_snapshots'] else ""}
+                                {" ORDER BY snapshot_time DESC" if table_name == LEADERBOARD_SNAPSHOTS else ""}
                                 LIMIT 1;
                                 """,
                                 (rank, reg, game_mode),
@@ -281,16 +284,16 @@ class LeaderboardDB:
 
             # Handle name-based lookup
             table_name = (
-                TABLES["current_leaderboard"]
+                CURRENT_LEADERBOARD
                 if (rank and rank > STATS_LIMIT)
-                else TABLES["leaderboard_snapshots"]
+                else LEADERBOARD_SNAPSHOTS
             )
 
             with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
                 rows = fetch_rank(cur, table_name)
 
-                if not rows and table_name == TABLES["leaderboard_snapshots"]:
-                    rows = fetch_rank(cur, TABLES["current_leaderboard"])
+                if not rows and table_name == LEADERBOARD_SNAPSHOTS:
+                    rows = fetch_rank(cur, CURRENT_LEADERBOARD)
 
                 if not rows:
                     return f"{query_params[0].lower()} can't be found."
@@ -322,7 +325,7 @@ class LeaderboardDB:
                 query = f"""
                     SELECT DISTINCT ON (region)
                         player_name, rating, region, snapshot_time
-                    FROM {TABLES['leaderboard_snapshots']}
+                    FROM {LEADERBOARD_SNAPSHOTS}
                     {where_clause}
                     ORDER BY region, rating DESC, snapshot_time ASC
                 """
@@ -363,7 +366,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT rank, rating, player_name, snapshot_time, region
-                    FROM {TABLES['leaderboard_snapshots']}
+                    FROM {LEADERBOARD_SNAPSHOTS}
                     {where_clause}
                     AND snapshot_time >= %s AND snapshot_time < %s
                     ORDER BY snapshot_time ASC;
@@ -404,7 +407,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT rank, rating, player_name, snapshot_time, region
-                    FROM {TABLES['leaderboard_snapshots']}
+                    FROM {LEADERBOARD_SNAPSHOTS}
                     {where_clause}
                     AND snapshot_time >= %s AND snapshot_time < %s
                     ORDER BY snapshot_time ASC;
@@ -446,7 +449,7 @@ class LeaderboardDB:
                     f"""
                     SELECT DISTINCT ON (region)
                         rank, rating, player_name, region
-                    FROM {TABLES['leaderboard_snapshots']}
+                    FROM {LEADERBOARD_SNAPSHOTS}
                     {where_clause}
                     ORDER BY region, snapshot_time DESC;
                 """,
@@ -575,7 +578,7 @@ class LeaderboardDB:
                     m.*,
                     TRIM(to_char(m.timestamp AT TIME ZONE 'America/Los_Angeles', 'Month')) || ' ' || 
                     TRIM(to_char(m.timestamp AT TIME ZONE 'America/Los_Angeles', 'DD HH:MI PM')) as formatted_time
-                FROM {TABLES['milestone_tracking']} m
+                FROM {MILESTONE_TRACKING} m
                 WHERE m.season = %s AND m.milestone = %s AND m.game_mode = %s
             """
             if parsed_region:
@@ -626,7 +629,7 @@ class LeaderboardDB:
                     cur.execute(
                         f"""
                         SELECT COUNT(DISTINCT player_name) AS player_count
-                        FROM {TABLES['current_leaderboard']}
+                        FROM {CURRENT_LEADERBOARD}
                         WHERE region = %s AND game_mode = %s
                     """,
                         (reg, game_mode),
@@ -639,7 +642,7 @@ class LeaderboardDB:
                         SELECT AVG(rating) AS avg_rating
                         FROM (
                             SELECT rating
-                            FROM {TABLES['current_leaderboard']}
+                            FROM {CURRENT_LEADERBOARD}
                             WHERE region = %s AND game_mode = %s
                             ORDER BY rating DESC
                             LIMIT 25

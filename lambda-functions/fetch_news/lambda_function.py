@@ -135,6 +135,7 @@ def insert_patch_to_supabase(post, relevant, table_name="news_posts"):
 
     # Get GPT summary and formatted content
     summary, formatted_content = summarize_and_format_patch(post.get("body", ""))
+    formatted_content = inject_entity_images(formatted_content)
 
     data = {
         "title": post["title"],
@@ -195,6 +196,42 @@ def insert_patch_to_supabase(post, relevant, table_name="news_posts"):
                     data["battlegrounds_relevant"],
                 ),
             )
+
+
+# Helper to inject entity images after section headers if missing
+def inject_entity_images(formatted_html):
+    import re
+
+    # Example entity image map (replace with your own source logic or import)
+    entity_images = {
+        "Ironforge Anvil": "https://example.com/images/ironforge-anvil.png",
+        "Bronze Timepiece": "https://example.com/images/bronze-timepiece.png",
+        "Czarina Portrait": "https://example.com/images/czarina-portrait.png",
+        # ... add more mappings
+    }
+
+    def has_image_nearby(section_html):
+        return bool(re.search(r"<img[^>]+>", section_html))
+
+    def insert_images_after_match(match):
+        title = match.group(1)
+        if title not in entity_images:
+            return match.group(0)  # no change
+        image_html = f"""
+        <div class="card-grid">
+          <div class="card-grid-item">
+            <img class="card-grid-img" src="{entity_images[title]}" alt="{title}">
+            <p class="card-grid-text">{title}</p>
+          </div>
+        </div>
+        """
+        post_section = formatted_html[match.end() : match.end() + 300]
+        if has_image_nearby(post_section):
+            return match.group(0)  # skip if existing images nearby
+        return f"{match.group(0)}\n{image_html}"
+
+    # Match headers like <h3>Entity Name</h3>
+    return re.sub(r"<h3>([^<]+)</h3>", insert_images_after_match, formatted_html)
 
 
 def strip_html(html):

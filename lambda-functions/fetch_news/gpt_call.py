@@ -43,6 +43,8 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
        If multiple images are adjacent (e.g. several new cards added in a row), group them within the same paragraph:
        <p><img src="URL1" alt="CARD1"><img src="URL2" alt="CARD2"></p>
        Only show images if they are explicitly included in the source material.
+       When appropriate, group cards into visual grids for better readability and mobile viewing.
+
     Output Format:
     Summary:
     <one sentence summary here>
@@ -66,22 +68,28 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
     Links:
     <a href="URL" target="_blank" rel="noopener noreferrer">Link text</a>
 
-    Tables (for armor changes or other structured data):
-    <table>
-      <thead>
-        <tr><th>Header 1</th><th>Header 2</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Data</td><td>Data</td></tr>
-      </tbody>
-    </table>
+    Grid Layouts (for armor tiers, cost changes, or grouped updates):
+    Instead of tables, display changes using responsive card grids. For each card or entity with a change:
+    - Use the following structure and class names:
+      <div class="card-grid">
+        <div class="card-grid-item">
+          <img class="card-grid-img" src="IMAGE_URL" alt="ENTITY_NAME">
+          <p class="card-grid-text">Old value → New value</p>
+        </div>
+      </div>
+    - If an image is not available, display a placeholder using:
+      <div class="card-grid-item">
+        <div class="card-grid-placeholder">ENTITY_NAME</div>
+        <p class="card-grid-text">Old value → New value</p>
+      </div>
+    - Use divs and paragraphs only — never tables. Ensure content is skimmable and mobile-friendly.
 
     Content Guidelines:
     - Only include Battlegrounds-related gameplay changes.
     - Exclude constructed/Hearthstone mode updates.
     - Prioritize updates in this order: added/removed minions, card stat/text changes, mechanic changes (anomalies, quests), bug fixes, hero bans, armor updates.
     - Embed images only for new cards, heroes, anomalies, trinkets, buddies, or quests as specified.
-    - Output valid HTML only — no extra explanations, markdown, or comments.
+    - Output valid HTML only — no extra explanations, markdown, or comments. Use divs and paragraphs for layout when needed, never tables.
     - For any card with an “Old” and “New” description, clearly identify not just stat changes, but also any change in card text wording, especially key terms (e.g. spell → Tavern spell). Treat even subtle text changes as meaningful and include them in the summary.
 
     Here are the patch notes:

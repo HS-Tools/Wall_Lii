@@ -7,10 +7,12 @@ from psycopg2.extras import execute_values
 import time
 from logger import setup_logger
 from db_utils import get_db_connection
-from config import TABLES
 
 # Set up logger
 logger = setup_logger("current_leaderboard")
+
+# Table names
+CURRENT_LEADERBOARD = "current_leaderboard"
 
 # Configs
 REGIONS = ["US", "EU", "AP"]
@@ -148,9 +150,9 @@ def update_current_leaderboard(players):
         conn = get_db_connection()
         with conn:
             with conn.cursor() as cur:
-                cur.execute(f"TRUNCATE TABLE {TABLES['current_leaderboard']};")
+                cur.execute(f"TRUNCATE TABLE {CURRENT_LEADERBOARD};")
                 insert_query = f"""
-                    INSERT INTO {TABLES['current_leaderboard']} (player_name, game_mode, region, rank, rating)
+                    INSERT INTO {CURRENT_LEADERBOARD} (player_name, game_mode, region, rank, rating)
                     VALUES %s
                 """
                 values = [
