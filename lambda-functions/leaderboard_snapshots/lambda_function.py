@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from psycopg2.extras import execute_values
 from logger import setup_logger
 from db_utils import get_db_connection
+import pytz
 
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
@@ -186,6 +187,54 @@ def write_to_postgres(players):
 
                 # Process milestones after inserting player data
                 process_milestones(cur, players)
+
+                # Upsert daily leaderboard stats for today's data
+                pacific = pytz.timezone("America/Los_Angeles")
+                today_pt = datetime.now(timezone.utc).astimezone(pacific).date()
+                daily_values = [
+                    (
+                        p["player_name"],
+                        p["game_mode"],
+                        p["region"],
+                        today_pt,
+                        p["rating"],
+                        p["rank"],
+                        0,  # games_played placeholder
+                        0,  # weekly_games_played placeholder
+                    )
+                    for p in players
+                ]
+                daily_upsert_query = """
+                    INSERT INTO daily_leaderboard_stats
+                      (player_name, game_mode, region, day_start, rating, rank, games_played, weekly_games_played)
+                    VALUES %s
+                    ON CONFLICT (player_name, game_mode, region, day_start) DO UPDATE
+                      SET
+                        rating = EXCLUDED.rating,
+                        rank = EXCLUDED.rank,
+                        games_played = daily_leaderboard_stats.games_played
+                                       + CASE
+                                           WHEN daily_leaderboard_stats.rating <> EXCLUDED.rating THEN 1
+                                           ELSE 0
+                                         END,
+                        weekly_games_played = 
+                            CASE
+                                WHEN EXCLUDED.day_start = date_trunc('week', EXCLUDED.day_start) THEN
+                                    CASE
+                                        WHEN daily_leaderboard_stats.rating <> EXCLUDED.rating THEN 1
+                                        ELSE 0
+                                    END
+                                ELSE
+                                    daily_leaderboard_stats.weekly_games_played
+                                    + CASE
+                                        WHEN daily_leaderboard_stats.rating <> EXCLUDED.rating THEN 1
+                                        ELSE 0
+                                      END
+                            END,
+                        updated_at = now();
+                """
+                execute_values(cur, daily_upsert_query, daily_values)
+                logger.info(f"Upserted daily stats for {len(daily_values)} players.")
     except Exception as e:
         logger.error(f"Error inserting into DB: {str(e)}")
         raise

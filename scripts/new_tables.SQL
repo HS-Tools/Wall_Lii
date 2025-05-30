@@ -44,3 +44,17 @@ create table bg_entities (
 
 -- Optional: index for faster lookup during hover replacement
 create index on bg_entities(entity_slug);
+
+
+-- 5. daily_leaderboard_stats
+CREATE TABLE daily_leaderboard_stats (
+  player_name TEXT NOT NULL,
+  game_mode CHAR(1) NOT NULL,         -- 0 = solo, 1 = duo
+  region CHAR(2) NOT NULL,
+  day_start DATE NOT NULL,            -- UTC or PT-based day start
+  rating SMALLINT NOT NULL,
+  rank SMALLINT NOT NULL,
+  games_played SMALLINT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (player_name, game_mode, region, day_start)
+);
