@@ -42,9 +42,9 @@ def main():
             lag(rating) OVER w AS prev_rating
           FROM leaderboard_snapshots
           WINDOW w AS (
-            PARTITION BY player_name, game_mode, region,
-              date_trunc('day', snapshot_time AT TIME ZONE 'America/Los_Angeles')
+            PARTITION BY player_name, game_mode, region
             ORDER BY snapshot_time
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
           )
         ),
         daily AS (
