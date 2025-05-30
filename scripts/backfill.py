@@ -9,6 +9,9 @@ import pytz
 PT = pytz.timezone("America/Los_Angeles")
 # ────────────────────────────────────────────────────────────────────────────────
 
+# IMPORTANT: This script is for backfilling the new table daily_leaderboard_stats. It does not add entries for days where there are no games which breaks some stuff
+# This breaks rating/rank delta initially but this should be fixed by June 03?
+
 
 def get_db_connection():
     """
