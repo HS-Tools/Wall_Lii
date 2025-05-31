@@ -206,6 +206,8 @@ class LeaderboardDB:
                 db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
             )
 
+            print(where_clause, query_params, rank, region)
+
             def fetch_rank(cur, table_name: str) -> list:
                 snapshot_time = (
                     ", snapshot_time" if table_name == LEADERBOARD_SNAPSHOTS else ""

@@ -6,6 +6,7 @@ from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
 from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message
 from utils.aws_dynamodb import DynamoDBClient
+from utils.regions import is_server
 
 
 class TwitchBot(commands.Bot):
@@ -127,10 +128,18 @@ class TwitchBot(commands.Bot):
     def get_command_name(self, ctx):
         return ctx.message.content.split()[0].lstrip("!")
 
+    def process_args(self, arg1, arg2, channel_name):
+        arg1 = self.clean_input(arg1)
+        if is_server(arg1) and not arg2:
+            return arg1, channel_name
+        if not arg1:
+            return channel_name
+        return arg1, arg2
+
     @commands.command(name="rank", aliases=["bgrank", "duorank"])
     async def rank_command(self, ctx, arg1=None, arg2=None):
         """Get player rank, defaulting to channel name if no player specified"""
-        arg1 = self.clean_input(arg1) or ctx.channel.name
+        arg1, arg2 = self.process_args(arg1, arg2, ctx.channel.name)
         game_mode = "1" if self.get_command_name(ctx) == "duorank" else "0"
         response = self.db.rank(
             self.clean_input(arg1), self.clean_input(arg2), game_mode
@@ -140,7 +149,7 @@ class TwitchBot(commands.Bot):
     @commands.command(name="day", aliases=["bgdaily", "daily", "duoday", "duodaily"])
     async def day_command(self, ctx, arg1=None, arg2=None):
         """Get player's daily stats"""
-        arg1 = self.clean_input(arg1) or ctx.channel.name
+        arg1, arg2 = self.process_args(arg1, arg2, ctx.channel.name)
         game_mode = (
             "1"
             if self.get_command_name(ctx) == "duodaily"
@@ -157,7 +166,7 @@ class TwitchBot(commands.Bot):
     )
     async def yesterday_command(self, ctx, arg1=None, arg2=None):
         """Get player's stats for yesterday for both regular and duo modes"""
-        arg1 = self.clean_input(arg1) or ctx.channel.name
+        arg1, arg2 = self.process_args(arg1, arg2, ctx.channel.name)
         game_mode = (
             "1"
             if self.get_command_name(ctx) == "duoyesterday"
@@ -172,7 +181,7 @@ class TwitchBot(commands.Bot):
     @commands.command(name="peak", aliases=["duopeak"])
     async def peak_command(self, ctx, arg1=None, arg2=None):
         """Get player's peak rating this season"""
-        arg1 = self.clean_input(arg1) or ctx.channel.name
+        arg1, arg2 = self.process_args(arg1, arg2, ctx.channel.name)
         game_mode = "1" if self.get_command_name(ctx) == "duopeak" else "0"
         response = self.db.peak(
             self.clean_input(arg1), self.clean_input(arg2), game_mode
@@ -184,7 +193,7 @@ class TwitchBot(commands.Bot):
     )
     async def week_command(self, ctx, arg1=None, arg2=None):
         """Get player's weekly stats"""
-        arg1 = self.clean_input(arg1) or ctx.channel.name
+        arg1, arg2 = self.process_args(arg1, arg2, ctx.channel.name)
         game_mode = (
             "1"
             if self.get_command_name(ctx) == "duoweek"
@@ -201,7 +210,7 @@ class TwitchBot(commands.Bot):
     )
     async def lastweek_command(self, ctx, arg1=None, arg2=None):
         """Get player's stats for last week for both regular and duo modes"""
-        arg1 = self.clean_input(arg1) or ctx.channel.name
+        arg1, arg2 = self.process_args(arg1, arg2, ctx.channel.name)
         game_mode = (
             "1"
             if self.get_command_name(ctx) == "duolastweek"

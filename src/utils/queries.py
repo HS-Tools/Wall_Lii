@@ -84,6 +84,8 @@ def parse_rank_or_player_args(
             params += (region,)
         return where_clause, params, rank, region
 
+    print(search_term)
+
     if aliases and search_term and not is_rank:
         raw_term = search_term.lower()
 
