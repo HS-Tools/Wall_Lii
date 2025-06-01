@@ -32,7 +32,6 @@ class TwitchBot(commands.Bot):
         "dogdog",
         "rdulive",
         "xqn_thesad",
-        "superjj102",
         "terrytsang",
     }  # These channels are always joined
 
@@ -133,7 +132,7 @@ class TwitchBot(commands.Bot):
         if is_server(arg1) and not arg2:
             return arg1, channel_name
         if not arg1:
-            return channel_name
+            return channel_name, None
         return arg1, arg2
 
     @commands.command(name="rank", aliases=["bgrank", "duorank"])
