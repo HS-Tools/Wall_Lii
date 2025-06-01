@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from psycopg2 import pool
 import asyncio
 import boto3
 from collections import defaultdict
@@ -66,18 +67,23 @@ class LeaderboardDB:
                 self.patch_link = requests.get(api_url).json()
 
     def _get_connection(self):
-        return psycopg2.connect(
-            host=os.getenv("DB_HOST"),
-            port=os.getenv("DB_PORT", "5432"),
-            dbname=os.getenv("DB_NAME"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-        )
+        if not hasattr(self, "_connection_pool"):
+            self._connection_pool = pool.SimpleConnectionPool(
+                1,
+                10,  # minconn, maxconn
+                host=os.getenv("DB_HOST"),
+                port=os.getenv("DB_PORT", "5432"),
+                dbname=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+            )
+        return self._connection_pool.getconn()
 
     async def _fetch_patch_link(self) -> str:
         """Fetch patch link from Supabase news_posts table"""
+        conn = self._get_connection()
         try:
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
                     SELECT title, slug
@@ -97,10 +103,11 @@ class LeaderboardDB:
                     links.append(f"{row['title']} wallii.gg/news/{row['slug']}")
 
                 return " | ".join(links) + " | All news: wallii.gg/news"
-
         except Exception as e:
             print(f"Error fetching patch link: {e}")
             return "Currently fetching patch link..."
+        finally:
+            self._connection_pool.putconn(conn)
 
     async def _load_aliases(self) -> dict:
         """Load aliases from DynamoDB table"""
@@ -133,17 +140,21 @@ class LeaderboardDB:
             await asyncio.sleep(60)
 
     def player_exists(self, name: str, region: str, game_mode: str = "0") -> bool:
-        with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                f"""
-                SELECT 1
-                FROM {LEADERBOARD_SNAPSHOTS}
-                WHERE player_name = %s AND region = %s AND game_mode = %s
-                LIMIT 1;
-            """,
-                (name.lower(), region, game_mode),
-            )
-            return cur.fetchone() is not None
+        conn = self._get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    f"""
+                    SELECT 1
+                    FROM {LEADERBOARD_SNAPSHOTS}
+                    WHERE player_name = %s AND region = %s AND game_mode = %s
+                    LIMIT 1;
+                """,
+                    (name.lower(), region, game_mode),
+                )
+                return cur.fetchone() is not None
+        finally:
+            self._connection_pool.putconn(conn)
 
     def top10(self, region: str = "global", game_mode: str = "0") -> str:
         is_global = not parse_server(region)
@@ -175,8 +186,9 @@ class LeaderboardDB:
         query_params = (game_mode,) if is_global else (game_mode, region.upper())
         title = "Top 10 globally: " if is_global else f"Top 10 {region.upper()}: "
 
+        conn = self._get_connection()
         try:
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query, query_params)
                 results = cur.fetchall()
 
@@ -194,8 +206,11 @@ class LeaderboardDB:
             )
         except Exception as e:
             return f"Error fetching leaderboard: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     def rank(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
+        conn = self._get_connection()
         try:
             where_clause, query_params, rank, region = parse_rank_or_player_args(
                 arg1,
@@ -203,7 +218,7 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
+                db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
             print(where_clause, query_params, rank, region)
@@ -229,9 +244,7 @@ class LeaderboardDB:
 
             # Handle rank-based lookup
             if rank is not None:
-                with self._get_connection().cursor(
-                    cursor_factory=RealDictCursor
-                ) as cur:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
                     if region:
                         # Only query specified region
                         table_name = (
@@ -291,7 +304,7 @@ class LeaderboardDB:
                 else LEADERBOARD_SNAPSHOTS
             )
 
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 rows = fetch_rank(cur, table_name)
 
                 if not rows and table_name == LEADERBOARD_SNAPSHOTS:
@@ -311,8 +324,11 @@ class LeaderboardDB:
 
         except Exception as e:
             return f"Error fetching rank: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
+        conn = self._get_connection()
         try:
             where_clause, query_params, _, _ = parse_rank_or_player_args(
                 arg1,
@@ -320,10 +336,10 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
+                db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 query = f"""
                     SELECT DISTINCT ON (region)
                         player_name, rating, region, snapshot_time
@@ -344,10 +360,13 @@ class LeaderboardDB:
 
         except Exception as e:
             return f"Error fetching peak: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     def day(
         self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0
     ) -> str:
+        conn = self._get_connection()
         try:
             where_clause, query_params, _, _ = parse_rank_or_player_args(
                 arg1,
@@ -355,7 +374,7 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
+                db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
             if len(query_params) > 3:
@@ -364,7 +383,7 @@ class LeaderboardDB:
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     f"""
                     SELECT rank, rating, player_name, snapshot_time, region
@@ -383,10 +402,13 @@ class LeaderboardDB:
 
         except Exception as e:
             return f"Error fetching day stats: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     def week(
         self, arg1: str, arg2: str = None, game_mode: str = "0", offset: int = 0
     ) -> str:
+        conn = self._get_connection()
         try:
             where_clause, query_params, _, _ = parse_rank_or_player_args(
                 arg1,
@@ -394,7 +416,7 @@ class LeaderboardDB:
                 game_mode,
                 aliases=self.aliases,
                 exists_check=self.player_exists,
-                db_cursor=self._get_connection().cursor(cursor_factory=RealDictCursor),
+                db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
             if len(query_params) > 3:
@@ -405,7 +427,7 @@ class LeaderboardDB:
             labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
             boundaries = [start + timedelta(days=i) for i in range(8)]
 
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     f"""
                     SELECT rank, rating, player_name, snapshot_time, region
@@ -429,6 +451,8 @@ class LeaderboardDB:
 
         except Exception as e:
             return f"Error fetching week stats: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     def _summarize_progress(
         self,
@@ -446,18 +470,22 @@ class LeaderboardDB:
         # If no regions and we have a fallback query, fetch latest snapshot
         if not regions and fallback_query:
             where_clause, query_params = fallback_query
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    f"""
-                    SELECT DISTINCT ON (region)
-                        rank, rating, player_name, region
-                    FROM {LEADERBOARD_SNAPSHOTS}
-                    {where_clause}
-                    ORDER BY region, snapshot_time DESC;
-                """,
-                    query_params,
-                )
-                fallback_rows = cur.fetchall()
+            conn = self._get_connection()
+            try:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(
+                        f"""
+                        SELECT DISTINCT ON (region)
+                            rank, rating, player_name, region
+                        FROM {LEADERBOARD_SNAPSHOTS}
+                        {where_clause}
+                        ORDER BY region, snapshot_time DESC;
+                    """,
+                        query_params,
+                    )
+                    fallback_rows = cur.fetchall()
+            finally:
+                self._connection_pool.putconn(conn)
 
             if not fallback_rows:
                 return f"{query_params[0]} is not in the top {STATS_LIMIT}."
@@ -556,6 +584,7 @@ class LeaderboardDB:
         """
         Get the first player to reach a milestone rating in solo and duos.
         """
+        conn = self._get_connection()
         try:
             # Parse milestone
             milestone = (
@@ -588,7 +617,7 @@ class LeaderboardDB:
             base_query += " ORDER BY m.timestamp ASC LIMIT 1"
 
             # Execute queries for solo and duos
-            with self._get_connection().cursor(cursor_factory=RealDictCursor) as cur:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 results = []
                 for mode in ("0", "1"):
                     params = [SEASON, milestone, mode]
@@ -616,17 +645,18 @@ class LeaderboardDB:
             )
         except Exception as e:
             return f"Error fetching milestone data: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     def region_stats(self, region: str = None, game_mode: str = "0") -> str:
+        conn = self._get_connection()
         try:
             region = parse_server(region)
             regions = REGIONS if region is None else [region.upper()]
             results = []
 
             for reg in regions:
-                with self._get_connection().cursor(
-                    cursor_factory=RealDictCursor
-                ) as cur:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
                     # Count the number of players in the region
                     cur.execute(
                         f"""
@@ -663,6 +693,8 @@ class LeaderboardDB:
 
         except Exception as e:
             return f"Error fetching region stats: {e}"
+        finally:
+            self._connection_pool.putconn(conn)
 
     async def start_background_tasks(self):
         """Start background refresh tasks"""
