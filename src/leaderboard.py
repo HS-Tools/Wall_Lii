@@ -157,53 +157,75 @@ class LeaderboardDB:
             self._connection_pool.putconn(conn)
 
     def top10(self, region: str = "global", game_mode: str = "0") -> str:
-        is_global = not parse_server(region)
-
-        if not is_global:
-            if parse_server(region) is None:
-                return "Invalid region specified. Please use a valid region or no region for global."
-            region = parse_server(region) if not is_global else None
-
-        query = f"""
-            WITH latest_snapshots AS (
-                SELECT DISTINCT ON (player_name, game_mode, region)
-                    player_name,
-                    rating,
-                    region,
-                    snapshot_time
-                FROM {LEADERBOARD_SNAPSHOTS}
-                WHERE game_mode = %s {{region_filter}}
-                ORDER BY player_name, game_mode, region, snapshot_time DESC
-            )
-            SELECT player_name, rating, region
-            FROM latest_snapshots
-            ORDER BY rating DESC
-            LIMIT 10;
-            """
-
-        region_filter = "" if is_global else "AND region = %s"
-        query = query.format(region_filter=region_filter)
-        query_params = (game_mode,) if is_global else (game_mode, region.upper())
-        title = "Top 10 globally: " if is_global else f"Top 10 {region.upper()}: "
-
+        """
+        Fetch top 10 players using daily_leaderboard_stats.
+        If region == "global", get top 10 from each region for today's baseline date, then sort by rating.
+        If a specific region is provided, fetch top 10 for that region only.
+        """
         conn = self._get_connection()
         try:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(query, query_params)
-                results = cur.fetchall()
+            # Determine baseline date as start of current day in LA
+            baseline_date = TimeRangeHelper.start_of_day_la(0).date()
 
-            return (
-                title
-                + ", ".join(
-                    (
-                        f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})"
-                        if is_global
-                        else f"{i+1}. {row['player_name']}: {row['rating']}"
-                    )
-                    for i, row in enumerate(results)
+            # Global: collect top 10 from each region, then sort across regions
+            if not parse_server(region):
+                all_rows = []
+                for reg in REGIONS:
+                    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                        cur.execute(
+                            """
+                            SELECT player_name, rating, rank, region
+                            FROM daily_leaderboard_stats
+                            WHERE region = %s AND game_mode = %s AND day_start = %s
+                            ORDER BY rank ASC
+                            LIMIT 10;
+                            """,
+                            (reg, game_mode, baseline_date),
+                        )
+                        rows = cur.fetchall()
+                        all_rows.extend(rows)
+
+                if not all_rows:
+                    return "No leaderboard data available for any region today."
+
+                # Sort combined rows by rating descending and take top 10
+                sorted_rows = sorted(all_rows, key=lambda r: r["rating"], reverse=True)[
+                    :10
+                ]
+                # Format output
+                output = "Top 10 Global: " + ", ".join(
+                    f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})"
+                    for i, row in enumerate(sorted_rows)
                 )
-                + (f" wallii.gg/all" if is_global else f" wallii.gg/{region.lower()}")
+                return output + " | wallii.gg/all"
+
+            # Specific region: validate region code
+            parsed_region = parse_server(region)
+            if not parsed_region:
+                return "Invalid region specified. Please use NA, EU, AP, or 'global'."
+
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT player_name, rating, rank
+                    FROM daily_leaderboard_stats
+                    WHERE region = %s AND game_mode = %s AND day_start = %s
+                    ORDER BY rank ASC
+                    LIMIT 10;
+                    """,
+                    (parsed_region, game_mode, baseline_date),
+                )
+                rows = cur.fetchall()
+
+            if not rows:
+                return f"No leaderboard data available for {parsed_region} today."
+
+            output = f"Top 10 {parsed_region}: " + ", ".join(
+                f"{i+1}. {row['player_name']}: {row['rating']}"
+                for i, row in enumerate(rows)
             )
+            return output + f" | wallii.gg/{parsed_region.lower()}"
+
         except Exception as e:
             return f"Error fetching leaderboard: {e}"
         finally:
