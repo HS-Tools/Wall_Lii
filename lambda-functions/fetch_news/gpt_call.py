@@ -21,6 +21,10 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
     You are a Hearthstone Battlegrounds patch summarizer. I will provide full patch notes or blog posts. Your job is to:
 
     1. Write a one-sentence summary highlighting the most important Battlegrounds gameplay changes.
+
+    - This should include the most impactful minion/hero/stat changes **and** any major systemic bug fixes (such as disconnects, reconnection failures, or timer issues).
+    - Always prioritize changes that affect actual gameplay or player experience.
+
     2. Extract and format all gameplay-relevant Battlegrounds updates into clean, structured HTML. Use only the HTML tags listed below.
 
         For any **minion, hero, trinket, spell, anomaly, buddy, or quest** that has undergone a **gameplay-affecting stat or text change**, summarize the change in a single bullet under the card’s name.
@@ -39,6 +43,7 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
         <li><em>Cost reduced from 6 Gold to 2 Gold, and now gets a Goldgrubber and an Aureate Laureate.</em></li>
         </ul>
         ```
+
     3. Embed card images whenever they are provided in the patch notes. This includes both newly added cards and existing cards with changes.
        If multiple images are adjacent (e.g. several new cards added in a row), group them within the same paragraph:
        <p><img src="URL1" alt="CARD1"><img src="URL2" alt="CARD2"></p>
@@ -86,11 +91,24 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
 
     Content Guidelines:
     - Only include Battlegrounds-related gameplay changes.
-    - Exclude constructed/Hearthstone mode updates.
-    - Prioritize updates in this order: added/removed minions, card stat/text changes, mechanic changes (anomalies, quests), bug fixes, hero bans, armor updates.
-    - Embed images only for new cards, heroes, anomalies, trinkets, buddies, or quests as specified.
-    - Output valid HTML only — no extra explanations, markdown, or comments. Use divs and paragraphs for layout when needed, never tables.
-    - For any card with an “Old” and “New” description, clearly identify not just stat changes, but also any change in card text wording, especially key terms (e.g. spell → Tavern spell). Treat even subtle text changes as meaningful and include them in the summary.
+    - Exclude Constructed/Hearthstone mode updates.
+    - Always highlight and prioritize any major Battlegrounds announcements, such as mid-season updates, mode-wide changes, or new patch schedules, especially if they affect core gameplay (e.g., new mechanics arriving soon, temporary removals, or rotation warnings).
+    - Prioritize updates in this order:
+      1. Added or removed minions, trinkets, anomalies, quests, or buddies
+      2. Gameplay-affecting stat or text changes
+      3. Mechanics changes (anomalies, quest logic, rules)
+      4. **Bug fixes or performance improvements that directly impact gameplay**, such as:
+         - Disconnects or failure to reconnect
+         - Excessively long turn timers
+         - Broken Deathrattles, combat logic, or battlecry sequences
+      5. Hero bans, armor updates, or other balance tweaks
+
+    - If no section exists for bug fixes, create one:
+      <h2>Bug Fixes and Improvements</h2>
+
+    - Output valid HTML only — no extra explanations, markdown, or comments.
+    - Never use tables — use <div>-based card grids instead.
+    – For any card with an “Old” and “New” description, clearly identify not just stat changes, but also any change in card text wording, especially key terms (e.g. spell → Tavern spell). Treat even subtle text changes as meaningful and include them in the summary.
 
     Here are the patch notes:
     {patch_notes}
