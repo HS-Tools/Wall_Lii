@@ -1,6 +1,8 @@
 import os
 import asyncio
 from datetime import datetime
+from psycopg2 import pool
+import aiohttp
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -15,6 +17,40 @@ load_dotenv()
 # Setup logger
 logger = setup_logger("DiscordBot")
 
+
+# Postgres client initialization
+class PostgresClient:
+    def __init__(self):
+        self._connection_pool = pool.SimpleConnectionPool(
+            1,
+            10,
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT", "5432"),
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+        )
+
+    def get_latest_news(self):
+        conn = self._connection_pool.getconn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT title, slug, summary, created_at FROM news_posts ORDER BY created_at DESC LIMIT 1"
+                )
+                row = cur.fetchone()
+                if row:
+                    return {
+                        "title": row[0],
+                        "slug": row[1],
+                        "summary": row[2],
+                        "created_at": row[3],
+                    }
+                return None
+        finally:
+            self._connection_pool.putconn(conn)
+
+
 # Configure intents
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,6 +60,9 @@ CHANNEL_IDS = {
     "wall_lii": 811468284394209300,
     "wall-lii-requests": 846867129834930207,
     "test": 730782280674443327,
+    "comphs_announcements": 1112517207382048890,
+    "battlegrounds": 729912603698135061,
+    "comphs_patchnotes": 939717131409432626,
 }
 
 LII_DISCORD_ID = 729524538559430670
@@ -41,12 +80,18 @@ class DiscordBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents, help_command=None)
         self.db = LeaderboardDB()
         self.dynamo_client = DynamoDBClient()
+        self.last_news_check = datetime.utcnow()
+
+        self.pg_client = PostgresClient()
 
         # Add event handlers
         self.add_event_handlers()
 
         # Register commands
         self.add_commands()
+
+    async def setup_hook(self):
+        self.news_task = self.loop.create_task(self.news_cron())
 
     def add_event_handlers(self):
         """Add event handlers for the bot"""
@@ -316,6 +361,39 @@ class DiscordBot(commands.Bot):
         except Exception as e:
             await responder("An error occurred while processing the command.")
             logger.error(f"Error in process_top: {e}")
+
+    async def news_cron(self):
+        await self.wait_until_ready()
+        channels = [
+            self.get_channel(CHANNEL_IDS["battlegrounds"]),
+            # self.get_channel(CHANNEL_IDS["test"])
+            # self.get_channel(CHANNEL_IDS["comphs_announcements"]),
+        ]
+        while not self.is_closed():
+            try:
+                post = self.pg_client.get_latest_news()
+                if post:
+                    created_at = post["created_at"]
+                    # If created_at is not a datetime, parse it
+                    if isinstance(created_at, str):
+                        created_at = datetime.fromisoformat(
+                            created_at.replace("Z", "+00:00")
+                        )
+                    if created_at > self.last_news_check:
+                        self.last_news_check = created_at
+                        url = f"https://wallii.gg/news/{post['slug']}"
+                        for channel in channels:
+                            if channel:
+                                embed = discord.Embed(
+                                    title=post["title"],
+                                    url=url,
+                                    description=post.get("summary", ""),
+                                    color=discord.Color.blue(),
+                                )
+                                await channel.send(embed=embed)
+            except Exception as e:
+                logger.error(f"News cron error: {e}")
+            await asyncio.sleep(60)
 
 
 def main():

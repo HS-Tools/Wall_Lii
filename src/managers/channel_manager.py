@@ -96,4 +96,5 @@ class ChannelManager:
                 await asyncio.sleep(0.5)
 
         logger.info(f"Live channels: {live_channels}")
+        logger.info(f"Hearthstone channels: {self.hearthstone_channels}")
         return live_channels

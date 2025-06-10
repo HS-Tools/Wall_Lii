@@ -35,6 +35,12 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
         - Do not include any "Old:" or "New:" prefixes — just describe the change fully and clearly in natural language.
         - Do not include the phrase "Summarized Change:" in your output.
 
+        For hero armor changes:
+        - Use a single bullet for each hero that had any armor value changed.
+        - Format each hero's line as: `Hero Name: high rank ↑/↓ new value, low rank ↑/↓ new value, duos ↑/↓ new value`
+        - Omit any field (high/low/duos) that was unchanged or marked "nc" or left blank in the source.
+        - List reduced armor changes first, followed by increased armor changes, preserving the original patch note order.
+
         Use this format:
 
         ```html
@@ -102,6 +108,7 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
          - Excessively long turn timers
          - Broken Deathrattles, combat logic, or battlecry sequences
       5. Hero bans, armor updates, or other balance tweaks
+    - If an anomaly is referenced as being “greater” or “lesser” in the patch notes, append (greater) or (lesser) to the anomaly name when summarizing and displaying it. This ensures correct image injection and matching with database entries.
 
     - If no section exists for bug fixes, create one:
       <h2>Bug Fixes and Improvements</h2>

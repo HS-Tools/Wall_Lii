@@ -1,3 +1,6 @@
+import datetime
+import psycopg2
+import sys
 import os
 import asyncio
 import time
@@ -24,16 +27,20 @@ class TwitchBot(commands.Bot):
                     await message.channel.send(self.db.patch_link)
                     self.last_patch_trigger[message.channel.name] = now
 
-    priority_channels = {
-        "liihs",
-        "waliibot",
-        "jeefhs",
-        "beterbabbit",
-        "dogdog",
-        "rdulive",
-        "xqn_thesad",
-        "terrytsang",
-    }  # These channels are always joined
+    priority_channels = (
+        {"liihs"}
+        if "--test" in sys.argv
+        else {
+            "liihs",
+            "waliibot",
+            "jeefhs",
+            "beterbabbit",
+            "dogdog",
+            "rdulive",
+            "xqn_thesad",
+            "terrytsang",
+        }
+    )  # These channels are always joined
 
     def __init__(self):
         # Initialize the bot with the necessary credentials
@@ -50,14 +57,23 @@ class TwitchBot(commands.Bot):
         # Track joined channels to avoid duplicate join/leave attempts
         self.currently_joined = set(self.priority_channels)
         self.last_patch_trigger = {}
+        # Global dictionary to track posted news: {created_at: {"title": ..., "slug": ..., "first_post_time": datetime, "last_sent": {channel: datetime}}}
+        self.posted_news = {}
+        self.latest_news_seen = datetime.datetime.now(datetime.timezone.utc)
 
     async def event_ready(self):
         print(f"Logged in as | {self.nick}")
         # Start the background task to check live channels
         self.bg_task = asyncio.create_task(self.channel_check_loop())
+        # Start the news announcer background task
+        self.news_task = asyncio.create_task(self.news_announcer())
 
     async def channel_check_loop(self):
         """Background task to periodically check for live channels"""
+        if "--test" in sys.argv:
+            print("Running in test mode — skipping channel check loop.")
+            return
+
         while True:
             try:
                 # Get live channels from the channel manager
@@ -109,6 +125,119 @@ class TwitchBot(commands.Bot):
                 print(f"Error in channel check loop: {e}")
 
             # Check every minute
+            await asyncio.sleep(60)
+
+    # --- News Announcer Background Task ---
+
+    async def news_announcer(self):
+        """
+        Background task to announce latest news to live Hearthstone channels every 60 seconds.
+        Only posts to each channel if last message for the post was >2h ago and within 24h of first announcement.
+        """
+        await asyncio.sleep(5)  # Wait for bot to be ready
+        # Prepare DB connection parameters from environment
+        PG_HOST = os.environ.get("DB_HOST")
+        PG_PORT = int(os.environ.get("DB_PORT", "5432"))
+        PG_NAME = os.environ.get("DB_NAME")
+        PG_USER = os.environ.get("DB_USER")
+        PG_PASSWORD = os.environ.get("DB_PASSWORD")
+        conn = None
+        while True:
+            try:
+                # Connect to the DB if not already connected
+                if conn is None or conn.closed:
+                    conn = psycopg2.connect(
+                        host=PG_HOST,
+                        port=PG_PORT,
+                        dbname=PG_NAME,
+                        user=PG_USER,
+                        password=PG_PASSWORD,
+                    )
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT title, slug, created_at FROM news_posts ORDER BY created_at DESC LIMIT 1"
+                    )
+                    row = cur.fetchone()
+                    if not row:
+                        await asyncio.sleep(60)
+                        continue
+                    title, slug, created_at = row
+                    # Parse created_at to UTC datetime
+                    if isinstance(created_at, str):
+                        created_at = datetime.datetime.fromisoformat(
+                            created_at.replace("Z", "+00:00")
+                        )
+                    elif not isinstance(created_at, datetime.datetime):
+                        created_at = datetime.datetime.utcfromtimestamp(created_at)
+                    created_at = created_at.replace(tzinfo=datetime.timezone.utc)
+                    # Use ISO string as unique key
+                    key = created_at.isoformat()
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    # Only proceed if this news post is newer than the latest we've seen
+                    if created_at > self.latest_news_seen:
+                        print("New patch notes found")
+                        await asyncio.sleep(60)
+                        continue
+                    self.latest_news_seen = created_at
+                    self.posted_news[key] = {
+                        "title": title,
+                        "slug": slug,
+                        "first_post_time": now,
+                        "last_sent": {},  # channel: datetime
+                    }
+                    # Clean up old posts (>36h old)
+                    for k in list(self.posted_news.keys()):
+                        if (
+                            now - self.posted_news[k]["first_post_time"]
+                        ).total_seconds() > 36 * 3600:
+                            self.posted_news.pop(k)
+                    # Prepare message
+                    msg = f"BGs update: {title} — https://wallii.gg/news/{slug}"
+                    # Get live channels (from bot.connected_channels)
+                    live_channels = set()
+                    # bot.connected_channels is a list of Channel objects
+                    for ch in getattr(self, "connected_channels", []):
+                        if hasattr(ch, "name"):
+                            live_channels.add(ch.name)
+
+                    # Filter for Hearthstone streamers
+                    hearthstone_channels = self.channel_manager.hearthstone_channels
+
+                    print("Currently streaming Hearthstone:", hearthstone_channels)
+
+                    # For each Hearthstone channel, send if >2h since last sent and <24h since first_post_time
+                    for channel in hearthstone_channels:
+                        last_sent = self.posted_news[key]["last_sent"].get(channel)
+                        first_post_time = self.posted_news[key]["first_post_time"]
+                        # Only send if <24h since first announcement
+                        if (now - first_post_time).total_seconds() > 24 * 3600:
+                            continue
+                        if (
+                            last_sent is not None
+                            and (now - last_sent).total_seconds() < 2 * 3600
+                        ):
+                            continue
+                        # Try to get Channel object from bot.connected_channels
+                        ch_obj = None
+                        for ch in getattr(self, "connected_channels", []):
+                            if hasattr(ch, "name") and ch.name == channel:
+                                ch_obj = ch
+                                break
+                        if ch_obj:
+                            try:
+                                await ch_obj.send(msg)
+                                self.posted_news[key]["last_sent"][channel] = now
+                            except Exception as e:
+                                print(f"Error sending news to {channel}: {e}")
+            except Exception as exc:
+                print(f"Error in news_announcer: {exc}")
+                # If DB error, close and reconnect next time
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    conn = None
             await asyncio.sleep(60)
 
     def clean_input(self, user_input):
