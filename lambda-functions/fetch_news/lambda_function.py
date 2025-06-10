@@ -270,3 +270,49 @@ def lambda_handler(event, context):
 # For local testing
 if __name__ == "__main__":
     print(lambda_handler({}, None))
+
+
+# Test function and invocation for inserting a patch note
+def test_insert_patch(use_blog=False):
+    """
+    Test generating and inserting a patch note to Supabase.
+    By default uses the tracker API; set use_blog=True to use blog API.
+    """
+    # Fetch the most recent patch note
+    post = None
+    if use_blog:
+        posts = get_blog_patch_notes()
+    else:
+        posts = get_forum_patch_notes()
+    if not posts:
+        print("No posts available for testing.")
+        return
+    latest = posts[0]
+    # Override fields for testing
+    latest["title"] = "test"
+    latest["slug"] = "test-patch"
+    latest["is_published"] = False  # override publish flag
+    latest["date"] = "2025-05-09T00:00:00Z"  # override created_at
+    # Remove any existing test post to ensure upsert/replace
+    conn = get_db_connection()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM news_posts WHERE slug = %s",
+                (latest["slug"],),
+            )
+    print("Existing test post (if any) deleted")
+    # Summarize and format
+    relevant = check_battlegrounds_relevance(latest["body"])
+    # Insert into Supabase
+    insert_patch_to_supabase(latest, relevant, table_name="news_posts")
+    print("Test insert completed for slug:", latest["slug"])
+
+
+# When running directly, run the test
+if __name__ == "__main__":
+    # Existing invocation
+    print(lambda_handler({}, None))
+    # Run test
+    print("Running test insert_patch with tracker API")
+    test_insert_patch(use_blog=False)
