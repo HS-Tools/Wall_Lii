@@ -174,61 +174,58 @@ class TwitchBot(commands.Bot):
                     key = created_at.isoformat()
                     now = datetime.datetime.now(datetime.timezone.utc)
                     # Only proceed if this news post is newer than the latest we've seen
-                    if created_at > self.latest_news_seen:
-                        print("New patch notes found")
+                    if created_at <= self.latest_news_seen:
                         await asyncio.sleep(60)
                         continue
-                    self.latest_news_seen = created_at
-                    self.posted_news[key] = {
-                        "title": title,
-                        "slug": slug,
-                        "first_post_time": now,
-                        "last_sent": {},  # channel: datetime
-                    }
-                    # Clean up old posts (>36h old)
-                    for k in list(self.posted_news.keys()):
-                        if (
-                            now - self.posted_news[k]["first_post_time"]
-                        ).total_seconds() > 36 * 3600:
-                            self.posted_news.pop(k)
-                    # Prepare message
-                    msg = f"BGs update: {title} — https://wallii.gg/news/{slug}"
-                    # Get live channels (from bot.connected_channels)
-                    live_channels = set()
-                    # bot.connected_channels is a list of Channel objects
-                    for ch in getattr(self, "connected_channels", []):
-                        if hasattr(ch, "name"):
-                            live_channels.add(ch.name)
 
-                    # Filter for Hearthstone streamers
-                    hearthstone_channels = self.channel_manager.hearthstone_channels
+                    # New post detection
+                    if created_at > self.latest_news_seen:
+                        print("New post found")
+                        self.latest_news_seen = created_at
+                        # Initialize tracking for this post
+                        self.posted_news[key] = {
+                            "title": title,
+                            "slug": slug,
+                            "first_post_time": now,
+                            "last_sent": {},  # channel: datetime
+                        }
+                        # Clean up old posts (>36h old)
+                        for k in list(self.posted_news.keys()):
+                            if (
+                                now - self.posted_news[k]["first_post_time"]
+                            ).total_seconds() > 36 * 3600:
+                                self.posted_news.pop(k)
 
-                    print("Currently streaming Hearthstone:", hearthstone_channels)
-
-                    # For each Hearthstone channel, send if >2h since last sent and <24h since first_post_time
-                    for channel in hearthstone_channels:
-                        last_sent = self.posted_news[key]["last_sent"].get(channel)
-                        first_post_time = self.posted_news[key]["first_post_time"]
-                        # Only send if <24h since first announcement
-                        if (now - first_post_time).total_seconds() > 24 * 3600:
+                    # Prepare per-post messages and send to live hearthstone channels every 2h until 24h elapse
+                    # Build the message once per post
+                    for k, post in self.posted_news.items():
+                        first_post = post["first_post_time"]
+                        # Skip if more than 24h since first post
+                        if (now - first_post).total_seconds() > 24 * 3600:
                             continue
-                        if (
-                            last_sent is not None
-                            and (now - last_sent).total_seconds() < 2 * 3600
-                        ):
-                            continue
-                        # Try to get Channel object from bot.connected_channels
-                        ch_obj = None
-                        for ch in getattr(self, "connected_channels", []):
-                            if hasattr(ch, "name") and ch.name == channel:
-                                ch_obj = ch
-                                break
-                        if ch_obj:
-                            try:
-                                await ch_obj.send(msg)
-                                self.posted_news[key]["last_sent"][channel] = now
-                            except Exception as e:
-                                print(f"Error sending news to {channel}: {e}")
+                        msg = f"BGs update: {post['title']} — https://wallii.gg/news/{post['slug']}"
+                        # Determine channels to send
+                        for channel in self.channel_manager.hearthstone_channels:
+                            last = post["last_sent"].get(channel)
+                            # Send if never sent or more than 2h since last send
+                            if last is None or (now - last).total_seconds() >= 2 * 3600:
+                                # Find Channel object
+                                ch_obj = next(
+                                    (
+                                        ch
+                                        for ch in getattr(
+                                            self, "connected_channels", []
+                                        )
+                                        if hasattr(ch, "name") and ch.name == channel
+                                    ),
+                                    None,
+                                )
+                                if ch_obj:
+                                    try:
+                                        await ch_obj.send(msg)
+                                        post["last_sent"][channel] = now
+                                    except Exception as e:
+                                        print(f"Error sending news to {channel}: {e}")
             except Exception as exc:
                 print(f"Error in news_announcer: {exc}")
                 # If DB error, close and reconnect next time
