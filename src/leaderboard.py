@@ -81,6 +81,7 @@ class LeaderboardDB:
 
     async def _fetch_patch_link(self) -> str:
         """Fetch patch link from Supabase news_posts table"""
+        return "https://hearthstone.blizzard.com/en-us/news/24205944"
         conn = self._get_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
