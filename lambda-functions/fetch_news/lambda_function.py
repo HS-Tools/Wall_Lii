@@ -301,7 +301,6 @@ def test_insert_patch(use_blog=False):
                 "DELETE FROM news_posts WHERE slug = %s",
                 (latest["slug"],),
             )
-    print("Existing test post (if any) deleted")
     # Summarize and format
     relevant = check_battlegrounds_relevance(latest["body"])
     # Insert into Supabase

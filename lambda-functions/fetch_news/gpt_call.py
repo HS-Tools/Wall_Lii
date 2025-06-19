@@ -17,138 +17,133 @@ client = OpenAI(api_key=api_key)
 
 
 def summarize_and_format_patch(patch_notes: str) -> tuple:
-    prompt = f"""
-You are a Hearthstone Battlegrounds patch summarizer. I will provide full patch notes or blog posts. Your job is to:
+    prompt = f"""You are a Hearthstone Battlegrounds patch note processor. Your task is to create a concise summary and structured HTML format for Battlegrounds-related changes.
 
-1. Write a one-sentence summary highlighting the most important Battlegrounds gameplay changes.
+## TASK
+1. Write a one-sentence summary highlighting the most impactful Battlegrounds change
+2. Format all gameplay changes into clean HTML using the specified structure
 
-- Always prioritize changes that affect core gameplay or player experience.
-- Include major announcements such as mid-season updates, minion/hero rotations, new minion types, mechanic overhauls, or system-wide balance changes.
-- Mention the most impactful stat or ability changes (e.g., tier drops, text changes, major buffs/nerfs).
-- Include critical bug fixes that impact gameplay flow, such as disconnects, reconnection failures, or timer issues.
-- If multiple categories are relevant, summarize the most global or impactful change (e.g., “Patch introduces Naga and removes Quests” is higher priority than “X minion buffed”).
+## SUMMARY GUIDELINES
+- Focus on core gameplay changes (new content, major balance updates, mechanic changes)
+- Prioritize: new minions/heroes/anomalies > stat changes > bug fixes > armor updates
+- Include major announcements (mid-season updates, rotations, new mechanics)
 
-2. Extract and format all gameplay-relevant Battlegrounds updates into clean, structured HTML. Use only the HTML tags listed below.
+## HTML FORMATTING RULES
 
-    For any **minion, hero, trinket, spell, anomaly, buddy, or quest** that has undergone a **gameplay-affecting stat or text change**, summarize the change in a single bullet under the card’s name.
+### Allowed HTML Tags Only:
+- `<h2>`, `<h3>` for section headers
+- `<ul>`, `<li>` for lists
+- `<p>` for paragraphs
+- `<a href="URL" target="_blank" rel="noopener noreferrer">` for links
+- `<div class="card-grid">` and `<div class="card-grid-item">` for grids
+- `<img class="card-grid-img" src="URL" alt="NAME">` for images
+- `<div class="card-grid-placeholder">NAME</div>` for missing images
+- `<p class="card-grid-text">` for grid descriptions
 
-    - Your one-line summary must **always include both the old and new values or text** for clarity.
-    - If the patch notes indicate that a change is only for clarity (e.g., “Dev Comment: The text update is a non-functional change just for clarity.”), explicitly mention this in the summary — for example:
-      <li><em>Text updated for clarity (“all your Quilboar”), but no functional change to gameplay.</em></li>
-    - Do not include any "Old:" or "New:" prefixes — just describe the change fully and clearly in natural language.
-    - Do not include the phrase "Summarized Change:" in your output.
+### Content Organization:
 
-    For hero armor changes:
-    - Present under two headings using card-grid format:
-      <h2>Decreased Armor</h2>
-      <div class="card-grid">
-        <div class="card-grid-item">
-          <div class="card-grid-placeholder">Hero Name</div>
-          <p class="card-grid-text">high rank: X, low rank: Y, duos: Z</p>
-        </div>
-      </div>
-      <h2>Increased Armor</h2>
-      <div class="card-grid">
-        <div class="card-grid-item">
-          <div class="card-grid-placeholder">Hero Name</div>
-          <p class="card-grid-text">high rank: X, low rank: Y, duos: Z</p>
-        </div>
-      </div>
-    - Only include heroes in each category.
-    - List only the new armor values; omit any unchanged fields.
-    - Preserve original patch note order within each section.
+**Minions, Heroes, Spells, Anomalies, Buddies, Quests:**
+```html
+<h3>Entity Name</h3>
+<ul>
+<li><em>Natural language description of the change</em></li>
+</ul>
+```
 
-    For cost changes (e.g., trinkets or cards):
-    - Describe in natural language: "Cost decreased from 4 to 3 Gold" or "Cost increased from 3 to 4 Gold".
-    - Do not use arrow notation for cost changes.
+**Hero Armor Changes:**
+- Only include heroes that have at least one valid armor value change
+- For each hero, only include categories (High Rank, Low Rank, Duos) that have non-blank and non-"nc" values
+- Examples:
+  - High Rank: 8, Low Rank: nc, Duos: 6 → High Rank: 8, Duos: 6
+  - High Rank: 14, Low Rank: (blank), Duos: 12 → High Rank: 14, Duos: 12
+- Format as:
+```html
+<h2>Decreased Armor</h2>
+<div class="card-grid">
+<div class="card-grid-item">
+<div class="card-grid-placeholder">Hero Name</div>
+<p class="card-grid-text">High Rank: X, Low Rank: Y, Duos: Z</p>
+</div>
+</div>
 
-    Use this format:
+<h2>Increased Armor</h2>
+<div class="card-grid">
+<div class="card-grid-item">
+<div class="card-grid-placeholder">Hero Name</div>
+<p class="card-grid-text">High Rank: X, Low Rank: Y, Duos: Z</p>
+</div>
+</div>
+```
 
-    ```html
-    <h3>Card Name</h3>
-    <ul>
-    <li><em>Cost decreased from 4 Gold to 2 Gold</em></li>
-    </ul>
-    ```
+**Trinket Cost Changes:**
+```html
+<h2>Trinket Cost Changes</h2>
+<div class="card-grid">
+<div class="card-grid-item">
+<div class="card-grid-placeholder">Trinket Name</div>
+<p class="card-grid-text">Cost decreased from 4 to 3 Gold</p>
+</div>
+</div>
+```
 
-3. Embed card images whenever they are provided in the patch notes. This includes both newly added cards and existing cards with changes.
-   If multiple images are adjacent (e.g. several new cards added in a row), group them within the same paragraph:
-   <p><img src="URL1" alt="CARD1"><img src="URL2" alt="CARD2"></p>
-   Only show images if they are explicitly included in the source material.
-   When appropriate, group cards into visual grids for better readability and mobile viewing.
+**Anomaly Changes:**
+1. List functional changes first:
+```html
+<h3>Anomaly Name</h3>
+<ul>
+<li><em>Change description</em></li>
+</ul>
+```
 
-Output Format:
+2. Then categorize using grids:
+```html
+<h3>New Anomalies</h3>
+<div class="card-grid">...</div>
+
+<h3>Returning Anomalies</h3>
+<div class="card-grid">...</div>
+
+<h3>Removed Anomalies</h3>
+<div class="card-grid">...</div>
+
+<h3>Duo Anomalies</h3>
+<div class="card-grid">...</div>
+```
+
+**Other Cost Changes (non-trinket):**
+Use natural language: "Cost decreased from 4 to 3 Gold"
+
+### Content Guidelines:
+- Only include Battlegrounds-related changes
+- Exclude Constructed/Hearthstone mode updates
+- For clarity-only changes, explicitly state "Text updated for clarity, no functional change"
+- Include bug fixes that impact gameplay (disconnects, timers, broken mechanics)
+- Append "(greater)" or "(lesser)" to anomaly names when specified
+- Group adjacent card images in single paragraphs
+- Preserve original patch note order within sections
+- For armor changes: only include a category (high rank, low rank, duos) if the following value is non-blank or not "nc"
+- For trinket cost changes: use the grid format with placeholder and cost change description
+
+### Output Format:
+```
 Summary:
-<one sentence summary here>
+<one sentence summary>
 
 HTML:
-<html content here>
+<html content>
+```
 
-Use these HTML tags only (no styling classes):
-
-Section headers:
-<h2>Section Title</h2>
-
-Lists:
-<ul>
-  <li><strong>Thing Changed:</strong> description</li>
-</ul>
-
-Paragraphs:
-<p>Paragraph content here.</p>
-
-Links:
-<a href="URL" target="_blank" rel="noopener noreferrer">Link text</a>
-
-- Always use the card-grid format for any stat or cost changes; do not use plain lists or tables for those.
-
-Grid Layouts (for armor tiers, cost changes, or grouped updates):
-Instead of tables, display changes using responsive card grids. For each card or entity with a change:
-- Use the following structure and class names:
-  <div class="card-grid">
-    <div class="card-grid-item">
-      <img class="card-grid-img" src="IMAGE_URL" alt="ENTITY_NAME">
-      <p class="card-grid-text">Cost decreased from 4 Gold to 2 Gold</p>
-    </div>
-  </div>
-- If an image is not available, display a placeholder using:
-  <div class="card-grid-item">
-    <div class="card-grid-placeholder">ENTITY_NAME</div>
-    <p class="card-grid-text">Cost decreased from 4 Gold to 2 Gold</p>
-  </div>
-- Use divs and paragraphs only — never tables. Ensure content is skimmable and mobile-friendly.
-
-Content Guidelines:
-- Only include Battlegrounds-related gameplay changes.
-- Exclude Constructed/Hearthstone mode updates.
-- Always highlight and prioritize any major Battlegrounds announcements, such as mid-season updates, mode-wide changes, or new patch schedules, especially if they affect core gameplay (e.g., new mechanics arriving soon, temporary removals, or rotation warnings).
-- Prioritize updates in this order:
-  1. Added or removed minions, trinkets, anomalies, quests, or buddies
-  2. Gameplay-affecting stat or text changes
-  3. Mechanics changes (anomalies, quest logic, rules)
-  4. **Bug fixes or performance improvements that directly impact gameplay**, such as:
-     - Disconnects or failure to reconnect
-     - Excessively long turn timers
-     - Broken Deathrattles, combat logic, or battlecry sequences
-  5. Hero bans, armor updates, or other balance tweaks
-- If an anomaly is referenced as being “greater” or “lesser” in the patch notes, append (greater) or (lesser) to the anomaly name when summarizing and displaying it. This ensures correct image injection and matching with database entries.
-
-- If no section exists for bug fixes, create one:
-  <h2>Bug Fixes and Improvements</h2>
-
-- Output valid HTML only — no extra explanations, markdown, or comments.
-- Never use tables — use <div>-based card grids instead.
-– For any card with an “Old” and “New” description, clearly identify not just stat changes, but also any change in card text wording, especially key terms (e.g. spell → Tavern spell). Treat even subtle text changes as meaningful and include them in the summary.
-
-Here are the patch notes:
-{patch_notes}
-"""
+## PATCH NOTES TO PROCESS:
+{patch_notes}"""
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "system",
+                    "content": "You are a Hearthstone Battlegrounds patch note processor. You create concise summaries and structured HTML for Battlegrounds changes.",
+                },
                 {"role": "user", "content": prompt},
             ],
             temperature=0.2,
@@ -181,18 +176,27 @@ Here are the patch notes:
 
 
 def check_battlegrounds_relevance(content: str) -> bool:
-    prompt = f"""
-    Does the following Hearthstone patch note or blog post contain any specific Battlegrounds gameplay updates such as changes to minions, heroes, anomalies, quests, buddies, trinkets, armor, or other gameplay mechanics? 
-    Answer "Yes" or "No" only.
+    prompt = f"""Determine if this Hearthstone content contains Battlegrounds gameplay updates.
 
-    Content:
-    {content}
-    """
+Look for changes to:
+- Minions, heroes, anomalies, quests, buddies, trinkets
+- Armor values, cost changes, stat adjustments
+- Gameplay mechanics, bug fixes affecting gameplay
+- New content additions or removals
+
+Answer only "Yes" or "No".
+
+Content:
+{content}"""
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "system",
+                    "content": "You are a content classifier for Hearthstone Battlegrounds updates. Answer only 'Yes' or 'No'.",
+                },
                 {"role": "user", "content": prompt},
             ],
             temperature=0,
