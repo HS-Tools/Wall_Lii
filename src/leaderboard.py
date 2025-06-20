@@ -446,7 +446,7 @@ class LeaderboardDB:
 
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
-            labels = ["M", "T", "W", "Th", "F", "Sa", "Su"]
+            labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             boundaries = [start + timedelta(days=i) for i in range(8)]
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
