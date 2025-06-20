@@ -9,8 +9,8 @@ import pytz
 PT = pytz.timezone("America/Los_Angeles")
 # ────────────────────────────────────────────────────────────────────────────────
 
-# IMPORTANT: This script is for backfilling the new table daily_leaderboard_stats. It does not add entries for days where there are no games which breaks some stuff
-# This breaks rating/rank delta initially but this should be fixed by June 03?
+# IMPORTANT: This script recalculates weekly_games_played using existing games_played data
+# It assumes the daily_leaderboard_stats table is correct except for weekly_games_played
 
 
 def get_db_connection():
@@ -34,72 +34,28 @@ def main():
 
     cur.execute(
         """
-        WITH base AS (
-          SELECT
-            player_name,
-            game_mode,
-            region,
-            (date_trunc('day', snapshot_time AT TIME ZONE 'America/Los_Angeles'))::date AS day_start,
-            rating,
-            rank,
-            lag(rating) OVER w AS prev_rating
-          FROM leaderboard_snapshots
-          WINDOW w AS (
-            PARTITION BY player_name, game_mode, region
-            ORDER BY snapshot_time
-            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-          )
-        ),
-        daily AS (
-          SELECT
+        WITH weekly_accumulation AS (
+          SELECT 
             player_name,
             game_mode,
             region,
             day_start,
-            last_value(rating) OVER w1 AS rating,
-            last_value(rank) OVER w1 AS rank,
-            SUM(CASE WHEN prev_rating IS NOT NULL AND rating <> prev_rating THEN 1 ELSE 0 END)
-              OVER w1 AS games_played,
-            CASE
-              WHEN day_start = date_trunc('week', day_start) THEN
-                SUM(CASE WHEN prev_rating IS NOT NULL AND rating <> prev_rating THEN 1 ELSE 0 END)
-                  OVER w1
-              ELSE
-                SUM(CASE WHEN prev_rating IS NOT NULL AND rating <> prev_rating THEN 1 ELSE 0 END)
-                  OVER w2
-            END AS weekly_games_played
-          FROM base
-          WINDOW
-            w1 AS (
-              PARTITION BY player_name, game_mode, region, day_start
-              ORDER BY day_start
-              ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-            ),
-            w2 AS (
-              PARTITION BY player_name, game_mode, region,
-                date_trunc('week', day_start)
+            games_played,
+            -- Calculate cumulative weekly games using existing games_played
+            SUM(games_played) OVER (
+              PARTITION BY player_name, game_mode, region, date_trunc('week', day_start)
               ORDER BY day_start
               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            )
-        ),
-        daily_uniq AS (
-          SELECT DISTINCT ON (player_name, game_mode, region, day_start)
-            player_name, game_mode, region, day_start, rating, rank,
-            games_played, weekly_games_played
-          FROM daily
+            ) AS weekly_games_played
+          FROM daily_leaderboard_stats
         )
-        INSERT INTO daily_leaderboard_stats
-          (player_name, game_mode, region, day_start,
-           rating, rank, games_played, weekly_games_played)
-        SELECT player_name, game_mode, region, day_start,
-               rating, rank, games_played, weekly_games_played
-        FROM daily_uniq
-        ON CONFLICT (player_name, game_mode, region, day_start) DO UPDATE
-          SET rating = EXCLUDED.rating,
-              rank = EXCLUDED.rank,
-              games_played = EXCLUDED.games_played,
-              weekly_games_played = EXCLUDED.weekly_games_played,
-              updated_at = now();
+        UPDATE daily_leaderboard_stats 
+        SET weekly_games_played = weekly_accumulation.weekly_games_played
+        FROM weekly_accumulation
+        WHERE daily_leaderboard_stats.player_name = weekly_accumulation.player_name
+          AND daily_leaderboard_stats.game_mode = weekly_accumulation.game_mode
+          AND daily_leaderboard_stats.region = weekly_accumulation.region
+          AND daily_leaderboard_stats.day_start = weekly_accumulation.day_start;
         """
     )
 
