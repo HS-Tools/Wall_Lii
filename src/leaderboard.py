@@ -286,7 +286,10 @@ class LeaderboardDB:
                         )
                         row = cur.fetchone()
                         if row:
-                            return f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']} wallii.gg/stats/{row['player_name']}"
+                            base_message = f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
+                            if row["rank"] <= 1000:
+                                base_message += f" wallii.gg/stats/{row['player_name']}"
+                            return base_message
                         else:
                             return f"No player found with rank {rank} in {region}."
                     else:
