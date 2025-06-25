@@ -43,10 +43,11 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
 ### Content Organization:
 
 **Minions, Heroes, Spells, Anomalies, Buddies, Quests:**
+The subject of each change should be wrapped in `<strong>` tags, followed by the description in natural language.
 ```html
 <h3>Entity Name</h3>
 <ul>
-<li><em>Natural language description of the change</em></li>
+<li><strong>Subject</strong> natural language description of the change</li>
 </ul>
 ```
 

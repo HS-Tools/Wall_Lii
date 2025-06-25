@@ -159,6 +159,10 @@ def insert_patch_to_supabase(post, relevant, table_name="news_posts"):
     conn = get_db_connection()
     with conn:
         with conn.cursor() as cur:
+            # First, try to delete any existing record with the same slug to avoid conflicts
+            cur.execute("DELETE FROM news_posts WHERE slug = %s", (data["slug"],))
+
+            # Then insert the new record
             cur.execute(
                 """
                 INSERT INTO news_posts (
@@ -166,19 +170,6 @@ def insert_patch_to_supabase(post, relevant, table_name="news_posts"):
                     author, created_at, updated_at, is_published, source, metadata, battlegrounds_relevant
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
-                ON CONFLICT (slug) DO UPDATE SET
-                    title = EXCLUDED.title,
-                    type = EXCLUDED.type,
-                    content = EXCLUDED.content,
-                    summary = EXCLUDED.summary,
-                    image_url = EXCLUDED.image_url,
-                    author = EXCLUDED.author,
-                    created_at = EXCLUDED.created_at,
-                    updated_at = EXCLUDED.updated_at,
-                    is_published = EXCLUDED.is_published,
-                    source = EXCLUDED.source,
-                    metadata = EXCLUDED.metadata,
-                    battlegrounds_relevant = EXCLUDED.battlegrounds_relevant
                 """,
                 (
                     data["title"],

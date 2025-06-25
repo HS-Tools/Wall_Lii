@@ -58,3 +58,11 @@ CREATE TABLE daily_leaderboard_stats (
   updated_at TIMESTAMPTZ DEFAULT now(),
   PRIMARY KEY (player_name, game_mode, region, day_start)
 );
+
+-- 6. channels
+CREATE TABLE IF NOT EXISTS channels (
+  channel TEXT PRIMARY KEY,
+  player  TEXT,
+  youtube TEXT,
+  live    BOOLEAN NOT NULL DEFAULT FALSE
+);

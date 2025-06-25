@@ -60,3 +60,17 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: rate(5 minutes)
+
+  TwitchLiveCheckFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: twitch_live_check/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 256
+      Events:
+        ScheduledUpdate:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)

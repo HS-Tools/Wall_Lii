@@ -133,6 +133,7 @@ class TwitchBot(commands.Bot):
         """
         Background task to announce latest news to live Hearthstone channels every 60 seconds.
         Only posts to each channel if last message for the post was >2h ago and within 24h of first announcement.
+        Only processes news posts that are battlegrounds_relevant = True.
         """
         await asyncio.sleep(5)  # Wait for bot to be ready
         # Prepare DB connection parameters from environment
@@ -155,7 +156,7 @@ class TwitchBot(commands.Bot):
                     )
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT title, slug, created_at FROM news_posts ORDER BY created_at DESC LIMIT 1"
+                        "SELECT title, slug, created_at FROM news_posts WHERE battlegrounds_relevant = True ORDER BY created_at DESC LIMIT 1"
                     )
                     row = cur.fetchone()
                     if not row:
@@ -180,7 +181,7 @@ class TwitchBot(commands.Bot):
 
                     # New post detection
                     if created_at > self.latest_news_seen:
-                        print("New post found")
+                        print("New battlegrounds-relevant post found")
                         self.latest_news_seen = created_at
                         # Initialize tracking for this post
                         self.posted_news[key] = {
