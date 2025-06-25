@@ -31,7 +31,8 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
 ## HTML FORMATTING RULES
 
 ### Allowed HTML Tags Only:
-- `<h2>`, `<h3>` for section headers
+- `<h2>` for section headers
+- `<h3>` for ul headers
 - `<ul>`, `<li>` for lists
 - `<p>` for paragraphs
 - `<a href="URL" target="_blank" rel="noopener noreferrer">` for links
@@ -43,11 +44,10 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
 ### Content Organization:
 
 **Minions, Heroes, Spells, Anomalies, Buddies, Quests:**
-The subject of each change should be wrapped in `<strong>` tags, followed by the description in natural language.
 ```html
 <h3>Entity Name</h3>
 <ul>
-<li><strong>Subject</strong> natural language description of the change</li>
+<li><em>Natural language description of the change</em></li>
 </ul>
 ```
 

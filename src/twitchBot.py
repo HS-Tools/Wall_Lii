@@ -32,7 +32,7 @@ class TwitchBot(commands.Bot):
         if "--test" in sys.argv
         else {
             "liihs",
-            "waliibot",
+            "walliibot",
             "jeefhs",
             "beterbabbit",
             "dogdog",
@@ -420,7 +420,7 @@ class TwitchBot(commands.Bot):
     @commands.command(name="addchannel")
     async def addchannel_command(self, ctx, player_name=None):
         """Add the current channel to the channel list with optional player name"""
-        if ctx.channel.name != "waliibot":
+        if ctx.channel.name != "walliibot":
             return
 
         username = ctx.author.name.lower()
@@ -433,7 +433,7 @@ class TwitchBot(commands.Bot):
     @commands.command(name="addname")
     async def addname_command(self, ctx, player_name=None):
         """Add an alias for the current channel name"""
-        if ctx.channel.name != "waliibot":
+        if ctx.channel.name != "walliibot":
             return
 
         if not player_name:
@@ -447,7 +447,7 @@ class TwitchBot(commands.Bot):
     @commands.command(name="deletechannel")
     async def deletechannel_command(self, ctx):
         """Delete the current channel from the channel list"""
-        if ctx.channel.name != "waliibot":
+        if ctx.channel.name != "walliibot":
             return
 
         username = ctx.author.name.lower()
