@@ -188,42 +188,84 @@ def write_to_postgres(players):
                 # Process milestones after inserting player data
                 process_milestones(cur, players)
 
-                # Upsert daily leaderboard stats for today's data
+                # Fully rewrite logic for handling the daily_leaderboard_stats table
                 from datetime import timedelta
 
                 pacific = pytz.timezone("America/Los_Angeles")
                 today_pt = datetime.now(timezone.utc).astimezone(pacific).date()
-
-                # Fetch previous day's weekly counts and ratings
                 yesterday_pt = today_pt - timedelta(days=1)
+                is_monday = today_pt.weekday() == 0  # Monday is 0
+
+                # Group players by (player_name, game_mode, region)
+                # key_fn and current_keys are not used, so removed.
+
+                # Fetch existing entries for today
                 cur.execute(
                     """
-                    SELECT player_name, game_mode, region, weekly_games_played, rating
+                    SELECT player_name, game_mode, region, rating, rank, games_played, weekly_games_played
                     FROM daily_leaderboard_stats
                     WHERE day_start = %s
-                    """,
+                """,
+                    (today_pt,),
+                )
+                existing_today = cur.fetchall()
+                # Map for today's stats
+                today_stats = {
+                    f"{r[0]}#{r[1]}#{r[2]}": {
+                        "rating": r[3],
+                        "rank": r[4],
+                        "games_played": r[5],
+                        "weekly_games_played": r[6],
+                    }
+                    for r in existing_today
+                }
+
+                # Fetch yesterday’s entries to compute games_played and weekly_games_played
+                cur.execute(
+                    """
+                    SELECT player_name, game_mode, region, rating, weekly_games_played
+                    FROM daily_leaderboard_stats
+                    WHERE day_start = %s
+                """,
                     (yesterday_pt,),
                 )
                 prev_rows = cur.fetchall()
                 prev_stats = {
-                    f"{row[0]}#{row[1]}#{row[2]}": {"weekly": row[3], "rating": row[4]}
-                    for row in prev_rows
+                    f"{r[0]}#{r[1]}#{r[2]}": {"rating": r[3], "weekly": r[4]}
+                    for r in prev_rows
                 }
 
                 daily_values = []
                 for p in players:
                     key = f"{p['player_name']}#{p['game_mode']}#{p['region']}"
+                    today = today_stats.get(key)
                     prev = prev_stats.get(key)
-                    games_played_initial = (
-                        0
-                        if prev and prev["rating"] == p["rating"]
-                        else (1 if prev else 0)
-                    )
-                    weekly_initial = (
-                        prev["weekly"] + games_played_initial
-                        if prev
-                        else games_played_initial
-                    )
+
+                    if today:
+                        # If player already has a row today, increment only if rating changed
+                        rating_changed = today["rating"] != p["rating"]
+                        games_played = (
+                            today["games_played"] + 1
+                            if rating_changed
+                            else today["games_played"]
+                        )
+                        weekly_games_played = (
+                            today["weekly_games_played"] + 1
+                            if rating_changed
+                            else today["weekly_games_played"]
+                        )
+                    else:
+                        # First entry for today, compare to yesterday
+                        rating_changed = prev and prev["rating"] != p["rating"]
+                        games_played = 1 if rating_changed else 0
+                        if not prev:
+                            games_played = 0  # New player, treat as 0
+                        weekly_games_played = (
+                            games_played
+                            if is_monday
+                            else (prev["weekly"] if prev else 0) + games_played
+                        )
+
                     daily_values.append(
                         (
                             p["player_name"],
@@ -232,44 +274,29 @@ def write_to_postgres(players):
                             today_pt,
                             p["rating"],
                             p["rank"],
-                            games_played_initial,
-                            weekly_initial,
+                            games_played,
+                            weekly_games_played,
+                            datetime.now(timezone.utc),
                         )
                     )
-                daily_upsert_query = """
+
+                # Clear and reinsert only affected rows (delete all for today, then reinsert)
+                if existing_today:
+                    cur.execute(
+                        """
+                        DELETE FROM daily_leaderboard_stats
+                        WHERE day_start = %s
+                    """,
+                        (today_pt,),
+                    )
+
+                insert_daily_query = """
                     INSERT INTO daily_leaderboard_stats
-                      (player_name, game_mode, region, day_start, rating, rank, games_played, weekly_games_played)
+                      (player_name, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, updated_at)
                     VALUES %s
-                    ON CONFLICT (player_name, game_mode, region, day_start) DO UPDATE
-                      SET
-                        rating = EXCLUDED.rating,
-                        rank = EXCLUDED.rank,
-                        games_played = daily_leaderboard_stats.games_played
-                                       + CASE
-                                           WHEN daily_leaderboard_stats.rating <> EXCLUDED.rating THEN 1
-                                           ELSE 0
-                                         END,
-                        weekly_games_played = 
-                            CASE
-                                WHEN EXCLUDED.day_start >= date_trunc('week', EXCLUDED.day_start) 
-                                     AND EXCLUDED.day_start < date_trunc('week', EXCLUDED.day_start) + interval '7 days' THEN
-                                    -- Within current week, add to weekly count
-                                    daily_leaderboard_stats.weekly_games_played
-                                    + CASE
-                                        WHEN daily_leaderboard_stats.rating <> EXCLUDED.rating THEN 1
-                                        ELSE 0
-                                      END
-                                ELSE
-                                    -- Outside current week, reset to current day's games
-                                    CASE
-                                        WHEN daily_leaderboard_stats.rating <> EXCLUDED.rating THEN 1
-                                        ELSE 0
-                                    END
-                            END,
-                        updated_at = now();
                 """
-                execute_values(cur, daily_upsert_query, daily_values)
-                logger.info(f"Upserted daily stats for {len(daily_values)} players.")
+                execute_values(cur, insert_daily_query, daily_values)
+                logger.info(f"Inserted daily stats for {len(daily_values)} players.")
     except Exception as e:
         logger.error(f"Error inserting into DB: {str(e)}")
         raise
