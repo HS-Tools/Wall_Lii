@@ -7,6 +7,7 @@ import boto3
 from typing import Set
 from logger import setup_logger
 import re
+from utils.supabase_channels import get_all_live_channels
 
 VALID_TWITCH_USERNAME = re.compile(r"^[a-zA-Z0-9_]{4,25}$")
 logger = setup_logger("ChannelManager")
@@ -33,16 +34,10 @@ class ChannelManager:
 
     def load_channels(self):
         try:
-            response = self.channel_table.scan()
-            self.all_channels = {
-                item["ChannelName"].strip().lower()
-                for item in response.get("Items", [])
-                if item.get("ChannelName")
-                and VALID_TWITCH_USERNAME.match(item["ChannelName"].strip())
-            }
-            logger.info(f"Loaded {len(self.all_channels)} channels from DynamoDB")
+            self.all_channels = get_all_live_channels()
+            logger.info(f"Loaded {len(self.all_channels)} channels from Supabase")
         except Exception as e:
-            logger.error(f"Failed to load channels from DynamoDB: {e}")
+            logger.error(f"Failed to load channels from Supabase: {e}")
             self.all_channels = {"liihs"}
 
     async def get_live_channels(self, channels: Set[str]) -> Set[str]:

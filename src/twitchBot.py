@@ -10,6 +10,7 @@ from managers.channel_manager import ChannelManager
 from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message
 from utils.aws_dynamodb import DynamoDBClient
 from utils.regions import is_server
+from utils.supabase_channels import add_channel, delete_channel, update_player
 
 
 class TwitchBot(commands.Bot):
@@ -422,12 +423,10 @@ class TwitchBot(commands.Bot):
         """Add the current channel to the channel list with optional player name"""
         if ctx.channel.name != "walliibot":
             return
-
         username = ctx.author.name.lower()
         if not player_name:
             player_name = username
-
-        response = self.dynamo_client.add_channel(username, player_name)
+        response = add_channel(username, player_name)
         await ctx.send(response)
 
     @commands.command(name="addname")
@@ -442,6 +441,7 @@ class TwitchBot(commands.Bot):
 
         username = ctx.author.name.lower()
         response = self.dynamo_client.add_alias(username, player_name)
+        response = update_player(username, player_name)
         await ctx.send(response)
 
     @commands.command(name="deletechannel")
@@ -449,9 +449,8 @@ class TwitchBot(commands.Bot):
         """Delete the current channel from the channel list"""
         if ctx.channel.name != "walliibot":
             return
-
         username = ctx.author.name.lower()
-        response = self.dynamo_client.delete_channel(username)
+        response = delete_channel(username)
         await ctx.send(response)
 
     @commands.command(name="help", aliases=["commands", "wall_lii"])

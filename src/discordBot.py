@@ -10,6 +10,7 @@ from pytz import timezone
 from leaderboard import LeaderboardDB
 from utils.aws_dynamodb import DynamoDBClient
 from logger import setup_logger
+from utils.supabase_channels import add_channel, delete_channel
 
 # Load environment variables
 load_dotenv()
@@ -226,10 +227,8 @@ class DiscordBot(commands.Bot):
             if not channel:
                 await ctx.send("Usage: !addchannel <channel> [player_name]")
                 return
-
-            # Check if user has permission
             if ctx.guild and ctx.guild.id == LII_DISCORD_ID:
-                response = self.dynamo_client.add_channel(channel, player_name)
+                response = add_channel(channel, player_name or channel)
                 await ctx.send(response)
             else:
                 await ctx.send("You don't have permission to use this command.")
@@ -239,10 +238,8 @@ class DiscordBot(commands.Bot):
             if not channel:
                 await ctx.send("Usage: !deletechannel <channel>")
                 return
-
-            # Check if user has permission
             if ctx.guild and ctx.guild.id == LII_DISCORD_ID:
-                response = self.dynamo_client.delete_channel(channel)
+                response = delete_channel(channel)
                 await ctx.send(response)
             else:
                 await ctx.send("You don't have permission to use this command.")
