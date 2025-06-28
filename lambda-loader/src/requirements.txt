@@ -1,7 +1,0 @@
-boto3
-requests
-requests-futures
-moto[dynamodb]
-pytest
-pytz
-aiohttp
