@@ -107,15 +107,16 @@ def scrape_and_insert_from_wiki(url: str, label: str):
 
 if __name__ == "__main__":
     urls = {
-        "minions": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Minion",
-        "tavern_spells": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Tavern_spell",
-        "trinkets": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Trinket",
-        "quests": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Quest",
-        "quest_rewards": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Reward",
-        "buddies": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Buddy",
-        "heroes": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Hero",
-        "spells": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Spell",
-        "removed_cards": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Removed_card",
+        # "minions": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Minion",
+        # "tavern_spells": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Tavern_spell",
+        # "trinkets": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Trinket",
+        # "quests": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Quest",
+        # "quest_rewards": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Reward",
+        # "buddies": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Buddy",
+        # "heroes": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Hero",
+        # "spells": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Spell",
+        # "removed_cards": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Removed_card",
+        "anomalies": "https://hearthstone.wiki.gg/wiki/Battlegrounds/Anomaly",
     }
 
     for label, url in urls.items():
