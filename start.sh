@@ -13,12 +13,8 @@ docker build -t hs_leaderboards_discord -f ./discord.Dockerfile .
 docker kill $(docker ps -q)
 docker rm $(docker ps -a -q)
 
-# Create logs directory if it doesn't exist
-mkdir -p /home/jim/Wall_Lii/logs
-
 # Run containers with volume mounts
 docker run --restart always -d \
-  -v /home/jim/Wall_Lii/logs:/logs \
   --name hs_twitch \
   hs_leaderboards_twitch
 
