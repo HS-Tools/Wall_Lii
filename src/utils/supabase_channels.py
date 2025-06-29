@@ -4,6 +4,8 @@ from datetime import datetime
 
 
 def add_channel(channel, player, youtube="", live=False):
+    channel = channel.lower()
+    player = player.lower()
     conn = get_db_connection()
     try:
         with conn:
@@ -23,6 +25,8 @@ def add_channel(channel, player, youtube="", live=False):
 
 
 def update_player(channel, player):
+    channel = channel.lower()
+    player = player.lower()
     conn = get_db_connection()
     try:
         with conn:
@@ -49,6 +53,7 @@ def update_player(channel, player):
 
 
 def delete_channel(channel):
+    channel = channel.lower()
     conn = get_db_connection()
     try:
         with conn:
