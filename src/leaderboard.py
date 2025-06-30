@@ -167,6 +167,21 @@ class LeaderboardDB:
             # Determine baseline date as start of current day in LA
             baseline_date = TimeRangeHelper.start_of_day_la(0).date()
 
+            # Check if any entry from today exists
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT 1
+                    FROM daily_leaderboard_stats
+                    WHERE day_start = %s
+                    LIMIT 1;
+                """,
+                    (baseline_date,),
+                )
+                if not cur.fetchone():
+                    # If no entry from today exists, use yesterday's data
+                    baseline_date = baseline_date - timedelta(days=1)
+
             # Global: collect top 10 from each region, then sort across regions
             if not parse_server(region):
                 all_rows = []
