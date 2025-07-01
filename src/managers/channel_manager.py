@@ -40,11 +40,11 @@ class ChannelManager:
             logger.error(f"Failed to load channels from Supabase: {e}")
             self.all_channels = {"liihs"}
 
-    async def get_live_channels(self, channels: Set[str]) -> Set[str]:
+    async def get_live_channels(self) -> Set[str]:
         # Reload channels from DynamoDB to get any new additions
         self.load_channels()
 
-        if not channels:
+        if not self.all_channels:
             return set()
 
         try:
@@ -59,7 +59,7 @@ class ChannelManager:
         async with aiohttp.ClientSession() as session:
             live_channels = set()
             self.hearthstone_channels = set()
-            channel_list = [c for c in list(channels) if c and c.strip()]
+            channel_list = [c for c in list(self.all_channels) if c and c.strip()]
 
             for i in range(0, len(channel_list), 50):
                 batch = channel_list[i : i + 50]

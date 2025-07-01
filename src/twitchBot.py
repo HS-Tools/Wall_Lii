@@ -1,4 +1,7 @@
 import datetime
+from logger import setup_logger
+
+logger = setup_logger("TwitchBot")
 import psycopg2
 import sys
 import os
@@ -63,7 +66,10 @@ class TwitchBot(commands.Bot):
         self.latest_news_seen = datetime.datetime.now(datetime.timezone.utc)
 
     async def event_ready(self):
-        print(f"Logged in as | {self.nick}")
+        logger.info(
+            f"Logged in as | {self.nick} at {datetime.datetime.now().isoformat()}"
+        )
+        logger.info(f"Initial channel list: {self.channel_manager.all_channels}")
         # Start the background task to check live channels
         self.bg_task = asyncio.create_task(self.channel_check_loop())
         # Start the news announcer background task
@@ -72,15 +78,22 @@ class TwitchBot(commands.Bot):
     async def channel_check_loop(self):
         """Background task to periodically check for live channels"""
         if "--test" in sys.argv:
-            print("Running in test mode — skipping channel check loop.")
+            logger.info("Running in test mode — skipping channel check loop.")
             return
 
         while True:
+            logger.info(
+                f"channel_check_loop iteration start at {datetime.datetime.now().isoformat()}"
+            )
+            # Refresh the currently_joined set from Twitch's actual connection state
+            actual_connected = {
+                ch.name for ch in getattr(self, "connected_channels", [])
+            }
+            logger.debug(f"Fetched connected_channels from library: {actual_connected}")
+            self.currently_joined = set(actual_connected)
             try:
                 # Get live channels from the channel manager
-                live_channels = await self.channel_manager.get_live_channels(
-                    self.channel_manager.all_channels
-                )
+                live_channels = await self.channel_manager.get_live_channels()
 
                 # Combine with priority channels
                 channels_to_join = live_channels.union(self.priority_channels)
@@ -91,42 +104,68 @@ class TwitchBot(commands.Bot):
 
                 # Join new channels
                 if to_join:
-                    print(
+                    logger.info(
                         f"Attempting to join {len(to_join)} channels: {', '.join(to_join)}"
                     )
                     for channel in to_join:
                         try:
                             # Join channels one by one to better handle errors
                             await self.join_channels([channel])
-                            self.currently_joined.add(channel)
-                            print(f"Successfully joined channel: {channel}")
+                            # self.currently_joined.add(channel)  # Now handled by refresh at top of loop
                             # Small delay to avoid rate limits
                             await asyncio.sleep(0.5)
                         except Exception as e:
-                            print(f"Error joining {channel}: {e}")
+                            logger.error(f"Error joining {channel}: {e}")
+                    # Debug/log: Currently joined after join
+                    logger.debug(
+                        f"Currently joined after join: {self.currently_joined}"
+                    )
+                    # Verify actual Twitch connection state against internal state
+                    actual_connected = {
+                        ch.name for ch in getattr(self, "connected_channels", [])
+                    }
+                    missing_joins = to_join - actual_connected
+                    if missing_joins:
+                        logger.warning(
+                            f"Channels reported joined but not in Twitch connection list: {', '.join(missing_joins)}"
+                        )
 
                 # Leave channels that are no longer live (except priority channels)
                 if to_leave:
                     to_leave_non_priority = to_leave - self.priority_channels
                     if to_leave_non_priority:
-                        print(
+                        logger.info(
                             f"Leaving {len(to_leave_non_priority)} channels: {', '.join(to_leave_non_priority)}"
                         )
                         for channel in to_leave_non_priority:
                             try:
                                 await self.part_channels([channel])
-                                self.currently_joined.remove(channel)
-                                print(f"Left channel: {channel}")
+                                # self.currently_joined.remove(channel)  # Now handled by refresh at top of loop
+                                logger.info(f"Left channel: {channel}")
                                 # Small delay to avoid rate limits
                                 await asyncio.sleep(0.5)
                             except Exception as e:
-                                print(f"Error leaving {channel}: {e}")
+                                logger.error(f"Error leaving {channel}: {e}")
 
             except Exception as e:
-                print(f"Error in channel check loop: {e}")
+                logger.exception("Error in channel check loop")
 
             # Check every minute
             await asyncio.sleep(60)
+
+    async def event_join(self, channel, user):
+        """Log when the bot has successfully joined a channel."""
+        if user.name.lower() == self.nick.lower():
+            logger.info(
+                f"Confirmed bot joined channel: {channel.name} at {datetime.datetime.now().isoformat()}"
+            )
+
+    async def event_part(self, channel, user):
+        """Log when the bot has successfully left a channel."""
+        if user.name.lower() == self.nick.lower():
+            logger.info(
+                f"Confirmed bot left channel: {channel.name} at {datetime.datetime.now().isoformat()}"
+            )
 
     # --- News Announcer Background Task ---
 
