@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ignored_cards = ["Avenge_(card)", "Blood Gem"]
+ignored_cards = ["Avenge_(card)", "Blood Gem", ""]
 
 
 def get_db_connection():
