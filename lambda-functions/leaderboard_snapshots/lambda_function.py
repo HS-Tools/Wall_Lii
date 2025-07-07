@@ -403,6 +403,9 @@ async def process_leaderboards():
     """Main function to fetch and process leaderboard data"""
     logger.info("Fetching leaderboard data...")
     players = await fetch_leaderboards()
+    if not players:
+        logger.warning("No player data fetched — skipping DB write to avoid data loss.")
+        return 0
     logger.info(f"Fetched {len(players)} players.")
     write_to_postgres(players)
     return len(players)
