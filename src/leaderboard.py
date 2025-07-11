@@ -86,11 +86,11 @@ class LeaderboardDB:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT title, slug
+                    SELECT title, slug, updated_at
                     FROM news_posts
                     WHERE battlegrounds_relevant = true
                     ORDER BY created_at DESC
-                    LIMIT 2;
+                    LIMIT 1;
                     """
                 )
                 rows = cur.fetchall()
@@ -100,9 +100,20 @@ class LeaderboardDB:
 
                 links = []
                 for row in rows:
-                    links.append(f"{row['title']} wallii.gg/news/{row['slug']}")
+                    # Format the date as "Jun 11" format
+                    if row["updated_at"]:
+                        date_str = row["updated_at"].strftime("%b %d")
+                    else:
+                        date_str = ""
 
-                return " | ".join(links) + " | All news: wallii.gg/news"
+                    if date_str:
+                        links.append(
+                            f"{row['title']} ({date_str}) wallii.gg/news/{row['slug']}"
+                        )
+                    else:
+                        links.append(f"{row['title']} wallii.gg/news/{row['slug']}")
+
+                return " | ".join(links)
         except Exception as e:
             print(f"Error fetching patch link: {e}")
             return "Currently fetching patch link..."
