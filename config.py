@@ -1,7 +1,7 @@
 # config.py
 import os
 
-SEASON = int(os.environ.get("CURRENT_SEASON", 15))
+SEASON = int(os.environ.get("CURRENT_SEASON", 16))
 TABLE_SUFFIX = f"_season{SEASON}"
 
 TABLES = {

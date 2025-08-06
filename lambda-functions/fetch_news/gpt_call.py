@@ -41,15 +41,36 @@ def summarize_and_format_patch(patch_notes: str) -> tuple:
 - `<div class="card-grid-placeholder">NAME</div>` for missing images
 - `<p class="card-grid-text">` for grid descriptions
 
-### Content Organization:
-
 **Minions, Heroes, Spells, Anomalies, Buddies, Quests:**
-```html
-<h3>Entity Name</h3>
-<ul>
-<li><em>Natural language description of the change</em></li>
-</ul>
-```
+- For each entity, show:
+  - `Old:` the previous functionality (copied verbatim)
+  - `New:` the updated functionality (copied verbatim)
+  - `Diff:` a natural language description of what changed functionally — be concise and player-focused
+  - Always use exact values or phrases from the old/new descriptions in the `Diff:` line. For example: "Stat changed from 5/3 to 6/4; Deathrattle changed from giving +3/+5 to +4/+6." Avoid vague summaries like "increased stats" or "improved effect".
+  - When the `new` description uses vague wording like "improve this", **infer the likely numeric or functional outcome** by comparing to the `old` (e.g., “+1/+1 each turn” if previously it gave only +1 Health)
+  - Preserve and reuse any associated image URLs from the original content if provided
+  - Ensure spells being reintroduced or removed from the pool are mentioned explicitly
+  - Always use <h3> tags for entity names only (e.g. spells, anomalies, minions).
+  - If the patch note is a full sentence combining the name and change (e.g., "Channel the Devourer has been returned to the spell pool."), reformat it as:
+    <h3>Channel the Devourer</h3>
+    <ul>
+      <li>has been returned to the spell pool.</li>
+    </ul>
+  - This ensures consistent formatting across all patch notes and separates the subject (entity name) from the gameplay update using bullet points.
+- For armor changes: only include a category (high rank, low rank, duos) if the following value is non-blank or not "nc"
+- For trinket cost changes: use the grid format with placeholder and cost change description
+
+**Card Image Handling**:
+- If an `<img src="...">` tag appears directly after a gameplay change (Minion, Hero, Spell, Anomaly, Trinket, etc.), preserve it and include it after the corresponding `<ul>` list block for that entity.
+- Convert preserved image tags to the following format:
+  ```html
+  <div class="flex flex-wrap gap-6 mt-2">
+    <img src="IMAGE_URL" class="w-64 h-auto object-contain rounded" alt="ENTITY NAME" loading="lazy" decoding="async" />
+  </div>
+  ```
+- If no image is provided in the original notes, fall back to `<div class="card-grid-placeholder">NAME</div>`.
+
+### Content Organization:
 
 **Hero Armor Changes:**
 - Only include heroes that have at least one valid armor value change
@@ -122,8 +143,6 @@ Use natural language: "Cost decreased from 4 to 3 Gold"
 - Append "(greater)" or "(lesser)" to anomaly names when specified
 - Group adjacent card images in single paragraphs
 - Preserve original patch note order within sections
-- For armor changes: only include a category (high rank, low rank, duos) if the following value is non-blank or not "nc"
-- For trinket cost changes: use the grid format with placeholder and cost change description
 
 ### Output Format:
 ```
