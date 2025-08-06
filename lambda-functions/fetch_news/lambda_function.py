@@ -305,4 +305,4 @@ if __name__ == "__main__":
     print(lambda_handler({}, None))
     # Run test
     print("Running test insert_patch with tracker API")
-    test_insert_patch(use_blog=False)
+    test_insert_patch(use_blog=True)
