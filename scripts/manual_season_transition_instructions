@@ -1,0 +1,58 @@
+
+
+# Manual Season Transition Instructions
+
+## 1. Export Important Tables (Replace YOUR_PASSWORD)
+
+Run the following commands locally to export the three key tables from Supabase via the connection pooler:
+
+```bash
+# Export leaderboard_snapshots
+PGPASSWORD="YOUR_PASSWORD" psql \
+  -h aws-0-us-east-1.pooler.supabase.com \
+  -p 5432 \
+  -d postgres \
+  -U postgres.xtivasurpzvcbomieuba \
+  -c "\COPY public.leaderboard_snapshots TO 'leaderboard_snapshots.csv' WITH CSV HEADER"
+
+# Export current_leaderboard
+PGPASSWORD="YOUR_PASSWORD" psql \
+  -h aws-0-us-east-1.pooler.supabase.com \
+  -p 5432 \
+  -d postgres \
+  -U postgres.xtivasurpzvcbomieuba \
+  -c "\COPY public.current_leaderboard TO 'current_leaderboard.csv' WITH CSV HEADER"
+
+# Export daily_leaderboard_stats
+PGPASSWORD="YOUR_PASSWORD" psql \
+  -h aws-0-us-east-1.pooler.supabase.com \
+  -p 5432 \
+  -d postgres \
+  -U postgres.xtivasurpzvcbomieuba \
+  -c "\COPY public.daily_leaderboard_stats TO 'daily_leaderboard_stats.csv' WITH CSV HEADER"
+```
+
+## 2. Clear Data from These Tables
+
+After confirming the exports are complete, run the following commands to truncate the tables:
+
+```sql
+TRUNCATE TABLE public.leaderboard_snapshots;
+TRUNCATE TABLE public.current_leaderboard;
+TRUNCATE TABLE public.daily_leaderboard_stats;
+```
+
+## 3. Update Season
+
+Update all hardcoded references to the current season number (e.g., `16`) and increment it to the new season (`17`):
+
+- Check and update in **3 locations** (typically in your config or codebase).
+
+## 4. Rebuild and Deploy Lambda Functions
+
+Run the following to rebuild and redeploy your AWS Lambda functions:
+
+```bash
+sam build
+sam deploy
+```
