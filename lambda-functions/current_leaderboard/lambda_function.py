@@ -19,7 +19,7 @@ REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "15"))
+CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "16"))
 
 
 async def fetch_all_pages(session, region, mode_api, mode_short, sem):
