@@ -1,6 +1,7 @@
 import os
 import psycopg2
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -10,11 +11,11 @@ DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-PRUNE_QUERY = """
+PRUNE_QUERY_TEMPLATE = """
 WITH recent_rows AS (
   SELECT *
   FROM leaderboard_snapshots
-  WHERE snapshot_time > NOW() - interval '24 hours'
+  WHERE snapshot_time > '{start_time}' AND snapshot_time <= '{end_time}'
 ),
 
 ranked AS (
@@ -38,9 +39,7 @@ to_delete AS (
   SELECT *
   FROM ranked
   WHERE
-    -- Not the oldest row for this rating
     row_asc > 1
-    -- AND not the most recent version of the most recent rating
     AND NOT (rating_rank = 1 AND row_desc = 1)
 )
 
@@ -52,8 +51,9 @@ WHERE leaderboard_snapshots.player_name = to_delete.player_name
   AND leaderboard_snapshots.snapshot_time = to_delete.snapshot_time;
 """
 
+
 def main():
-    print("Pruning redundant snapshots from the last 24 hours...")
+    print("Pruning redundant snapshots from the last 10 days...")
 
     conn = psycopg2.connect(
         host=DB_HOST,
@@ -61,17 +61,30 @@ def main():
         dbname=DB_NAME,
         user=DB_USER,
         password=DB_PASSWORD,
-        sslmode="require"
+        sslmode="require",
     )
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(PRUNE_QUERY)
-                print("Pruning completed successfully.")
-    except Exception as e:
-        print("Error during pruning:", str(e))
-    finally:
-        conn.close()
+    now = datetime.utcnow()
+
+    for i in range(20, 30):
+        end_time = now - timedelta(days=i)
+        start_time = end_time - timedelta(days=1)
+
+        query = PRUNE_QUERY_TEMPLATE.format(
+            start_time=start_time.isoformat(), end_time=end_time.isoformat()
+        )
+
+        print(f"Pruning snapshots from {start_time} to {end_time}...")
+
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(query)
+                    print(f"Pruning for {start_time.date()} completed.")
+        except Exception as e:
+            print(f"Error during pruning for {start_time.date()}: {str(e)}")
+
+    conn.close()
+
 
 if __name__ == "__main__":
     main()
