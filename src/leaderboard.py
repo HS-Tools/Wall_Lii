@@ -11,7 +11,7 @@ from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
 from datetime import timedelta
 from psycopg2.extras import RealDictCursor
-from utils.constants import REGIONS, STATS_LIMIT
+from utils.constants import NON_CN_REGIONS, REGIONS, STATS_LIMIT
 from typing import Optional
 import aiohttp
 
@@ -196,7 +196,7 @@ class LeaderboardDB:
             # Global: collect top 10 from each region, then sort across regions
             if not parse_server(region):
                 all_rows = []
-                for reg in REGIONS:
+                for reg in NON_CN_REGIONS:
                     with conn.cursor(cursor_factory=RealDictCursor) as cur:
                         cur.execute(
                             """
@@ -219,7 +219,7 @@ class LeaderboardDB:
                     :10
                 ]
                 # Format output
-                output = "Top 10 Global: " + ", ".join(
+                output = "Top 10 Global (No CN): " + ", ".join(
                     f"{i+1}. {row['player_name']}: {row['rating']} ({row['region']})"
                     for i, row in enumerate(sorted_rows)
                 )
@@ -228,7 +228,9 @@ class LeaderboardDB:
             # Specific region: validate region code
             parsed_region = parse_server(region)
             if not parsed_region:
-                return "Invalid region specified. Please use NA, EU, AP, or 'global'."
+                return (
+                    "Invalid region specified. Please use NA, EU, AP, CN or 'global'."
+                )
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(

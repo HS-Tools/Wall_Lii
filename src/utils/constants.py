@@ -1,2 +1,3 @@
 REGIONS = ["NA", "EU", "AP", "CN"]
+NON_CN_REGIONS = ["NA", "EU", "AP"]
 STATS_LIMIT = 1000
