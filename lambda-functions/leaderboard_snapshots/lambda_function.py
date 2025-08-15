@@ -27,121 +27,199 @@ MAX_PAGES = int(os.environ.get("MAX_PAGES", "40"))
 
 
 async def fetch_page(session, params, sem, retries=3):
-    """Fetch a single page of leaderboard data with retries"""
+    """Fetch a single page of leaderboard data with retries and timeout"""
     backoff = 1
+    timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout per request
+
     async with sem:
         for attempt in range(retries):
             try:
-                async with session.get(BASE_URL, params=params) as response:
+                async with session.get(
+                    BASE_URL, params=params, timeout=timeout
+                ) as response:
                     if response.status == 200:
                         return await response.json()
-                    logger.warning(f"Failed {params}: Status {response.status}")
+                    elif response.status == 429:  # Rate limited
+                        logger.warning(
+                            f"Rate limited {params}: Status {response.status}"
+                        )
+                        await asyncio.sleep(
+                            backoff * 2
+                        )  # Longer backoff for rate limits
+                    else:
+                        logger.warning(f"Failed {params}: Status {response.status}")
+            except asyncio.TimeoutError:
+                logger.error(f"Timeout {params}: Attempt {attempt + 1}")
             except Exception as e:
                 logger.error(f"Error {params}: {str(e)}")
+
             if attempt < retries - 1:
                 await asyncio.sleep(backoff)
                 backoff *= 2
         return None
 
 
+async def fetch_region_mode_pages(
+    session, api_region, mode_api, mode_short, sem, max_pages
+):
+    """Fetch all pages for a specific region and mode until empty page is found"""
+    players = []
+    page = 1
+
+    while page <= max_pages:
+        params = {
+            "region": api_region,
+            "leaderboardId": mode_api,
+            "seasonId": str(CURRENT_SEASON),
+            "page": page,
+        }
+
+        result = await fetch_page(session, params, sem)
+        if not result or "leaderboard" not in result:
+            logger.warning(f"No data returned for {api_region}/{mode_api} page {page}")
+            break
+
+        rows = result["leaderboard"].get("rows", [])
+        if not rows:
+            break
+
+        # Process players from this page
+        for row in rows:
+            if row and row.get("accountid"):
+                players.append(
+                    {
+                        "player_name": row["accountid"].lower(),
+                        "game_mode": mode_short,
+                        "region": REGION_MAPPING[api_region],
+                        "rank": row["rank"],
+                        "rating": row["rating"],
+                        "snapshot_time": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+
+        page += 1
+
+    return players
+
+
 async def fetch_leaderboards(max_pages=MAX_PAGES):
-    """Fetch leaderboard data from all regions and modes"""
+    """Fetch leaderboard data from all regions and modes with smart pagination"""
     players = []
     sem = asyncio.Semaphore(10)
 
+    # Configure session with timeouts and connection limits
+    timeout = aiohttp.ClientTimeout(total=60)  # 60 second timeout for entire session
+
     # Fetch data from global regions (US, EU, AP)
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(
+        timeout=timeout, connector=aiohttp.TCPConnector(limit=20, limit_per_host=5)
+    ) as session:
         tasks = []
         for mode_api, mode_short in MODES:
             for api_region in REGIONS:
-                for page in range(1, max_pages + 1):
-                    params = {
-                        "region": api_region,
-                        "leaderboardId": mode_api,
-                        "seasonId": str(CURRENT_SEASON),
-                        "page": page,
-                    }
-                    tasks.append(
-                        (
-                            REGION_MAPPING[api_region],
-                            mode_short,
-                            fetch_page(session, params, sem),
-                        )
+                # Fetch pages for this region/mode until we get an empty page
+                tasks.append(
+                    fetch_region_mode_pages(
+                        session, api_region, mode_api, mode_short, sem, max_pages
                     )
+                )
 
-        results = await asyncio.gather(*[t[2] for t in tasks])
-        for (region, mode, _), result in zip(tasks, results):
-            if result and "leaderboard" in result:
-                for row in result["leaderboard"].get("rows", []):
-                    if row and row.get("accountid"):
-                        players.append(
-                            {
-                                "player_name": row["accountid"].lower(),
-                                "game_mode": mode,
-                                "region": region,
-                                "rank": row["rank"],
-                                "rating": row["rating"],
-                                "snapshot_time": datetime.now(timezone.utc).isoformat(),
-                            }
-                        )
+        results = await asyncio.gather(*tasks)
+        for result in results:
+            if result:
+                players.extend(result)
 
-    # Fetch data from China region
-    async with aiohttp.ClientSession() as session:
+    # Fetch data from China region with smart pagination
+    async with aiohttp.ClientSession(
+        timeout=timeout, connector=aiohttp.TCPConnector(limit=20, limit_per_host=5)
+    ) as session:
         cn_tasks = []
-        cn_pages = 20  # Only need 20 pages for CN region (500 players total)
-
         for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
-            for page in range(1, cn_pages + 1):
-                url = f"https://webapi.blizzard.cn/hs-rank-api-server/api/game/ranks"
-                params = {
-                    "page": page,
-                    "page_size": 25,
-                    "mode_name": mode_name,
-                    "season_id": str(CURRENT_SEASON),
-                }
-                cn_tasks.append((mode_short, fetch_cn_page(session, url, params, sem)))
+            cn_tasks.append(
+                fetch_cn_region_mode_pages(
+                    session, mode_short, mode_name, sem, max_pages
+                )
+            )
 
-        cn_results = await asyncio.gather(*[t[1] for t in cn_tasks])
-
-        for (mode, _), result in zip(cn_tasks, cn_results):
-            if (
-                result
-                and result.get("code") == 0
-                and "data" in result
-                and "list" in result["data"]
-            ):
-                for row in result["data"]["list"]:
-                    players.append(
-                        {
-                            "player_name": row["battle_tag"].lower(),
-                            "game_mode": mode,
-                            "region": "CN",
-                            "rank": row["position"],
-                            "rating": row["score"],
-                            "snapshot_time": datetime.now(timezone.utc).isoformat(),
-                        }
-                    )
+        cn_results = await asyncio.gather(*cn_tasks)
+        for result in cn_results:
+            if result:
+                players.extend(result)
 
     logger.info(f"Fetched {len(players)} players from all regions including CN")
     return _make_names_unique(players)
 
 
 async def fetch_cn_page(session, url, params, sem, retries=3):
-    """Fetch a single page of leaderboard data from CN API with retries"""
+    """Fetch a single page of leaderboard data from CN API with retries and timeout"""
     backoff = 1
+    timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout per request
+
     async with sem:
         for attempt in range(retries):
             try:
-                async with session.get(url, params=params) as response:
+                async with session.get(url, params=params, timeout=timeout) as response:
                     if response.status == 200:
                         return await response.json()
-                    logger.warning(f"Failed CN {params}: Status {response.status}")
+                    elif response.status == 429:  # Rate limited
+                        logger.warning(
+                            f"Rate limited CN {params}: Status {response.status}"
+                        )
+                        await asyncio.sleep(
+                            backoff * 2
+                        )  # Longer backoff for rate limits
+                    else:
+                        logger.warning(f"Failed CN {params}: Status {response.status}")
+            except asyncio.TimeoutError:
+                logger.error(f"Timeout CN {params}: Attempt {attempt + 1}")
             except Exception as e:
                 logger.error(f"Error CN {params}: {str(e)}")
+
             if attempt < retries - 1:
                 await asyncio.sleep(backoff)
                 backoff *= 2
         return None
+
+
+async def fetch_cn_region_mode_pages(session, mode_short, mode_name, sem, max_pages):
+    """Fetch all pages for a specific CN region and mode until empty page is found"""
+    players = []
+    page = 1
+    url = "https://webapi.blizzard.cn/hs-rank-api-server/api/game/ranks"
+
+    while page <= max_pages:
+        params = {
+            "page": page,
+            "page_size": 25,
+            "mode_name": mode_name,
+            "season_id": str(CURRENT_SEASON),
+        }
+
+        result = await fetch_cn_page(session, url, params, sem)
+        if not result or result.get("code") != 0:
+            logger.warning(f"No data returned for CN {mode_name} page {page}")
+            break
+
+        data_list = result.get("data", {}).get("list", [])
+        if not data_list:
+            break
+
+        # Process players from this page
+        for row in data_list:
+            players.append(
+                {
+                    "player_name": row["battle_tag"].lower(),
+                    "game_mode": mode_short,
+                    "region": "CN",
+                    "rank": row["position"],
+                    "rating": row["score"],
+                    "snapshot_time": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+
+        page += 1
+
+    return players
 
 
 def _make_names_unique(players):
@@ -400,15 +478,38 @@ def process_milestones(cursor, players):
 
 
 async def process_leaderboards():
-    """Main function to fetch and process leaderboard data"""
+    """Main function to fetch and process leaderboard data with timeout protection"""
+    start_time = datetime.now()
     logger.info("Fetching leaderboard data...")
-    players = await fetch_leaderboards()
-    if not players:
-        logger.warning("No player data fetched — skipping DB write to avoid data loss.")
-        return 0
-    logger.info(f"Fetched {len(players)} players.")
-    write_to_postgres(players)
-    return len(players)
+
+    try:
+        players = await fetch_leaderboards()
+        if not players:
+            logger.warning(
+                "No player data fetched — skipping DB write to avoid data loss."
+            )
+            return 0
+
+        fetch_time = (datetime.now() - start_time).total_seconds()
+        logger.info(f"Fetched {len(players)} players in {fetch_time:.2f}s.")
+
+        # Check if we're approaching timeout (leave 60 seconds buffer for DB operations)
+        elapsed = (datetime.now() - start_time).total_seconds()
+        if elapsed > 240:  # 300 - 60 seconds buffer
+            logger.warning(
+                f"Approaching timeout after {elapsed}s, skipping database write"
+            )
+            return len(players)
+
+        write_to_postgres(players)
+        total_time = (datetime.now() - start_time).total_seconds()
+        logger.info(f"DB write completed in {total_time:.2f}s")
+
+        return len(players)
+
+    except Exception as e:
+        logger.error(f"Error in process_leaderboards: {str(e)}")
+        raise
 
 
 def lambda_handler(event, context):
