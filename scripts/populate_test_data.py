@@ -48,7 +48,18 @@ BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsDat
 CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "16"))
 MILESTONE_START = int(os.environ.get("MILESTONE_START", "8000"))
 MILESTONE_INCREMENT = int(os.environ.get("MILESTONE_INCREMENT", "1000"))
-MAX_PAGES = int(os.environ.get("MAX_PAGES", "4"))
+
+# Concurrency & batching
+FETCH_CONCURRENCY = int(
+    os.environ.get("FETCH_CONCURRENCY", "16")
+)  # parallel API fetches
+AIOHTTP_CONNECTOR_LIMIT = int(os.environ.get("AIOHTTP_CONNECTOR_LIMIT", "64"))
+AIOHTTP_PER_HOST_LIMIT = int(os.environ.get("AIOHTTP_PER_HOST_LIMIT", "16"))
+BATCH_WRITE_SIZE = int(
+    os.environ.get("BATCH_WRITE_SIZE", "200")
+)  # execute_values page_size
+
+MAX_PAGES = int(os.environ.get("MAX_PAGES", "40"))
 
 
 async def fetch_page(session, params, sem, retries=3):
@@ -130,14 +141,17 @@ async def fetch_region_mode_pages(
 async def fetch_leaderboards(max_pages=MAX_PAGES):
     """Fetch leaderboard data from all regions and modes with smart pagination"""
     players = []
-    sem = asyncio.Semaphore(10)
+    sem = asyncio.Semaphore(FETCH_CONCURRENCY)
 
     # Configure session with timeouts and connection limits
     timeout = aiohttp.ClientTimeout(total=60)  # 60 second timeout for entire session
 
     # Fetch data from global regions (US, EU, AP)
     async with aiohttp.ClientSession(
-        timeout=timeout, connector=aiohttp.TCPConnector(limit=20, limit_per_host=5)
+        timeout=timeout,
+        connector=aiohttp.TCPConnector(
+            limit=AIOHTTP_CONNECTOR_LIMIT, limit_per_host=AIOHTTP_PER_HOST_LIMIT
+        ),
     ) as session:
         tasks = []
         for mode_api, mode_short in MODES:
@@ -156,7 +170,10 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
 
     # Fetch data from China region with smart pagination
     async with aiohttp.ClientSession(
-        timeout=timeout, connector=aiohttp.TCPConnector(limit=20, limit_per_host=5)
+        timeout=timeout,
+        connector=aiohttp.TCPConnector(
+            limit=AIOHTTP_CONNECTOR_LIMIT, limit_per_host=AIOHTTP_PER_HOST_LIMIT
+        ),
     ) as session:
         cn_tasks = []
         for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
@@ -283,19 +300,29 @@ def write_to_postgres(players):
                         DO UPDATE SET player_name = EXCLUDED.player_name
                         """
                     execute_values(
-                        cur, player_upsert_query, [(n,) for n in unique_names]
+                        cur,
+                        player_upsert_query,
+                        [(n,) for n in unique_names],
+                        page_size=BATCH_WRITE_SIZE,
                     )
 
-                    # 2) Fetch ids for all names in a single SELECT
-                    cur.execute(
-                        """
-                        SELECT player_id, player_name
-                        FROM players
-                        WHERE player_name = ANY(%s)
-                        """,
-                        (unique_names,),
-                    )
-                    id_rows = cur.fetchall()
+                    # Helper to chunk large arrays for ANY() queries
+                    def _chunks(lst, n):
+                        for i in range(0, len(lst), n):
+                            yield lst[i : i + n]
+
+                    # 2) Fetch ids for all names in chunks to avoid overly-large arrays
+                    id_rows = []
+                    for chunk in _chunks(unique_names, 1000):
+                        cur.execute(
+                            """
+                            SELECT player_id, player_name
+                            FROM players
+                            WHERE player_name = ANY(%s)
+                            """,
+                            (chunk,),
+                        )
+                        id_rows.extend(cur.fetchall())
                     id_by_name = {name: pid for (pid, name) in id_rows}
 
                     # Sanity log
@@ -416,7 +443,12 @@ def write_to_postgres(players):
                       updated_at = now()
                 """
                 if daily_values:
-                    execute_values(cur, insert_daily_query, daily_values)
+                    execute_values(
+                        cur,
+                        insert_daily_query,
+                        daily_values,
+                        page_size=BATCH_WRITE_SIZE,
+                    )
                 logger.info(
                     f"Upserted daily stats for {len(daily_values)} rows (skipped {skipped_missing_ids} missing ids)."
                 )
@@ -478,7 +510,7 @@ def write_to_postgres(players):
                             )
                             for r in snapshot_stage
                         ],
-                        page_size=100,
+                        page_size=BATCH_WRITE_SIZE,
                     )
 
                     # 2) Insert only change points into snapshots_test using a LATERAL lookup of the last rating
@@ -597,7 +629,12 @@ def process_milestones(cursor, players):
                 for m in milestones_to_insert
             ]
 
-            execute_values(cursor, milestone_insert_query, milestone_values)
+            execute_values(
+                cursor,
+                milestone_insert_query,
+                milestone_values,
+                page_size=BATCH_WRITE_SIZE,
+            )
             logger.info(f"Processed {len(milestones_to_insert)} milestones.")
 
     except Exception as e:
