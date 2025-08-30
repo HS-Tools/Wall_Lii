@@ -9,3 +9,11 @@ TABLES = {
     "leaderboard_snapshots": f"leaderboard_snapshots{TABLE_SUFFIX}",
     "milestone_tracking": f"milestone_tracking{TABLE_SUFFIX}",
 }
+
+# New normalized table structure (test versions)
+TEST_TABLES = {
+    "daily_leaderboard_stats": "daily_leaderboard_stats_test",
+    "leaderboard_snapshots": "leaderboard_snapshots_test",
+    "players": "players",
+    "milestone_tracking": "milestone_tracking",  # unchanged
+}

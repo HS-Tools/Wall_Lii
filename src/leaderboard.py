@@ -27,6 +27,37 @@ CURRENT_LEADERBOARD = "current_leaderboard"
 LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
 MILESTONE_TRACKING = "milestone_tracking"
 
+# New normalized table names (test versions)
+from config import TEST_TABLES
+
+DAILY_LEADERBOARD_STATS_TEST = TEST_TABLES["daily_leaderboard_stats"]
+LEADERBOARD_SNAPSHOTS_TEST = TEST_TABLES["leaderboard_snapshots"]
+PLAYERS_TABLE = TEST_TABLES["players"]
+
+
+def get_table_name_with_join(
+    table_name: str, use_test_tables: bool = True
+) -> tuple[str, str]:
+    """
+    Get the appropriate table name and join clause for the new normalized structure.
+    Returns (table_name, join_clause)
+    """
+    if not use_test_tables:
+        return table_name, ""
+
+    if table_name == LEADERBOARD_SNAPSHOTS:
+        return (
+            LEADERBOARD_SNAPSHOTS_TEST,
+            f"INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id",
+        )
+    elif table_name == CURRENT_LEADERBOARD:
+        return (
+            CURRENT_LEADERBOARD,
+            f"INNER JOIN {PLAYERS_TABLE} p ON cl.player_id = p.player_id",
+        )
+    else:
+        return table_name, ""
+
 
 class LeaderboardDB:
     def __init__(self, use_local: bool = False):
@@ -157,8 +188,9 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT 1
-                    FROM {LEADERBOARD_SNAPSHOTS}
-                    WHERE player_name = %s AND region = %s AND game_mode = %s
+                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
+                    WHERE p.player_name = %s AND ls.region = %s AND ls.game_mode = %s
                     LIMIT 1;
                 """,
                     (name.lower(), region, game_mode),
@@ -181,9 +213,9 @@ class LeaderboardDB:
             # Check if any entry from today exists
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    """
+                    f"""
                     SELECT 1
-                    FROM daily_leaderboard_stats
+                    FROM {DAILY_LEADERBOARD_STATS_TEST}
                     WHERE day_start = %s
                     LIMIT 1;
                 """,
@@ -199,11 +231,12 @@ class LeaderboardDB:
                 for reg in NON_CN_REGIONS:
                     with conn.cursor(cursor_factory=RealDictCursor) as cur:
                         cur.execute(
-                            """
-                            SELECT player_name, rating, rank, region
-                            FROM daily_leaderboard_stats
-                            WHERE region = %s AND game_mode = %s AND day_start = %s
-                            ORDER BY rank ASC
+                            f"""
+                            SELECT p.player_name, d.rating, d.rank, d.region
+                            FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                            INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
+                            WHERE d.region = %s AND d.game_mode = %s AND d.day_start = %s
+                            ORDER BY d.rank ASC
                             LIMIT 10;
                             """,
                             (reg, game_mode, baseline_date),
@@ -234,11 +267,12 @@ class LeaderboardDB:
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    """
-                    SELECT player_name, rating, rank
-                    FROM daily_leaderboard_stats
-                    WHERE region = %s AND game_mode = %s AND day_start = %s
-                    ORDER BY rank ASC
+                    f"""
+                    SELECT p.player_name, d.rating, d.rank
+                    FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                    INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
+                    WHERE d.region = %s AND d.game_mode = %s AND d.day_start = %s
+                    ORDER BY d.rank ASC
                     LIMIT 10;
                     """,
                     (parsed_region, game_mode, baseline_date),
@@ -274,44 +308,106 @@ class LeaderboardDB:
             print(where_clause, query_params, rank, region)
 
             def fetch_rank(cur, table_name: str) -> list:
-                snapshot_time = (
-                    ", snapshot_time" if table_name == LEADERBOARD_SNAPSHOTS else ""
+                new_table_name, join_clause = get_table_name_with_join(table_name)
+                table_alias = (
+                    "ls" if new_table_name == LEADERBOARD_SNAPSHOTS_TEST else "cl"
                 )
-                snapshot_order = (
-                    "snapshot_time DESC, "
-                    if table_name == LEADERBOARD_SNAPSHOTS
+
+                snapshot_time = (
+                    ", ls.snapshot_time"
+                    if new_table_name == LEADERBOARD_SNAPSHOTS_TEST
                     else ""
                 )
-                query = f"""
-                    SELECT DISTINCT ON (region)
-                        player_name, rating, region, rank
-                    FROM {table_name}
-                    {where_clause}
-                    ORDER BY region, {snapshot_order}rank DESC
-                """
-                cur.execute(query, query_params)
-                return cur.fetchall()
+                snapshot_order = (
+                    "ls.snapshot_time DESC, "
+                    if new_table_name == LEADERBOARD_SNAPSHOTS_TEST
+                    else ""
+                )
+
+                # For snapshots table, we need to get rank from daily_leaderboard_stats_test
+                if new_table_name == LEADERBOARD_SNAPSHOTS_TEST:
+                    # First get the player data from snapshots
+                    query = f"""
+                        SELECT DISTINCT ON (ls.region)
+                            p.player_name, ls.rating, ls.region, ls.player_id, ls.game_mode{snapshot_time}
+                        FROM {new_table_name} {table_alias}
+                        {join_clause}
+                        {where_clause}
+                        ORDER BY {table_alias}.region, {snapshot_order}ls.rating DESC
+                    """
+                    cur.execute(query, query_params)
+                    rows = cur.fetchall()
+
+                    # Now get the rank for each player from daily_leaderboard_stats_test
+                    result_rows = []
+                    for row in rows:
+                        # Get the latest rank for this player
+                        cur.execute(
+                            f"""
+                            SELECT rank
+                            FROM {DAILY_LEADERBOARD_STATS_TEST}
+                            WHERE player_id = %s AND region = %s AND game_mode = %s
+                            ORDER BY day_start DESC
+                            LIMIT 1
+                            """,
+                            (row["player_id"], row["region"], row["game_mode"]),
+                        )
+                        rank_result = cur.fetchone()
+                        rank = rank_result["rank"] if rank_result else None
+
+                        # Create a new row with the rank
+                        result_row = {
+                            "player_name": row["player_name"],
+                            "rating": row["rating"],
+                            "region": row["region"],
+                            "rank": rank,
+                        }
+                        if "snapshot_time" in row:
+                            result_row["snapshot_time"] = row["snapshot_time"]
+                        result_rows.append(result_row)
+
+                    return result_rows
+                else:
+                    # For current_leaderboard, use the old structure without joins
+                    query = f"""
+                        SELECT DISTINCT ON (region)
+                            player_name, rating, region, rank{snapshot_time}
+                        FROM {new_table_name}
+                        {where_clause.replace('p.player_name', 'player_name').replace('ls.game_mode', 'game_mode').replace('ls.region', 'region')}
+                        ORDER BY region, {snapshot_order}rank DESC
+                    """
+                    cur.execute(query, query_params)
+                    return cur.fetchall()
 
             # Handle rank-based lookup
             if rank is not None:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
                     if region:
                         # Only query specified region
-                        table_name = (
-                            CURRENT_LEADERBOARD
-                            if rank > 1000
-                            else LEADERBOARD_SNAPSHOTS
-                        )
-                        cur.execute(
-                            f"""
-                            SELECT player_name, rating, region, rank
-                            FROM {table_name}
-                            WHERE rank = %s AND region = %s AND game_mode = %s
-                            {" ORDER BY snapshot_time DESC" if table_name == LEADERBOARD_SNAPSHOTS else ""}
-                            LIMIT 1;
-                            """,
-                            (rank, region, game_mode),
-                        )
+                        if rank > 1000:
+                            # Use current_leaderboard for ranks > 1000
+                            cur.execute(
+                                f"""
+                                SELECT player_name, rating, region, rank
+                                FROM {CURRENT_LEADERBOARD}
+                                WHERE rank = %s AND region = %s AND game_mode = %s
+                                LIMIT 1;
+                                """,
+                                (rank, region, game_mode),
+                            )
+                        else:
+                            # Use daily_leaderboard_stats_test for ranks <= 1000
+                            cur.execute(
+                                f"""
+                                SELECT p.player_name, d.rating, d.region, d.rank
+                                FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                                INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
+                                WHERE d.rank = %s AND d.region = %s AND d.game_mode = %s
+                                ORDER BY d.day_start DESC
+                                LIMIT 1;
+                                """,
+                                (rank, region, game_mode),
+                            )
                         row = cur.fetchone()
                         if row:
                             base_message = f"{row['player_name']} is rank {row['rank']} in {row['region']} at {row['rating']}"
@@ -324,21 +420,30 @@ class LeaderboardDB:
                         # No region: return top player per region
                         results = []
                         for reg in REGIONS:
-                            table_name = (
-                                CURRENT_LEADERBOARD
-                                if rank > 1000
-                                else LEADERBOARD_SNAPSHOTS
-                            )
-                            cur.execute(
-                                f"""
-                                SELECT player_name, rating, region, rank
-                                FROM {table_name}
-                                WHERE rank = %s AND region = %s AND game_mode = %s
-                                {" ORDER BY snapshot_time DESC" if table_name == LEADERBOARD_SNAPSHOTS else ""}
-                                LIMIT 1;
-                                """,
-                                (rank, reg, game_mode),
-                            )
+                            if rank > 1000:
+                                # Use current_leaderboard for ranks > 1000
+                                cur.execute(
+                                    f"""
+                                    SELECT player_name, rating, region, rank
+                                    FROM {CURRENT_LEADERBOARD}
+                                    WHERE rank = %s AND region = %s AND game_mode = %s
+                                    LIMIT 1;
+                                    """,
+                                    (rank, reg, game_mode),
+                                )
+                            else:
+                                # Use daily_leaderboard_stats_test for ranks <= 1000
+                                cur.execute(
+                                    f"""
+                                    SELECT p.player_name, d.rating, d.region, d.rank
+                                    FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                                    INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
+                                    WHERE d.rank = %s AND d.region = %s AND d.game_mode = %s
+                                    ORDER BY d.day_start DESC
+                                    LIMIT 1;
+                                    """,
+                                    (rank, reg, game_mode),
+                                )
                             row = cur.fetchone()
                             if row:
                                 results.append(
@@ -394,11 +499,12 @@ class LeaderboardDB:
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 query = f"""
-                    SELECT DISTINCT ON (region)
-                        player_name, rating, region, snapshot_time
-                    FROM {LEADERBOARD_SNAPSHOTS}
+                    SELECT DISTINCT ON (ls.region)
+                        p.player_name, ls.rating, ls.region, ls.snapshot_time
+                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     {where_clause}
-                    ORDER BY region, rating DESC, snapshot_time ASC
+                    ORDER BY ls.region, ls.rating DESC, ls.snapshot_time ASC
                 """
                 cur.execute(query, query_params)
                 rows = cur.fetchall()
@@ -437,17 +543,50 @@ class LeaderboardDB:
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # First get the snapshot data
                 cur.execute(
                     f"""
-                    SELECT rank, rating, player_name, snapshot_time, region
-                    FROM {LEADERBOARD_SNAPSHOTS}
+                    SELECT ls.rating, p.player_name, ls.snapshot_time, ls.region, ls.player_id, ls.game_mode
+                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     {where_clause}
-                    AND snapshot_time >= %s AND snapshot_time < %s
-                    ORDER BY snapshot_time ASC;
+                    AND ls.snapshot_time >= %s AND ls.snapshot_time < %s
+                    ORDER BY ls.snapshot_time ASC;
                 """,
                     query_params + (start_time, end_time),
                 )
-                rows = cur.fetchall()
+                snapshot_rows = cur.fetchall()
+
+                # Now get the rank for each snapshot
+                rows = []
+                for snapshot_row in snapshot_rows:
+                    # Get the rank for this player on the snapshot date
+                    cur.execute(
+                        f"""
+                        SELECT rank
+                        FROM {DAILY_LEADERBOARD_STATS_TEST}
+                        WHERE player_id = %s AND region = %s AND game_mode = %s AND day_start = DATE(%s)
+                        LIMIT 1
+                        """,
+                        (
+                            snapshot_row["player_id"],
+                            snapshot_row["region"],
+                            snapshot_row["game_mode"],
+                            snapshot_row["snapshot_time"],
+                        ),
+                    )
+                    rank_result = cur.fetchone()
+                    rank = rank_result["rank"] if rank_result else None
+
+                    # Create a new row with the rank
+                    row = {
+                        "rank": rank,
+                        "rating": snapshot_row["rating"],
+                        "player_name": snapshot_row["player_name"],
+                        "snapshot_time": snapshot_row["snapshot_time"],
+                        "region": snapshot_row["region"],
+                    }
+                    rows.append(row)
 
             return self._summarize_progress(
                 rows, offset, fallback_query=(where_clause, query_params)
@@ -481,17 +620,50 @@ class LeaderboardDB:
             boundaries = [start + timedelta(days=i) for i in range(8)]
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # First get the snapshot data
                 cur.execute(
                     f"""
-                    SELECT rank, rating, player_name, snapshot_time, region
-                    FROM {LEADERBOARD_SNAPSHOTS}
+                    SELECT ls.rating, p.player_name, ls.snapshot_time, ls.region, ls.player_id, ls.game_mode
+                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     {where_clause}
-                    AND snapshot_time >= %s AND snapshot_time < %s
-                    ORDER BY snapshot_time ASC;
+                    AND ls.snapshot_time >= %s AND ls.snapshot_time < %s
+                    ORDER BY ls.snapshot_time ASC;
                 """,
                     query_params + (start, end),
                 )
-                rows = cur.fetchall()
+                snapshot_rows = cur.fetchall()
+
+                # Now get the rank for each snapshot
+                rows = []
+                for snapshot_row in snapshot_rows:
+                    # Get the rank for this player on the snapshot date
+                    cur.execute(
+                        f"""
+                        SELECT rank
+                        FROM {DAILY_LEADERBOARD_STATS_TEST}
+                        WHERE player_id = %s AND region = %s AND game_mode = %s AND day_start = DATE(%s)
+                        LIMIT 1
+                        """,
+                        (
+                            snapshot_row["player_id"],
+                            snapshot_row["region"],
+                            snapshot_row["game_mode"],
+                            snapshot_row["snapshot_time"],
+                        ),
+                    )
+                    rank_result = cur.fetchone()
+                    rank = rank_result["rank"] if rank_result else None
+
+                    # Create a new row with the rank
+                    row = {
+                        "rank": rank,
+                        "rating": snapshot_row["rating"],
+                        "player_name": snapshot_row["player_name"],
+                        "snapshot_time": snapshot_row["snapshot_time"],
+                        "region": snapshot_row["region"],
+                    }
+                    rows.append(row)
 
             return self._summarize_progress(
                 rows,
@@ -526,17 +698,49 @@ class LeaderboardDB:
             conn = self._get_connection()
             try:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    # First get the snapshot data
                     cur.execute(
                         f"""
-                        SELECT DISTINCT ON (region)
-                            rank, rating, player_name, region
-                        FROM {LEADERBOARD_SNAPSHOTS}
+                        SELECT DISTINCT ON (ls.region)
+                            ls.rating, p.player_name, ls.region, ls.player_id, ls.game_mode
+                        FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                        INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                         {where_clause}
-                        ORDER BY region, snapshot_time DESC;
+                        ORDER BY ls.region, ls.snapshot_time DESC;
                     """,
                         query_params,
                     )
-                    fallback_rows = cur.fetchall()
+                    snapshot_rows = cur.fetchall()
+
+                    # Now get the rank for each snapshot
+                    fallback_rows = []
+                    for snapshot_row in snapshot_rows:
+                        # Get the latest rank for this player
+                        cur.execute(
+                            f"""
+                            SELECT rank
+                            FROM {DAILY_LEADERBOARD_STATS_TEST}
+                            WHERE player_id = %s AND region = %s AND game_mode = %s
+                            ORDER BY day_start DESC
+                            LIMIT 1
+                            """,
+                            (
+                                snapshot_row["player_id"],
+                                snapshot_row["region"],
+                                snapshot_row["game_mode"],
+                            ),
+                        )
+                        rank_result = cur.fetchone()
+                        rank = rank_result["rank"] if rank_result else None
+
+                        # Create a new row with the rank
+                        row = {
+                            "rank": rank,
+                            "rating": snapshot_row["rating"],
+                            "player_name": snapshot_row["player_name"],
+                            "region": snapshot_row["region"],
+                        }
+                        fallback_rows.append(row)
             finally:
                 self._connection_pool.putconn(conn)
 
@@ -569,7 +773,7 @@ class LeaderboardDB:
         ratings = [r["rating"] for r in region_rows]
         timestamps = [r["snapshot_time"] for r in region_rows]
         player_name = region_rows[0]["player_name"]
-        rank = region_rows[-1]["rank"]
+        rank = region_rows[-1]["rank"] or "N/A"  # Handle NULL rank
         start_rating, end_rating = ratings[0], ratings[-1]
         total_delta = end_rating - start_rating
 
@@ -588,7 +792,8 @@ class LeaderboardDB:
                     else (" that day" if offset > 0 else " today")
                 )
             )
-            return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{time_suffix}{view_link}"
+            rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
+            return f"{player_name} is {rank_text} in {region} at {end_rating} with no games played{time_suffix}{view_link}"
 
         adjective = "climbed" if total_delta >= 0 else "fell"
         emote = "liiHappyCat" if total_delta >= 0 else "liiCat"
@@ -614,7 +819,8 @@ class LeaderboardDB:
 
             if not day_deltas_str:
                 suffix = " last week" if offset > 0 else " this week"
-                return f"{player_name} is rank {rank} in {region} at {end_rating} with no games played{suffix}{view_link}"
+                rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
+                return f"{player_name} is {rank_text} in {region} at {end_rating} with no games played{suffix}{view_link}"
             else:
                 suffix = " last week" if offset > 0 else ""
                 return (
@@ -628,6 +834,7 @@ class LeaderboardDB:
                 if ratings[i + 1] != ratings[i]
             ]
             deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
+            rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
             return (
                 f"{player_name} {adjective} from {start_rating} to {end_rating} "
                 f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}{view_link}"

@@ -15,6 +15,11 @@ logger = setup_logger("leaderboard_snapshots")
 LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
 MILESTONE_TRACKING = "milestone_tracking"
 
+# New normalized table names (test versions)
+DAILY_LEADERBOARD_STATS_TEST = "daily_leaderboard_stats_test"
+LEADERBOARD_SNAPSHOTS_TEST = "leaderboard_snapshots_test"
+PLAYERS_TABLE = "players"
+
 # Configs
 REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
