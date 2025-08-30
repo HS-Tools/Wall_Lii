@@ -292,6 +292,26 @@ def write_to_postgres(players):
                 unique_names = sorted({p["player_name"] for p in players})
                 id_by_name = {}
                 if unique_names:
+                    # Helper to chunk large arrays
+                    def _chunks(lst, n):
+                        for i in range(0, len(lst), n):
+                            yield lst[i : i + n]
+
+                    # Pre-check: how many of these names already exist?
+                    _existing_rows = []
+                    for chunk in _chunks(unique_names, 1000):
+                        cur.execute(
+                            """
+                            SELECT player_id, player_name
+                            FROM players
+                            WHERE player_name = ANY(%s)
+                            """,
+                            (chunk,),
+                        )
+                        _existing_rows.extend(cur.fetchall())
+                    _existing_names = {name for (_pid, name) in _existing_rows}
+                    _existing_count = len(_existing_names)
+
                     # 1) Upsert without RETURNING (safe across execute_values batching)
                     player_upsert_query = """
                         INSERT INTO players (player_name)
@@ -305,11 +325,6 @@ def write_to_postgres(players):
                         [(n,) for n in unique_names],
                         page_size=BATCH_WRITE_SIZE,
                     )
-
-                    # Helper to chunk large arrays for ANY() queries
-                    def _chunks(lst, n):
-                        for i in range(0, len(lst), n):
-                            yield lst[i : i + n]
 
                     # 2) Fetch ids for all names in chunks to avoid overly-large arrays
                     id_rows = []
@@ -325,6 +340,10 @@ def write_to_postgres(players):
                         id_rows.extend(cur.fetchall())
                     id_by_name = {name: pid for (pid, name) in id_rows}
 
+                    _created_count = len(unique_names) - _existing_count
+                    logger.info(
+                        f"Players: existing={_existing_count}, created={_created_count}, total={len(unique_names)}"
+                    )
                     # Sanity log
                     if len(id_by_name) != len(unique_names):
                         missing = [n for n in unique_names if n not in id_by_name]
@@ -442,15 +461,31 @@ def write_to_postgres(players):
                       END,
                       updated_at = now()
                 """
+                # Use RETURNING to count inserts vs updates across chunks
+                insert_daily_query_returning = (
+                    insert_daily_query + "\nRETURNING (xmax = 0) AS inserted"
+                )
+                daily_inserted = 0
+                daily_updated = 0
+
+                def _chunks_daily(lst, n):
+                    for i in range(0, len(lst), n):
+                        yield lst[i : i + n]
+
                 if daily_values:
-                    execute_values(
-                        cur,
-                        insert_daily_query,
-                        daily_values,
-                        page_size=BATCH_WRITE_SIZE,
-                    )
+                    for chunk in _chunks_daily(daily_values, BATCH_WRITE_SIZE):
+                        execute_values(
+                            cur,
+                            insert_daily_query_returning,
+                            chunk,
+                            page_size=BATCH_WRITE_SIZE,
+                        )
+                        flags = cur.fetchall()  # list of (inserted,)
+                        ins = sum(1 for (inserted,) in flags if inserted)
+                        daily_inserted += ins
+                        daily_updated += len(flags) - ins
                 logger.info(
-                    f"Upserted daily stats for {len(daily_values)} rows (skipped {skipped_missing_ids} missing ids)."
+                    f"Daily upsert: attempted={len(daily_values)}, inserted={daily_inserted}, updated={daily_updated}, skipped_missing_ids={skipped_missing_ids}"
                 )
                 # =============================
                 # Change-point insert into snapshots (TEST)
@@ -532,7 +567,10 @@ def write_to_postgres(players):
                         WHERE prev.rating IS NULL OR prev.rating <> t.rating
                         """
                     )
-                    logger.info("Inserted change-point snapshots into test table.")
+                    snapshot_inserted = cur.rowcount
+                    logger.info(
+                        f"Snapshots change-points: staged={len(snapshot_stage)}, inserted={snapshot_inserted}, skipped={len(snapshot_stage) - snapshot_inserted}"
+                    )
                 else:
                     logger.info("No snapshot rows to stage (empty or missing ids).")
     except Exception as e:
