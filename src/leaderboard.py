@@ -12,7 +12,7 @@ from utils.time_range import TimeRangeHelper
 from datetime import timedelta
 from psycopg2.extras import RealDictCursor
 from utils.constants import NON_CN_REGIONS, REGIONS, STATS_LIMIT
-from typing import Optional
+from typing import Optional, Tuple
 import aiohttp
 
 import sys
@@ -37,7 +37,7 @@ PLAYERS_TABLE = NORMALIZED_TABLES["players"]
 
 def get_table_name_with_join(
     table_name: str, use_normalized_tables: bool = True
-) -> tuple[str, str]:
+) -> Tuple[str, str]:
     """
     Get the appropriate table name and join clause for the new normalized structure.
     Returns (table_name, join_clause)
