@@ -22,9 +22,9 @@ if env_path.exists():
 logger = setup_logger("leaderboard_snapshots")
 
 # Table names
-LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots_test"
+LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
 MILESTONE_TRACKING = "milestone_tracking"
-DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats_test"
+DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats"
 PLAYERS_TABLE = "players"
 
 # Configs
