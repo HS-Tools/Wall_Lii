@@ -14,10 +14,7 @@ logger = setup_logger("leaderboard_snapshots")
 # Table names
 LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
 MILESTONE_TRACKING = "milestone_tracking"
-
-# New normalized table names (test versions)
-DAILY_LEADERBOARD_STATS_TEST = "daily_leaderboard_stats_test"
-LEADERBOARD_SNAPSHOTS_TEST = "leaderboard_snapshots_test"
+DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats"
 PLAYERS_TABLE = "players"
 
 # Configs
@@ -28,6 +25,17 @@ BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsDat
 CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "16"))
 MILESTONE_START = int(os.environ.get("MILESTONE_START", "8000"))
 MILESTONE_INCREMENT = int(os.environ.get("MILESTONE_INCREMENT", "1000"))
+
+# Concurrency & batching
+FETCH_CONCURRENCY = int(
+    os.environ.get("FETCH_CONCURRENCY", "16")
+)  # parallel API fetches
+AIOHTTP_CONNECTOR_LIMIT = int(os.environ.get("AIOHTTP_CONNECTOR_LIMIT", "64"))
+AIOHTTP_PER_HOST_LIMIT = int(os.environ.get("AIOHTTP_PER_HOST_LIMIT", "16"))
+BATCH_WRITE_SIZE = int(
+    os.environ.get("BATCH_WRITE_SIZE", "200")
+)  # execute_values page_size
+
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "40"))
 
 
@@ -110,14 +118,17 @@ async def fetch_region_mode_pages(
 async def fetch_leaderboards(max_pages=MAX_PAGES):
     """Fetch leaderboard data from all regions and modes with smart pagination"""
     players = []
-    sem = asyncio.Semaphore(10)
+    sem = asyncio.Semaphore(FETCH_CONCURRENCY)
 
     # Configure session with timeouts and connection limits
     timeout = aiohttp.ClientTimeout(total=60)  # 60 second timeout for entire session
 
     # Fetch data from global regions (US, EU, AP)
     async with aiohttp.ClientSession(
-        timeout=timeout, connector=aiohttp.TCPConnector(limit=20, limit_per_host=5)
+        timeout=timeout,
+        connector=aiohttp.TCPConnector(
+            limit=AIOHTTP_CONNECTOR_LIMIT, limit_per_host=AIOHTTP_PER_HOST_LIMIT
+        ),
     ) as session:
         tasks = []
         for mode_api, mode_short in MODES:
@@ -136,7 +147,10 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
 
     # Fetch data from China region with smart pagination
     async with aiohttp.ClientSession(
-        timeout=timeout, connector=aiohttp.TCPConnector(limit=20, limit_per_host=5)
+        timeout=timeout,
+        connector=aiohttp.TCPConnector(
+            limit=AIOHTTP_CONNECTOR_LIMIT, limit_per_host=AIOHTTP_PER_HOST_LIMIT
+        ),
     ) as session:
         cn_tasks = []
         for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
@@ -244,57 +258,103 @@ def _make_names_unique(players):
 
 def write_to_postgres(players):
     """Write player data to the database and process milestones"""
-    insert_query = f"""
-        INSERT INTO {LEADERBOARD_SNAPSHOTS} (player_name, game_mode, region, rank, rating, snapshot_time)
-        VALUES %s
-    """
-    values = [
-        (
-            p["player_name"],
-            p["game_mode"],
-            p["region"],
-            p["rank"],
-            p["rating"],
-            p["snapshot_time"],
-        )
-        for p in players
-    ]
 
     conn = None
     try:
         conn = get_db_connection()
         with conn:
             with conn.cursor() as cur:
-                execute_values(cur, insert_query, values, page_size=100)
-                logger.info(f"Inserted {len(players)} players.")
+
+                # Map player_name -> player_id (upsert players, then fetch ids)
+                unique_names = sorted({p["player_name"] for p in players})
+                id_by_name = {}
+                if unique_names:
+                    # Helper to chunk large arrays
+                    def _chunks(lst, n):
+                        for i in range(0, len(lst), n):
+                            yield lst[i : i + n]
+
+                    # Pre-check: how many of these names already exist?
+                    _existing_rows = []
+                    for chunk in _chunks(unique_names, 1000):
+                        cur.execute(
+                            """
+                            SELECT player_id, player_name
+                            FROM players
+                            WHERE player_name = ANY(%s)
+                            """,
+                            (chunk,),
+                        )
+                        _existing_rows.extend(cur.fetchall())
+                    _existing_names = {name for (_pid, name) in _existing_rows}
+                    _existing_count = len(_existing_names)
+
+                    # 1) Upsert without RETURNING (safe across execute_values batching)
+                    player_upsert_query = """
+                        INSERT INTO players (player_name)
+                        VALUES %s
+                        ON CONFLICT (player_name)
+                        DO UPDATE SET player_name = EXCLUDED.player_name
+                        """
+                    execute_values(
+                        cur,
+                        player_upsert_query,
+                        [(n,) for n in unique_names],
+                        page_size=BATCH_WRITE_SIZE,
+                    )
+
+                    # 2) Fetch ids for all names in chunks to avoid overly-large arrays
+                    id_rows = []
+                    for chunk in _chunks(unique_names, 1000):
+                        cur.execute(
+                            """
+                            SELECT player_id, player_name
+                            FROM players
+                            WHERE player_name = ANY(%s)
+                            """,
+                            (chunk,),
+                        )
+                        id_rows.extend(cur.fetchall())
+                    id_by_name = {name: pid for (pid, name) in id_rows}
+
+                    _created_count = len(unique_names) - _existing_count
+                    logger.info(
+                        f"Players: existing={_existing_count}, created={_created_count}, total={len(unique_names)}"
+                    )
+                    # Sanity log
+                    if len(id_by_name) != len(unique_names):
+                        missing = [n for n in unique_names if n not in id_by_name]
+                        logger.warning(
+                            f"Player id lookup mismatch: expected {len(unique_names)}, got {len(id_by_name)}. Missing sample: {missing[:10]}"
+                        )
+                    logger.info(f"Prepared id map for {len(id_by_name)} players.")
+                else:
+                    logger.info("No player names to upsert into players table.")
 
                 # Process milestones after inserting player data
                 process_milestones(cur, players)
 
-                # Fully rewrite logic for handling the daily_leaderboard_stats table
+                # Fully rewrite logic for handling the daily_leaderboard_stats table via UPSERT
                 from datetime import timedelta
 
                 pacific = pytz.timezone("America/Los_Angeles")
-                today_pt = datetime.now(timezone.utc).astimezone(pacific).date()
+                now_utc = datetime.now(timezone.utc)
+                today_pt = now_utc.astimezone(pacific).date()
                 yesterday_pt = today_pt - timedelta(days=1)
                 is_monday = today_pt.weekday() == 0  # Monday is 0
 
-                # Group players by (player_name, game_mode, region)
-                # key_fn and current_keys are not used, so removed.
-
-                # Fetch existing entries for today
+                # Fetch existing entries for today (cast enums to text for consistent Python keys)
                 cur.execute(
-                    """
-                    SELECT player_name, game_mode, region, rating, rank, games_played, weekly_games_played
-                    FROM daily_leaderboard_stats
+                    f"""
+                    SELECT player_id, game_mode::text, region::text, rating, rank, games_played, weekly_games_played
+                    FROM {DAILY_LEADERBOARD_STATS}
                     WHERE day_start = %s
-                """,
+                    """,
                     (today_pt,),
                 )
                 existing_today = cur.fetchall()
-                # Map for today's stats
                 today_stats = {
-                    f"{r[0]}#{r[1]}#{r[2]}": {
+                    f"{r[0]}#{r[2]}#{r[1]}": {  # player_id#region#mode
                         "rating": r[3],
                         "rank": r[4],
                         "games_played": r[5],
@@ -303,83 +363,196 @@ def write_to_postgres(players):
                     for r in existing_today
                 }
 
-                # Fetch yesterday’s entries to compute games_played and weekly_games_played
+                # Fetch yesterday's entries to compute base weekly and rating delta at day rollover
                 cur.execute(
-                    """
-                    SELECT player_name, game_mode, region, rating, weekly_games_played
-                    FROM daily_leaderboard_stats
+                    f"""
+                    SELECT player_id, game_mode::text, region::text, rating, weekly_games_played
+                    FROM {DAILY_LEADERBOARD_STATS}
                     WHERE day_start = %s
-                """,
+                    """,
                     (yesterday_pt,),
                 )
                 prev_rows = cur.fetchall()
                 prev_stats = {
-                    f"{r[0]}#{r[1]}#{r[2]}": {"rating": r[3], "weekly": r[4]}
+                    f"{r[0]}#{r[2]}#{r[1]}": {"rating": r[3], "weekly": r[4]}
                     for r in prev_rows
                 }
 
+                # Build UPSERT values
                 daily_values = []
+                skipped_missing_ids = 0
                 for p in players:
-                    key = f"{p['player_name']}#{p['game_mode']}#{p['region']}"
+                    pid = id_by_name.get(p["player_name"])  # ensure we have an id
+                    if pid is None:
+                        skipped_missing_ids += 1
+                        continue
+
+                    mode_label = str(p["game_mode"])  # enum labels are '0'/'1'
+                    region_label = p["region"]  # enum labels 'NA','EU','AP','CN'
+                    key = f"{pid}#{region_label}#{mode_label}"
                     today = today_stats.get(key)
                     prev = prev_stats.get(key)
 
-                    if today:
-                        # If player already has a row today, increment only if rating changed
-                        rating_changed = today["rating"] != p["rating"]
-                        games_played = (
-                            today["games_played"] + 1
-                            if rating_changed
-                            else today["games_played"]
+                    if not today:
+                        base_weekly = (
+                            0 if is_monday else (prev["weekly"] if prev else 0)
                         )
-                        weekly_games_played = (
-                            today["weekly_games_played"] + 1
-                            if rating_changed
-                            else today["weekly_games_played"]
+                        rating_changed_from_prev = bool(
+                            prev and prev["rating"] != p["rating"]
                         )
+                        weekly_games_played = base_weekly + (
+                            1 if rating_changed_from_prev else 0
+                        )
+                        games_played = 1 if rating_changed_from_prev else 0
                     else:
-                        # First entry for today, compare to yesterday
-                        rating_changed = prev and prev["rating"] != p["rating"]
-                        games_played = 1 if rating_changed else 0
-                        if not prev:
-                            games_played = 0  # New player, treat as 0
-                        weekly_games_played = (
-                            games_played
-                            if is_monday
-                            else (prev["weekly"] if prev else 0) + games_played
-                        )
+                        # For existing rows, ON CONFLICT will increment if rating changes.
+                        weekly_games_played = today["weekly_games_played"]
+                        games_played = today["games_played"]
 
                     daily_values.append(
                         (
-                            p["player_name"],
-                            p["game_mode"],
-                            p["region"],
-                            today_pt,
+                            pid,  # player_id
+                            mode_label,  # game_mode_enum label
+                            region_label,  # region_enum label
+                            today_pt,  # day_start
                             p["rating"],
                             p["rank"],
                             games_played,
                             weekly_games_played,
-                            datetime.now(timezone.utc),
+                            now_utc,
                         )
                     )
 
-                # Clear and reinsert only affected rows (delete all for today, then reinsert)
-                if existing_today:
-                    cur.execute(
-                        """
-                        DELETE FROM daily_leaderboard_stats
-                        WHERE day_start = %s
-                    """,
-                        (today_pt,),
+                insert_daily_query = f"""
+                    INSERT INTO {DAILY_LEADERBOARD_STATS}
+                      (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, updated_at)
+                    VALUES %s
+                    ON CONFLICT (player_id, game_mode, region, day_start)
+                    DO UPDATE SET
+                      rating = EXCLUDED.rating,
+                      rank = EXCLUDED.rank,
+                      games_played = CASE
+                        WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.games_played + 1
+                        ELSE {DAILY_LEADERBOARD_STATS}.games_played
+                      END,
+                      weekly_games_played = CASE
+                        WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.weekly_games_played + 1
+                        ELSE {DAILY_LEADERBOARD_STATS}.weekly_games_played
+                      END,
+                      updated_at = now()
+                """
+                # Use RETURNING to count inserts vs updates across chunks
+                insert_daily_query_returning = (
+                    insert_daily_query + "\nRETURNING (xmax = 0) AS inserted"
+                )
+                daily_inserted = 0
+                daily_updated = 0
+
+                def _chunks_daily(lst, n):
+                    for i in range(0, len(lst), n):
+                        yield lst[i : i + n]
+
+                if daily_values:
+                    for chunk in _chunks_daily(daily_values, BATCH_WRITE_SIZE):
+                        execute_values(
+                            cur,
+                            insert_daily_query_returning,
+                            chunk,
+                            page_size=BATCH_WRITE_SIZE,
+                        )
+                        flags = cur.fetchall()  # list of (inserted,)
+                        ins = sum(1 for (inserted,) in flags if inserted)
+                        daily_inserted += ins
+                        daily_updated += len(flags) - ins
+                logger.info(
+                    f"Daily upsert: attempted={len(daily_values)}, inserted={daily_inserted}, updated={daily_updated}, skipped_missing_ids={skipped_missing_ids}"
+                )
+                # =============================
+                # Change-point insert into snapshots
+                # =============================
+                # Build staging rows with player_id + enums
+                snapshot_stage = []
+                for p in players:
+                    pid = id_by_name.get(
+                        p["player_name"]
+                    )  # must exist from earlier upsert
+                    if pid is None:
+                        continue
+                    snapshot_stage.append(
+                        (
+                            pid,  # player_id
+                            str(p["game_mode"]),  # game_mode_enum label '0' | '1'
+                            p["region"],  # region_enum label 'NA'|'EU'|'AP'|'CN'
+                            p["rank"],
+                            p["rating"],
+                            p["snapshot_time"],  # ISO string; cast to timestamptz below
+                        )
                     )
 
-                insert_daily_query = """
-                    INSERT INTO daily_leaderboard_stats
-                      (player_name, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, updated_at)
-                    VALUES %s
-                """
-                execute_values(cur, insert_daily_query, daily_values)
-                logger.info(f"Inserted daily stats for {len(daily_values)} players.")
+                if snapshot_stage:
+                    # 1) Put incoming poll into a TEMP table with proper enum types
+                    cur.execute(
+                        f"""
+                        CREATE TEMP TABLE tmp_ls (
+                          player_id bigint,
+                          game_mode { 'game_mode_enum' },
+                          region    { 'region_enum'   },
+                          rank      int,
+                          rating    int,
+                          snapshot_time timestamptz
+                        ) ON COMMIT DROP
+                        """.replace(
+                            "{ 'game_mode_enum' }", "game_mode_enum"
+                        ).replace(
+                            "{ 'region_enum'   }", "region_enum"
+                        )
+                    )
+
+                    # Insert rows, casting labels to enums/timestamptz
+                    execute_values(
+                        cur,
+                        """
+                        INSERT INTO tmp_ls (player_id, game_mode, region, rating, snapshot_time)
+                        VALUES %s
+                        """,
+                        [
+                            (
+                                r[0],
+                                r[1],  # label will auto-cast to game_mode_enum
+                                r[2],  # label will auto-cast to region_enum
+                                r[4],
+                                r[5],
+                            )
+                            for r in snapshot_stage
+                        ],
+                        page_size=BATCH_WRITE_SIZE,
+                    )
+
+                    # 2) Insert only change points into snapshots using a LATERAL lookup of the last rating
+                    cur.execute(
+                        f"""
+                        INSERT INTO {LEADERBOARD_SNAPSHOTS}
+                          (player_id, game_mode, region, rating, snapshot_time)
+                        SELECT t.player_id, t.game_mode, t.region, t.rating, t.snapshot_time
+                        FROM tmp_ls t
+                        LEFT JOIN LATERAL (
+                          SELECT ls.rating
+                          FROM {LEADERBOARD_SNAPSHOTS} ls
+                          WHERE ls.player_id = t.player_id
+                            AND ls.region    = t.region
+                            AND ls.game_mode = t.game_mode
+                          ORDER BY ls.snapshot_time DESC
+                          LIMIT 1
+                        ) prev ON TRUE
+                        WHERE prev.rating IS NULL OR prev.rating <> t.rating
+                        """
+                    )
+                    snapshot_inserted = cur.rowcount
+                    logger.info(
+                        f"Snapshots change-points: staged={len(snapshot_stage)}, inserted={snapshot_inserted}, skipped={len(snapshot_stage) - snapshot_inserted}"
+                    )
+                else:
+                    logger.info("No snapshot rows to stage (empty or missing ids).")
     except Exception as e:
         logger.error(f"Error inserting into DB: {str(e)}")
         raise
@@ -474,7 +647,12 @@ def process_milestones(cursor, players):
                 for m in milestones_to_insert
             ]
 
-            execute_values(cursor, milestone_insert_query, milestone_values)
+            execute_values(
+                cursor,
+                milestone_insert_query,
+                milestone_values,
+                page_size=BATCH_WRITE_SIZE,
+            )
             logger.info(f"Processed {len(milestones_to_insert)} milestones.")
 
     except Exception as e:

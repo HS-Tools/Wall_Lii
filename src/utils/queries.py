@@ -6,13 +6,13 @@ import os
 
 # Add parent directory to path to import config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from config import TEST_TABLES
+from config import NORMALIZED_TABLES
 
 # New normalized table names
-DAILY_LEADERBOARD_STATS_TEST = TEST_TABLES["daily_leaderboard_stats"]
-LEADERBOARD_SNAPSHOTS_TEST = TEST_TABLES["leaderboard_snapshots"]
+DAILY_LEADERBOARD_STATS = NORMALIZED_TABLES["daily_leaderboard_stats"]
+LEADERBOARD_SNAPSHOTS = NORMALIZED_TABLES["leaderboard_snapshots"]
 CURRENT_LEADERBOARD = "current_leaderboard"  # Keep old name for now
-PLAYERS_TABLE = TEST_TABLES["players"]
+PLAYERS_TABLE = NORMALIZED_TABLES["players"]
 
 
 def resolve_players_from_rank(
@@ -47,12 +47,12 @@ def resolve_players_from_rank(
             )
             return [r["player_name"] for r in db_cursor.fetchall()]
     else:
-        # Use daily_leaderboard_stats_test for ranks <= 1000
+        # Use daily_leaderboard_stats for ranks <= 1000
         if region:
             db_cursor.execute(
                 f"""
                 SELECT p.player_name
-                FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                FROM {DAILY_LEADERBOARD_STATS} d
                 INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
                 WHERE d.game_mode = %s AND d.rank = %s AND d.region = %s
                 ORDER BY d.day_start DESC
@@ -66,7 +66,7 @@ def resolve_players_from_rank(
             db_cursor.execute(
                 f"""
                 SELECT DISTINCT ON (d.region) p.player_name
-                FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                FROM {DAILY_LEADERBOARD_STATS} d
                 INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
                 WHERE d.game_mode = %s AND d.rank = %s
                 ORDER BY d.region, d.day_start DESC;

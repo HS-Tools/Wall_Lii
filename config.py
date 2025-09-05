@@ -10,10 +10,10 @@ TABLES = {
     "milestone_tracking": f"milestone_tracking{TABLE_SUFFIX}",
 }
 
-# New normalized table structure (test versions)
-TEST_TABLES = {
-    "daily_leaderboard_stats": "daily_leaderboard_stats_test",
-    "leaderboard_snapshots": "leaderboard_snapshots_test",
+# New normalized table structure
+NORMALIZED_TABLES = {
+    "daily_leaderboard_stats": "daily_leaderboard_stats",
+    "leaderboard_snapshots": "leaderboard_snapshots",
     "players": "players",
-    "milestone_tracking": "milestone_tracking",  # unchanged
+    "milestone_tracking": "milestone_tracking",
 }

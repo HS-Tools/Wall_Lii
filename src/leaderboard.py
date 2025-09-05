@@ -27,27 +27,27 @@ CURRENT_LEADERBOARD = "current_leaderboard"
 LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
 MILESTONE_TRACKING = "milestone_tracking"
 
-# New normalized table names (test versions)
-from config import TEST_TABLES
+# New normalized table names
+from config import NORMALIZED_TABLES
 
-DAILY_LEADERBOARD_STATS_TEST = TEST_TABLES["daily_leaderboard_stats"]
-LEADERBOARD_SNAPSHOTS_TEST = TEST_TABLES["leaderboard_snapshots"]
-PLAYERS_TABLE = TEST_TABLES["players"]
+DAILY_LEADERBOARD_STATS = NORMALIZED_TABLES["daily_leaderboard_stats"]
+LEADERBOARD_SNAPSHOTS = NORMALIZED_TABLES["leaderboard_snapshots"]
+PLAYERS_TABLE = NORMALIZED_TABLES["players"]
 
 
 def get_table_name_with_join(
-    table_name: str, use_test_tables: bool = True
+    table_name: str, use_normalized_tables: bool = True
 ) -> tuple[str, str]:
     """
     Get the appropriate table name and join clause for the new normalized structure.
     Returns (table_name, join_clause)
     """
-    if not use_test_tables:
+    if not use_normalized_tables:
         return table_name, ""
 
     if table_name == LEADERBOARD_SNAPSHOTS:
         return (
-            LEADERBOARD_SNAPSHOTS_TEST,
+            LEADERBOARD_SNAPSHOTS,
             f"INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id",
         )
     elif table_name == CURRENT_LEADERBOARD:
@@ -188,7 +188,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT 1
-                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    FROM {LEADERBOARD_SNAPSHOTS} ls
                     INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     WHERE p.player_name = %s AND ls.region = %s AND ls.game_mode = %s
                     LIMIT 1;
@@ -215,7 +215,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT 1
-                    FROM {DAILY_LEADERBOARD_STATS_TEST}
+                    FROM {DAILY_LEADERBOARD_STATS}
                     WHERE day_start = %s
                     LIMIT 1;
                 """,
@@ -233,7 +233,7 @@ class LeaderboardDB:
                         cur.execute(
                             f"""
                             SELECT p.player_name, d.rating, d.rank, d.region
-                            FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                            FROM {DAILY_LEADERBOARD_STATS} d
                             INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
                             WHERE d.region = %s AND d.game_mode = %s AND d.day_start = %s
                             ORDER BY d.rank ASC
@@ -269,7 +269,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT p.player_name, d.rating, d.rank
-                    FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                    FROM {DAILY_LEADERBOARD_STATS} d
                     INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
                     WHERE d.region = %s AND d.game_mode = %s AND d.day_start = %s
                     ORDER BY d.rank ASC
@@ -309,23 +309,21 @@ class LeaderboardDB:
 
             def fetch_rank(cur, table_name: str) -> list:
                 new_table_name, join_clause = get_table_name_with_join(table_name)
-                table_alias = (
-                    "ls" if new_table_name == LEADERBOARD_SNAPSHOTS_TEST else "cl"
-                )
+                table_alias = "ls" if new_table_name == LEADERBOARD_SNAPSHOTS else "cl"
 
                 snapshot_time = (
                     ", ls.snapshot_time"
-                    if new_table_name == LEADERBOARD_SNAPSHOTS_TEST
+                    if new_table_name == LEADERBOARD_SNAPSHOTS
                     else ""
                 )
                 snapshot_order = (
                     "ls.snapshot_time DESC, "
-                    if new_table_name == LEADERBOARD_SNAPSHOTS_TEST
+                    if new_table_name == LEADERBOARD_SNAPSHOTS
                     else ""
                 )
 
-                # For snapshots table, we need to get rank from daily_leaderboard_stats_test
-                if new_table_name == LEADERBOARD_SNAPSHOTS_TEST:
+                # For snapshots table, we need to get rank from daily_leaderboard_stats
+                if new_table_name == LEADERBOARD_SNAPSHOTS:
                     # First get the player data from snapshots
                     query = f"""
                         SELECT DISTINCT ON (ls.region)
@@ -338,14 +336,14 @@ class LeaderboardDB:
                     cur.execute(query, query_params)
                     rows = cur.fetchall()
 
-                    # Now get the rank for each player from daily_leaderboard_stats_test
+                    # Now get the rank for each player from daily_leaderboard_stats
                     result_rows = []
                     for row in rows:
                         # Get the latest rank for this player
                         cur.execute(
                             f"""
                             SELECT rank
-                            FROM {DAILY_LEADERBOARD_STATS_TEST}
+                            FROM {DAILY_LEADERBOARD_STATS}
                             WHERE player_id = %s AND region = %s AND game_mode = %s
                             ORDER BY day_start DESC
                             LIMIT 1
@@ -396,11 +394,11 @@ class LeaderboardDB:
                                 (rank, region, game_mode),
                             )
                         else:
-                            # Use daily_leaderboard_stats_test for ranks <= 1000
+                            # Use daily_leaderboard_stats for ranks <= 1000
                             cur.execute(
                                 f"""
                                 SELECT p.player_name, d.rating, d.region, d.rank
-                                FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                                FROM {DAILY_LEADERBOARD_STATS} d
                                 INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
                                 WHERE d.rank = %s AND d.region = %s AND d.game_mode = %s
                                 ORDER BY d.day_start DESC
@@ -432,11 +430,11 @@ class LeaderboardDB:
                                     (rank, reg, game_mode),
                                 )
                             else:
-                                # Use daily_leaderboard_stats_test for ranks <= 1000
+                                # Use daily_leaderboard_stats for ranks <= 1000
                                 cur.execute(
                                     f"""
                                     SELECT p.player_name, d.rating, d.region, d.rank
-                                    FROM {DAILY_LEADERBOARD_STATS_TEST} d
+                                    FROM {DAILY_LEADERBOARD_STATS} d
                                     INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
                                     WHERE d.rank = %s AND d.region = %s AND d.game_mode = %s
                                     ORDER BY d.day_start DESC
@@ -501,7 +499,7 @@ class LeaderboardDB:
                 query = f"""
                     SELECT DISTINCT ON (ls.region)
                         p.player_name, ls.rating, ls.region, ls.snapshot_time
-                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    FROM {LEADERBOARD_SNAPSHOTS} ls
                     INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     {where_clause}
                     ORDER BY ls.region, ls.rating DESC, ls.snapshot_time ASC
@@ -547,7 +545,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT ls.rating, p.player_name, ls.snapshot_time, ls.region, ls.player_id, ls.game_mode
-                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    FROM {LEADERBOARD_SNAPSHOTS} ls
                     INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     {where_clause}
                     AND ls.snapshot_time >= %s AND ls.snapshot_time < %s
@@ -564,7 +562,7 @@ class LeaderboardDB:
                     cur.execute(
                         f"""
                         SELECT rank
-                        FROM {DAILY_LEADERBOARD_STATS_TEST}
+                        FROM {DAILY_LEADERBOARD_STATS}
                         WHERE player_id = %s AND region = %s AND game_mode = %s AND day_start = DATE(%s)
                         LIMIT 1
                         """,
@@ -624,7 +622,7 @@ class LeaderboardDB:
                 cur.execute(
                     f"""
                     SELECT ls.rating, p.player_name, ls.snapshot_time, ls.region, ls.player_id, ls.game_mode
-                    FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                    FROM {LEADERBOARD_SNAPSHOTS} ls
                     INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                     {where_clause}
                     AND ls.snapshot_time >= %s AND ls.snapshot_time < %s
@@ -641,7 +639,7 @@ class LeaderboardDB:
                     cur.execute(
                         f"""
                         SELECT rank
-                        FROM {DAILY_LEADERBOARD_STATS_TEST}
+                        FROM {DAILY_LEADERBOARD_STATS}
                         WHERE player_id = %s AND region = %s AND game_mode = %s AND day_start = DATE(%s)
                         LIMIT 1
                         """,
@@ -703,7 +701,7 @@ class LeaderboardDB:
                         f"""
                         SELECT DISTINCT ON (ls.region)
                             ls.rating, p.player_name, ls.region, ls.player_id, ls.game_mode
-                        FROM {LEADERBOARD_SNAPSHOTS_TEST} ls
+                        FROM {LEADERBOARD_SNAPSHOTS} ls
                         INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
                         {where_clause}
                         ORDER BY ls.region, ls.snapshot_time DESC;
@@ -719,7 +717,7 @@ class LeaderboardDB:
                         cur.execute(
                             f"""
                             SELECT rank
-                            FROM {DAILY_LEADERBOARD_STATS_TEST}
+                            FROM {DAILY_LEADERBOARD_STATS}
                             WHERE player_id = %s AND region = %s AND game_mode = %s
                             ORDER BY day_start DESC
                             LIMIT 1

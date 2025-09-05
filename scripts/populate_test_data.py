@@ -35,9 +35,9 @@ import pytz
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
 
-# Table names (TEST variants)
-DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats_test"
-LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots_test"
+# Table names
+DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats"
+LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
 MILESTONE_TRACKING = "milestone_tracking"  # unchanged; optional
 
 # Configs
@@ -354,7 +354,7 @@ def write_to_postgres(players):
                 else:
                     logger.info("No player names to upsert into players table.")
 
-                # Fully rewrite logic for handling the daily_leaderboard_stats_test table via UPSERT
+                # Fully rewrite logic for handling the daily_leaderboard_stats table via UPSERT
                 from datetime import timedelta
 
                 pacific = pytz.timezone("America/Los_Angeles")
@@ -548,7 +548,7 @@ def write_to_postgres(players):
                         page_size=BATCH_WRITE_SIZE,
                     )
 
-                    # 2) Insert only change points into snapshots_test using a LATERAL lookup of the last rating
+                    # 2) Insert only change points into snapshots using a LATERAL lookup of the last rating
                     cur.execute(
                         f"""
                         INSERT INTO {LEADERBOARD_SNAPSHOTS}
