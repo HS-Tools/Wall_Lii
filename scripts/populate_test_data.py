@@ -1,4 +1,28 @@
 import os
+from pathlib import Path
+from time import sleep
+from dotenv import load_dotenv
+from db_utils import get_db_connection
+import requests
+
+# Load environment variables from .env file
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
+
+# 1. Establish db connection
+# 2. Fetch top 100 of each leaderboard ideally in parallel
+# 3. I need to get the player id to player name mappings
+# 4. Add new entries to the player id table if there's new players
+# 5.
+
+BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
+REGIONS = ["US", "EU", "AP"]
+REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
+MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
+CURRENT_SEASON = 16
+
+
+import os
 import json
 import asyncio
 import aiohttp
@@ -8,24 +32,13 @@ from logger import setup_logger
 from db_utils import get_db_connection
 import pytz
 
-# Delete this stuff
-from dotenv import load_dotenv
-from pathlib import Path
-
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent.parent / ".env"
-if env_path.exists():
-    load_dotenv(env_path)
-# del this above
-
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
 
 # Table names
-LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots_test"
-MILESTONE_TRACKING = "milestone_tracking"
-DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats_test"
-PLAYERS_TABLE = "players"
+DAILY_LEADERBOARD_STATS = "daily_leaderboard_stats"
+LEADERBOARD_SNAPSHOTS = "leaderboard_snapshots"
+MILESTONE_TRACKING = "milestone_tracking"  # unchanged; optional
 
 # Configs
 REGIONS = ["US", "EU", "AP"]
@@ -341,9 +354,6 @@ def write_to_postgres(players):
                 else:
                     logger.info("No player names to upsert into players table.")
 
-                # Process milestones after inserting player data
-                process_milestones(cur, players)
-
                 # Fully rewrite logic for handling the daily_leaderboard_stats table via UPSERT
                 from datetime import timedelta
 
@@ -373,7 +383,7 @@ def write_to_postgres(players):
                     for r in existing_today
                 }
 
-                # Fetch yesterday's entries to compute base weekly and rating delta at day rollover
+                # Fetch yesterday’s entries to compute base weekly and rating delta at day rollover
                 cur.execute(
                     f"""
                     SELECT player_id, game_mode::text, region::text, rating, weekly_games_played
@@ -478,7 +488,7 @@ def write_to_postgres(players):
                     f"Daily upsert: attempted={len(daily_values)}, inserted={daily_inserted}, updated={daily_updated}, skipped_missing_ids={skipped_missing_ids}"
                 )
                 # =============================
-                # Change-point insert into snapshots
+                # Change-point insert into snapshots (TEST)
                 # =============================
                 # Build staging rows with player_id + enums
                 snapshot_stage = []
@@ -728,4 +738,6 @@ def lambda_handler(event, context):
 
 # For local testing
 if __name__ == "__main__":
-    print(lambda_handler({}, None))
+    while True:
+        print(lambda_handler({}, None))
+        sleep(300)

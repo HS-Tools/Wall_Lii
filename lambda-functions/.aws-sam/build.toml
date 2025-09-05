@@ -18,15 +18,6 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["LeaderboardSnapshotsFunction"]
 
-[function_build_definitions.37f7e52e-0a01-4ef3-beb7-36f8867c8ccb]
-codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/prune"
-runtime = "python3.9"
-architecture = "x86_64"
-handler = "lambda_function.lambda_handler"
-manifest_hash = ""
-packagetype = "Zip"
-functions = ["PruneFunction"]
-
 [function_build_definitions.04cf6b03-586a-4b20-aacc-7abb1d04d46e]
 codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/fetch_news"
 runtime = "python3.9"
