@@ -87,14 +87,22 @@ def get_buddy_dict():
         if hero_id in _heroes:
             b = buddy
             buddy_string = f"{b['name']} is a Tier {b['techLevel']} {b['attack']}/{b['health']}. Ability: {filterText(b['text'])}"
+            hero_name = get_shortened_name(_heroes[hero_id])
+
             if not buddy_is_golden:
-                buddies[get_shortened_name(_heroes[hero_id])] = (
+                buddies[hero_name] = (
                     _heroes[hero_id],
                     buddy_string,
                 )
             else:
                 golden_buddy_string = "Golden " + buddy_string
-                buddies[get_shortened_name(_heroes[hero_id])] += (golden_buddy_string,)
+                if hero_name in buddies:
+                    buddies[hero_name] += (golden_buddy_string,)
+                else:
+                    buddies[hero_name] = (
+                        _heroes[hero_id],
+                        golden_buddy_string,
+                    )
 
     return buddies
 
