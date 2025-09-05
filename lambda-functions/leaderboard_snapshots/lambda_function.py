@@ -8,16 +8,6 @@ from logger import setup_logger
 from db_utils import get_db_connection
 import pytz
 
-# Delete this stuff
-from dotenv import load_dotenv
-from pathlib import Path
-
-# Load environment variables from .env file
-env_path = Path(__file__).parent.parent.parent / ".env"
-if env_path.exists():
-    load_dotenv(env_path)
-# del this above
-
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
 
