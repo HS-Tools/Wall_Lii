@@ -7,6 +7,10 @@ from psycopg2.extras import execute_values
 from logger import setup_logger
 from db_utils import get_db_connection
 import pytz
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Set up logger
 logger = setup_logger("leaderboard_snapshots")
@@ -216,7 +220,7 @@ async def fetch_cn_region_mode_pages(session, mode_short, mode_name, sem, max_pa
 
         result = await fetch_cn_page(session, url, params, sem)
         if not result or result.get("code") != 0:
-            logger.warning(f"No data returned for CN {mode_name} page {page}")
+            # logger.warning(f"No data returned for CN {mode_name} page {page}")
             break
 
         data_list = result.get("data", {}).get("list", [])
@@ -274,21 +278,6 @@ def write_to_postgres(players):
                         for i in range(0, len(lst), n):
                             yield lst[i : i + n]
 
-                    # Pre-check: how many of these names already exist?
-                    _existing_rows = []
-                    for chunk in _chunks(unique_names, 1000):
-                        cur.execute(
-                            """
-                            SELECT player_id, player_name
-                            FROM players
-                            WHERE player_name = ANY(%s)
-                            """,
-                            (chunk,),
-                        )
-                        _existing_rows.extend(cur.fetchall())
-                    _existing_names = {name for (_pid, name) in _existing_rows}
-                    _existing_count = len(_existing_names)
-
                     # 1) Upsert without RETURNING (safe across execute_values batching)
                     player_upsert_query = """
                         INSERT INTO players (player_name)
@@ -317,10 +306,6 @@ def write_to_postgres(players):
                         id_rows.extend(cur.fetchall())
                     id_by_name = {name: pid for (pid, name) in id_rows}
 
-                    _created_count = len(unique_names) - _existing_count
-                    logger.info(
-                        f"Players: existing={_existing_count}, created={_created_count}, total={len(unique_names)}"
-                    )
                     # Sanity log
                     if len(id_by_name) != len(unique_names):
                         missing = [n for n in unique_names if n not in id_by_name]
@@ -343,130 +328,95 @@ def write_to_postgres(players):
                 yesterday_pt = today_pt - timedelta(days=1)
                 is_monday = today_pt.weekday() == 0  # Monday is 0
 
-                # Fetch existing entries for today (cast enums to text for consistent Python keys)
+                # Stage today's polled rows in a temp table, then do a single server-side upsert
                 cur.execute(
-                    f"""
-                    SELECT player_id, game_mode::text, region::text, rating, rank, games_played, weekly_games_played
-                    FROM {DAILY_LEADERBOARD_STATS}
-                    WHERE day_start = %s
-                    """,
-                    (today_pt,),
+                    """
+                    CREATE TEMP TABLE tmp_daily (
+                      player_id int,
+                      game_mode game_mode_enum,
+                      region    region_enum,
+                      rating    int,
+                      rank      int,
+                      day_start date,
+                      updated_at timestamptz
+                    ) ON COMMIT DROP
+                    """
                 )
-                existing_today = cur.fetchall()
-                today_stats = {
-                    f"{r[0]}#{r[2]}#{r[1]}": {  # player_id#region#mode
-                        "rating": r[3],
-                        "rank": r[4],
-                        "games_played": r[5],
-                        "weekly_games_played": r[6],
-                    }
-                    for r in existing_today
-                }
 
-                # Fetch yesterday's entries to compute base weekly and rating delta at day rollover
-                cur.execute(
-                    f"""
-                    SELECT player_id, game_mode::text, region::text, rating, weekly_games_played
-                    FROM {DAILY_LEADERBOARD_STATS}
-                    WHERE day_start = %s
-                    """,
-                    (yesterday_pt,),
-                )
-                prev_rows = cur.fetchall()
-                prev_stats = {
-                    f"{r[0]}#{r[2]}#{r[1]}": {"rating": r[3], "weekly": r[4]}
-                    for r in prev_rows
-                }
-
-                # Build UPSERT values
-                daily_values = []
-                skipped_missing_ids = 0
+                # Build temp rows from fetched players
+                tmp_rows = []
                 for p in players:
-                    pid = id_by_name.get(p["player_name"])  # ensure we have an id
+                    pid = id_by_name.get(p["player_name"])
                     if pid is None:
-                        skipped_missing_ids += 1
                         continue
-
-                    mode_label = str(p["game_mode"])  # enum labels are '0'/'1'
-                    region_label = p["region"]  # enum labels 'NA','EU','AP','CN'
-                    key = f"{pid}#{region_label}#{mode_label}"
-                    today = today_stats.get(key)
-                    prev = prev_stats.get(key)
-
-                    if not today:
-                        base_weekly = (
-                            0 if is_monday else (prev["weekly"] if prev else 0)
-                        )
-                        rating_changed_from_prev = bool(
-                            prev and prev["rating"] != p["rating"]
-                        )
-                        weekly_games_played = base_weekly + (
-                            1 if rating_changed_from_prev else 0
-                        )
-                        games_played = 1 if rating_changed_from_prev else 0
-                    else:
-                        # For existing rows, ON CONFLICT will increment if rating changes.
-                        weekly_games_played = today["weekly_games_played"]
-                        games_played = today["games_played"]
-
-                    daily_values.append(
+                    tmp_rows.append(
                         (
-                            pid,  # player_id
-                            mode_label,  # game_mode_enum label
-                            region_label,  # region_enum label
-                            today_pt,  # day_start
+                            pid,
+                            str(p["game_mode"]),  # label auto-casts to enum
+                            p["region"],  # label auto-casts to enum
                             p["rating"],
                             p["rank"],
-                            games_played,
-                            weekly_games_played,
+                            today_pt,
                             now_utc,
                         )
                     )
 
-                insert_daily_query = f"""
-                    INSERT INTO {DAILY_LEADERBOARD_STATS}
-                      (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, updated_at)
-                    VALUES %s
-                    ON CONFLICT (player_id, game_mode, region, day_start)
-                    DO UPDATE SET
-                      rating = EXCLUDED.rating,
-                      rank = EXCLUDED.rank,
-                      games_played = CASE
-                        WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.games_played + 1
-                        ELSE {DAILY_LEADERBOARD_STATS}.games_played
-                      END,
-                      weekly_games_played = CASE
-                        WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.weekly_games_played + 1
-                        ELSE {DAILY_LEADERBOARD_STATS}.weekly_games_played
-                      END,
-                      updated_at = now()
-                """
-                # Use RETURNING to count inserts vs updates across chunks
-                insert_daily_query_returning = (
-                    insert_daily_query + "\nRETURNING (xmax = 0) AS inserted"
-                )
-                daily_inserted = 0
-                daily_updated = 0
+                if tmp_rows:
+                    execute_values(
+                        cur,
+                        """
+                        INSERT INTO tmp_daily (player_id, game_mode, region, rating, rank, day_start, updated_at)
+                        VALUES %s
+                        """,
+                        tmp_rows,
+                        page_size=BATCH_WRITE_SIZE,
+                    )
 
-                def _chunks_daily(lst, n):
-                    for i in range(0, len(lst), n):
-                        yield lst[i : i + n]
-
-                if daily_values:
-                    for chunk in _chunks_daily(daily_values, BATCH_WRITE_SIZE):
-                        execute_values(
-                            cur,
-                            insert_daily_query_returning,
-                            chunk,
-                            page_size=BATCH_WRITE_SIZE,
+                    # Single statement: insert new rows with correct initial counters,
+                    # and update existing rows by incrementing when rating changes.
+                    # For inserts, we carry yesterday's weekly unless Monday.
+                    cur.execute(
+                        f"""
+                        WITH prev AS (
+                          SELECT d.player_id, d.game_mode, d.region,
+                                 d.rating AS prev_rating,
+                                 d.weekly_games_played AS prev_weekly
+                          FROM {DAILY_LEADERBOARD_STATS} d
+                          WHERE d.day_start = %s
                         )
-                        flags = cur.fetchall()  # list of (inserted,)
-                        ins = sum(1 for (inserted,) in flags if inserted)
-                        daily_inserted += ins
-                        daily_updated += len(flags) - ins
-                logger.info(
-                    f"Daily upsert: attempted={len(daily_values)}, inserted={daily_inserted}, updated={daily_updated}, skipped_missing_ids={skipped_missing_ids}"
-                )
+                        INSERT INTO {DAILY_LEADERBOARD_STATS}
+                          (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, updated_at)
+                        SELECT t.player_id, t.game_mode, t.region, t.day_start, t.rating, t.rank,
+                               CASE WHEN COALESCE(p.prev_rating, NULL) IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS games_played,
+                               (CASE WHEN %s THEN 0 ELSE COALESCE(p.prev_weekly, 0) END)
+                                 + CASE WHEN COALESCE(p.prev_rating, NULL) IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS weekly_games_played,
+                               t.updated_at
+                        FROM tmp_daily t
+                        LEFT JOIN prev p
+                          ON p.player_id = t.player_id
+                         AND p.game_mode = t.game_mode
+                         AND p.region    = t.region
+                        ON CONFLICT (player_id, game_mode, region, day_start)
+                        DO UPDATE SET
+                          rating = EXCLUDED.rating,
+                          rank = EXCLUDED.rank,
+                          games_played = CASE
+                            WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.games_played + 1
+                            ELSE {DAILY_LEADERBOARD_STATS}.games_played
+                          END,
+                          weekly_games_played = CASE
+                            WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.weekly_games_played + 1
+                            ELSE {DAILY_LEADERBOARD_STATS}.weekly_games_played
+                          END,
+                          updated_at = now()
+                        """,
+                        (yesterday_pt, is_monday),
+                    )
+                    logger.info(
+                        f"Daily upsert (server-side): affected_rows={cur.rowcount}"
+                    )
+                else:
+                    logger.info("No tmp_daily rows to upsert.")
                 # =============================
                 # Change-point insert into snapshots
                 # =============================
@@ -494,7 +444,7 @@ def write_to_postgres(players):
                     cur.execute(
                         f"""
                         CREATE TEMP TABLE tmp_ls (
-                          player_id bigint,
+                          player_id int,
                           game_mode { 'game_mode_enum' },
                           region    { 'region_enum'   },
                           rank      int,
