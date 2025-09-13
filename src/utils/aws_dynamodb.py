@@ -35,6 +35,8 @@ class DynamoDBClient:
 
     # ---------- Alias Table ----------
     def add_alias(self, alias, player_name):
+        alias = alias.lower()
+        player_name = player_name.lower()
         try:
             self.alias_table.update_item(
                 Key={"Alias": alias},
@@ -48,6 +50,7 @@ class DynamoDBClient:
             return f"Error updating alias: {e}"
 
     def delete_alias(self, alias):
+        alias = alias.lower()
         try:
             self.alias_table.delete_item(Key={"Alias": alias})
             return f"Alias {alias} deleted successfully"
@@ -57,6 +60,8 @@ class DynamoDBClient:
 
     # ---------- Channel Table ----------
     def add_channel(self, channel, player_name=None):
+        channel = channel.lower()
+        player_name = player_name.lower()
         try:
             player_name = player_name or channel
             self.channel_table.put_item(
@@ -71,6 +76,7 @@ class DynamoDBClient:
             return f"Error adding channel: {e}"
 
     def delete_channel(self, channel):
+        channel = channel.lower()
         try:
             self.channel_table.delete_item(Key={"ChannelName": channel})
             return f"Channel {channel} deleted successfully"
