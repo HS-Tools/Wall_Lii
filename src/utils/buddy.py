@@ -6,6 +6,10 @@ from .buddy_fetch import get_buddy_dict, get_trinkets_dict, parse_buddy, parse_t
 buddy_dict = get_buddy_dict()
 trinket_dict = get_trinkets_dict()
 
+def update_buddy_dict_and_trinket_dict():
+    global buddy_dict, trinket_dict
+    buddy_dict = get_buddy_dict()
+    trinket_dict = get_trinkets_dict()
 
 def get_buddy_text(name: str):
     results = parse_buddy(name.lower(), buddy_dict, easter_egg_buddies_dict)

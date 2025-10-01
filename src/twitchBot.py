@@ -10,7 +10,7 @@ import time
 from twitchio.ext import commands
 from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
-from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message
+from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message, update_buddy_dict_and_trinket_dict
 from utils.aws_dynamodb import DynamoDBClient
 from utils.regions import is_server
 from utils.supabase_channels import add_channel, delete_channel, update_player
@@ -240,6 +240,9 @@ class TwitchBot(commands.Bot):
                     # Prepare per-post messages and send to live hearthstone channels every 2h until 24h elapse
                     # Build the message once per post
                     for k, post in self.posted_news.items():
+                        # Check for new buddies and trinkets:
+                        update_buddy_dict_and_trinket_dict()
+                        
                         first_post = post["first_post_time"]
                         # Skip if more than 24h since first post
                         if (now - first_post).total_seconds() > 24 * 3600:
