@@ -3,6 +3,7 @@ from logger import setup_logger
 
 logger = setup_logger("TwitchBot")
 import psycopg2
+from psycopg2 import pool
 import sys
 import os
 import asyncio
@@ -10,7 +11,12 @@ import time
 from twitchio.ext import commands
 from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
-from utils.buddy import get_buddy_text, get_trinket_text, get_buddy_gold_tier_message, update_buddy_dict_and_trinket_dict
+from utils.buddy import (
+    get_buddy_text,
+    get_trinket_text,
+    get_buddy_gold_tier_message,
+    update_buddy_dict_and_trinket_dict,
+)
 from utils.aws_dynamodb import DynamoDBClient
 from utils.regions import is_server
 from utils.supabase_channels import add_channel, delete_channel, update_player
@@ -182,24 +188,32 @@ class TwitchBot(commands.Bot):
         PG_NAME = os.environ.get("DB_NAME")
         PG_USER = os.environ.get("DB_USER")
         PG_PASSWORD = os.environ.get("DB_PASSWORD")
-        conn = None
+
         while True:
+            conn = None
             try:
-                # Connect to the DB if not already connected
-                if conn is None or conn.closed:
-                    conn = psycopg2.connect(
-                        host=PG_HOST,
-                        port=PG_PORT,
-                        dbname=PG_NAME,
-                        user=PG_USER,
-                        password=PG_PASSWORD,
-                    )
+                # Create a new connection for each iteration to ensure proper cleanup
+                conn = psycopg2.connect(
+                    host=PG_HOST,
+                    port=PG_PORT,
+                    dbname=PG_NAME,
+                    user=PG_USER,
+                    password=PG_PASSWORD,
+                )
+                conn.autocommit = True
+
                 with conn.cursor() as cur:
                     cur.execute(
                         "SELECT title, slug, created_at FROM news_posts WHERE battlegrounds_relevant = True ORDER BY created_at DESC LIMIT 1"
                     )
                     row = cur.fetchone()
                     if not row:
+                        # Close connection before sleeping
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                        conn = None  # Prevent finally block from closing again
                         await asyncio.sleep(60)
                         continue
                     title, slug, created_at = row
@@ -216,6 +230,12 @@ class TwitchBot(commands.Bot):
                     now = datetime.datetime.now(datetime.timezone.utc)
                     # Only proceed if this news post is newer than the latest we've seen
                     if created_at <= self.latest_news_seen:
+                        # Close connection before sleeping
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                        conn = None  # Prevent finally block from closing again
                         await asyncio.sleep(60)
                         continue
 
@@ -242,7 +262,7 @@ class TwitchBot(commands.Bot):
                     for k, post in self.posted_news.items():
                         # Check for new buddies and trinkets:
                         update_buddy_dict_and_trinket_dict()
-                        
+
                         first_post = post["first_post_time"]
                         # Skip if more than 24h since first post
                         if (now - first_post).total_seconds() > 24 * 3600:
@@ -272,13 +292,13 @@ class TwitchBot(commands.Bot):
                                         print(f"Error sending news to {channel}: {e}")
             except Exception as exc:
                 print(f"Error in news_announcer: {exc}")
-                # If DB error, close and reconnect next time
+            finally:
+                # Always close the connection, regardless of success or failure
                 if conn:
                     try:
                         conn.close()
                     except Exception:
                         pass
-                    conn = None
             await asyncio.sleep(60)
 
     def clean_input(self, user_input):
