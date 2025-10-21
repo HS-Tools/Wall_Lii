@@ -305,8 +305,6 @@ class LeaderboardDB:
                 db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
-            print(where_clause, query_params, rank, region)
-
             def fetch_rank(cur, table_name: str) -> list:
                 new_table_name, join_clause = get_table_name_with_join(table_name)
                 table_alias = "ls" if new_table_name == LEADERBOARD_SNAPSHOTS else "cl"

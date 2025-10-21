@@ -142,7 +142,7 @@ def test_day_queries():
         print(f"Error: {e}")
 
     # Test yesterday's progress
-    print("\n2. !day beter 1")
+    print("\n2. !yday beter")
     try:
         result = db.day("beter", None, "0", 1)
         print(f"Result: {result}")
@@ -163,7 +163,7 @@ def test_week_queries():
         print(f"Error: {e}")
 
     # Test last week's progress
-    print("\n2. !week beter 1")
+    print("\n2. !lweek beter")
     try:
         result = db.week("beter", None, "0", 1)
         print(f"Result: {result}")
