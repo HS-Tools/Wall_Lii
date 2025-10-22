@@ -181,24 +181,6 @@ class LeaderboardDB:
             # Wait for 1 minute before next refresh
             await asyncio.sleep(60)
 
-    def player_exists(self, name: str, region: str, game_mode: str = "0") -> bool:
-        conn = self._get_connection()
-        try:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    f"""
-                    SELECT 1
-                    FROM {LEADERBOARD_SNAPSHOTS} ls
-                    INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
-                    WHERE p.player_name = %s AND ls.region = %s AND ls.game_mode = %s
-                    LIMIT 1;
-                """,
-                    (name.lower(), region, game_mode),
-                )
-                return cur.fetchone() is not None
-        finally:
-            self._connection_pool.putconn(conn)
-
     def top10(self, region: str = "global", game_mode: str = "0") -> str:
         """
         Fetch top 10 players using daily_leaderboard_stats.
@@ -301,7 +283,6 @@ class LeaderboardDB:
                 arg2,
                 game_mode,
                 aliases=self.aliases,
-                exists_check=self.player_exists,
                 db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
@@ -489,7 +470,6 @@ class LeaderboardDB:
                 arg2,
                 game_mode,
                 aliases=self.aliases,
-                exists_check=self.player_exists,
                 db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
@@ -531,7 +511,6 @@ class LeaderboardDB:
                 arg2,
                 game_mode,
                 aliases=self.aliases,
-                exists_check=self.player_exists,
                 db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 
@@ -617,7 +596,6 @@ class LeaderboardDB:
                 arg2,
                 game_mode,
                 aliases=self.aliases,
-                exists_check=self.player_exists,
                 db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
 

@@ -81,7 +81,6 @@ def parse_rank_or_player_args(
     arg2: Optional[str] = None,
     game_mode: str = "0",
     aliases: Optional[dict] = None,
-    exists_check: Optional[Callable] = None,
     db_cursor=None,
 ):
     region = None
@@ -126,22 +125,8 @@ def parse_rank_or_player_args(
 
         # Check if this is an alias
         if raw_term in aliases:
-            # If we have an exists_check function, verify if the original name exists
-            if exists_check and region:
-                if not exists_check(raw_term, region, game_mode):
-                    search_term = aliases[raw_term]
-            elif exists_check and not region:
-                # Check all regions - if player doesn't exist in any, use the alias
-                exists_in_any = False
-                for reg in REGIONS:
-                    if exists_check(raw_term, reg, game_mode):
-                        exists_in_any = True
-                        break
-                if not exists_in_any:
-                    search_term = aliases[raw_term]
-            else:
-                # No exists_check, just use the alias
-                search_term = aliases[raw_term]
+            # Always use the alias - let the main query handle if player doesn't exist
+            search_term = aliases[raw_term]
 
     where_clause = "WHERE p.player_name = %s AND ls.game_mode = %s"
     params = (search_term, game_mode)
