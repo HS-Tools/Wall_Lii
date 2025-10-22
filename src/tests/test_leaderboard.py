@@ -118,6 +118,10 @@ class TestTop10:
 
     def test_top10_global_solo(self, mock_postgres, mock_time_range_helper):
         """Test global top10 for solo mode (game_mode=0)"""
+        print("\n" + "=" * 60)
+        print("TESTING TOP10 COMMAND")
+        print("=" * 60)
+
         # Mock the database responses for each region
         na_data = create_mock_db_response("NA", "0")
         eu_data = create_mock_db_response("EU", "0")
@@ -136,6 +140,10 @@ class TestTop10:
         db = LeaderboardDB()
         result = db.top10()
 
+        print(f"\nTOP10 (global):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
         # Verify the result contains expected content
         assert "Top 10 Global (No CN)" in result
         assert "wallii.gg/all" in result
@@ -153,6 +161,10 @@ class TestTop10:
         db = LeaderboardDB()
         result = db.top10("NA")
 
+        print(f"\nTOP10 (NA):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
         assert "Top 10 NA:" in result
         assert "wallii.gg/na" in result
         assert "jeef" in result  # jeef should be in NA top 10
@@ -167,6 +179,10 @@ class TestTop10:
         db = LeaderboardDB()
         result = db.top10("EU")
 
+        print(f"\nTOP10 (EU):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
         assert "Top 10 EU:" in result
         assert "wallii.gg/eu" in result
         assert "hsmt" in result  # hsmt should be in EU top 10
@@ -179,6 +195,10 @@ class TestTop10:
 
         db = LeaderboardDB()
         result = db.top10("AP")
+
+        print(f"\nTOP10 (AP):")
+        print(f"Result: {result}")
+        print("-" * 40)
 
         assert "Top 10 AP:" in result
         assert "wallii.gg/ap" in result
@@ -301,3 +321,505 @@ class TestTop10:
         assert "1. rank1: 20000" in result
         assert "2. rank2: 19000" in result
         assert "3. rank3: 18000" in result
+
+
+class TestPeak:
+    """Test suite for the peak command using CSV mock data"""
+
+    def test_peak_beterbabbit_na(self, mock_postgres, mock_time_range_helper):
+        """Test peak command with beterbabbit in NA"""
+        print("\n" + "=" * 60)
+        print("TESTING PEAK COMMAND")
+        print("=" * 60)
+
+        # Load snapshot data for beterbabbit
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        # Mock the database response
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.peak("beterbabbit", "NA")
+
+        print(f"\nPEAK (beterbabbit, NA):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_peak_rank_2(self, mock_postgres, mock_time_range_helper):
+        """Test peak command with rank 2"""
+        # Mock snapshot data for rank 2 player
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+            }
+        ]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.peak("2")
+
+        print(f"\nPEAK (2):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_peak_rank_2_na(self, mock_postgres, mock_time_range_helper):
+        """Test peak command with rank 2 in NA"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+            }
+        ]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.peak("2", "NA")
+
+        print(f"\nPEAK (2, NA):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_peak_na_beterbabbit(self, mock_postgres, mock_time_range_helper):
+        """Test peak command with NA, beterbabbit"""
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.peak("NA", "beterbabbit")
+
+        print(f"\nPEAK (NA, beterbabbit):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_peak_na_rank_2(self, mock_postgres, mock_time_range_helper):
+        """Test peak command with NA, rank 2"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+            }
+        ]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.peak("NA", "2")
+
+        print(f"\nPEAK (NA, 2):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+
+class TestDay:
+    """Test suite for the day command using CSV mock data"""
+
+    def test_day_beterbabbit_na_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test day command with beterbabbit in NA, offset=0 (today)"""
+        print("\n" + "=" * 60)
+        print("TESTING DAY COMMAND")
+        print("=" * 60)
+
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        # Mock daily leaderboard stats for rank lookup
+        mock_daily_stats = [{"rank": 2}]
+
+        def mock_fetchall():
+            return snapshot_data
+
+        def mock_fetchone():
+            return mock_daily_stats[0]
+
+        mock_postgres.fetchall.return_value = mock_fetchall()
+        mock_postgres.fetchone.return_value = mock_fetchone()
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.day("beterbabbit", "NA", offset=0)
+
+        print(f"\nDAY (beterbabbit, NA, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_day_beterbabbit_na_offset_1(self, mock_postgres, mock_time_range_helper):
+        """Test day command with beterbabbit in NA, offset=1 (yesterday)"""
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.day("beterbabbit", "NA", offset=1)
+
+        print(f"\nDAY (beterbabbit, NA, offset=1):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_day_rank_2_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test day command with rank 2, offset=0"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+                "player_id": 123,
+                "game_mode": "0",
+            }
+        ]
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.day("2", offset=0)
+
+        print(f"\nDAY (2, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_day_rank_2_na_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test day command with rank 2 in NA, offset=0"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+                "player_id": 123,
+                "game_mode": "0",
+            }
+        ]
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.day("2", "NA", offset=0)
+
+        print(f"\nDAY (2, NA, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_day_na_beterbabbit_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test day command with NA, beterbabbit, offset=0"""
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.day("NA", "beterbabbit", offset=0)
+
+        print(f"\nDAY (NA, beterbabbit, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_day_na_rank_2_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test day command with NA, rank 2, offset=0"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+                "player_id": 123,
+                "game_mode": "0",
+            }
+        ]
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.day("NA", "2", offset=0)
+
+        print(f"\nDAY (NA, 2, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+
+class TestWeek:
+    """Test suite for the week command using CSV mock data"""
+
+    def test_week_beterbabbit_na_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test week command with beterbabbit in NA, offset=0 (this week)"""
+        print("\n" + "=" * 60)
+        print("TESTING WEEK COMMAND")
+        print("=" * 60)
+
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.week("beterbabbit", "NA", offset=0)
+
+        print(f"\nWEEK (beterbabbit, NA, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_week_beterbabbit_na_offset_1(self, mock_postgres, mock_time_range_helper):
+        """Test week command with beterbabbit in NA, offset=1 (last week)"""
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.week("beterbabbit", "NA", offset=1)
+
+        print(f"\nWEEK (beterbabbit, NA, offset=1):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_week_rank_2_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test week command with rank 2, offset=0"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+                "player_id": 123,
+                "game_mode": "0",
+            }
+        ]
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.week("2", offset=0)
+
+        print(f"\nWEEK (2, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_week_rank_2_na_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test week command with rank 2 in NA, offset=0"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+                "player_id": 123,
+                "game_mode": "0",
+            }
+        ]
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.week("2", "NA", offset=0)
+
+        print(f"\nWEEK (2, NA, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_week_na_beterbabbit_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test week command with NA, beterbabbit, offset=0"""
+        snapshot_path = os.path.join(
+            os.path.dirname(__file__),
+            "mock_data",
+            "beterbabbit_lastweek_snapshots_2025-10-13.csv",
+        )
+        snapshot_data = load_csv_data(snapshot_path)
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.week("NA", "beterbabbit", offset=0)
+
+        print(f"\nWEEK (NA, beterbabbit, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_week_na_rank_2_offset_0(self, mock_postgres, mock_time_range_helper):
+        """Test week command with NA, rank 2, offset=0"""
+        mock_snapshot_data = [
+            {
+                "player_name": "test_player",
+                "rating": 19000,
+                "region": "NA",
+                "snapshot_time": datetime(2025, 10, 21, 12, 0, 0),
+                "player_id": 123,
+                "game_mode": "0",
+            }
+        ]
+
+        mock_daily_stats = [{"rank": 2}]
+
+        mock_postgres.fetchall.return_value = mock_snapshot_data
+        mock_postgres.fetchone.return_value = mock_daily_stats[0]
+
+        db = LeaderboardDB()
+        result = db.week("NA", "2", offset=0)
+
+        print(f"\nWEEK (NA, 2, offset=0):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+
+class TestRank:
+    """Test suite for the rank command using CSV mock data"""
+
+    def test_rank_beterbabbit_na(self, mock_postgres, mock_time_range_helper):
+        """Test rank command with beterbabbit in NA"""
+        print("\n" + "=" * 60)
+        print("TESTING RANK COMMAND")
+        print("=" * 60)
+
+        # Mock current leaderboard data for beterbabbit
+        mock_leaderboard_data = [
+            {"player_name": "beterbabbit", "rating": 17306, "region": "NA", "rank": 2}
+        ]
+
+        mock_postgres.fetchall.return_value = mock_leaderboard_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.rank("beterbabbit", "NA")
+
+        print(f"\nRANK (beterbabbit, NA):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_rank_rank_2(self, mock_postgres, mock_time_range_helper):
+        """Test rank command with rank 2"""
+        # Mock daily leaderboard stats for rank 2
+        mock_daily_stats = [
+            {"player_name": "beterbabbit", "rating": 17306, "region": "NA", "rank": 2}
+        ]
+
+        mock_postgres.fetchall.return_value = mock_daily_stats
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.rank("2")
+
+        print(f"\nRANK (2):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_rank_rank_2_na(self, mock_postgres, mock_time_range_helper):
+        """Test rank command with rank 2 in NA"""
+        mock_daily_stats = [
+            {"player_name": "beterbabbit", "rating": 17306, "region": "NA", "rank": 2}
+        ]
+
+        mock_postgres.fetchall.return_value = mock_daily_stats
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.rank("2", "NA")
+
+        print(f"\nRANK (2, NA):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_rank_na_beterbabbit(self, mock_postgres, mock_time_range_helper):
+        """Test rank command with NA, beterbabbit"""
+        mock_leaderboard_data = [
+            {"player_name": "beterbabbit", "rating": 17306, "region": "NA", "rank": 2}
+        ]
+
+        mock_postgres.fetchall.return_value = mock_leaderboard_data
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.rank("NA", "beterbabbit")
+
+        print(f"\nRANK (NA, beterbabbit):")
+        print(f"Result: {result}")
+        print("-" * 40)
+
+    def test_rank_na_rank_2(self, mock_postgres, mock_time_range_helper):
+        """Test rank command with NA, rank 2"""
+        mock_daily_stats = [
+            {"player_name": "beterbabbit", "rating": 17306, "region": "NA", "rank": 2}
+        ]
+
+        mock_postgres.fetchall.return_value = mock_daily_stats
+        mock_postgres.fetchone.return_value = {"1": 1}
+
+        db = LeaderboardDB()
+        result = db.rank("NA", "2")
+
+        print(f"\nRANK (NA, 2):")
+        print(f"Result: {result}")
+        print("-" * 40)

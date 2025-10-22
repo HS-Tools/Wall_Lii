@@ -542,6 +542,30 @@ class LeaderboardDB:
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Get starting rating from daily_leaderboard_stats (1 day before start)
+                start_date = start_time.date()
+                start_date_prev = start_date - timedelta(days=1)
+
+                # First get the starting rating from daily_leaderboard_stats
+                cur.execute(
+                    f"""
+                    SELECT 
+                        d.rating as start_rating,
+                        p.player_name,
+                        d.region,
+                        d.player_id,
+                        d.game_mode
+                    FROM {DAILY_LEADERBOARD_STATS} d
+                    INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
+                    {where_clause.replace('ls.', 'd.').replace('p.player_name', 'p.player_name')}
+                    AND d.day_start = %s
+                """,
+                    query_params + (start_date_prev,),
+                )
+                start_ratings = {
+                    row["player_id"]: row["start_rating"] for row in cur.fetchall()
+                }
+
                 # OPTIMIZED: Single query with LEFT JOIN to get both snapshot data and ranks
                 cur.execute(
                     f"""
@@ -568,6 +592,10 @@ class LeaderboardDB:
                     query_params + (start_time, end_time),
                 )
                 rows = cur.fetchall()
+
+                # Add starting rating to each row
+                for row in rows:
+                    row["start_rating"] = start_ratings.get(row["player_id"])
 
             return self._summarize_progress(
                 rows, offset, fallback_query=(where_clause, query_params)
@@ -601,6 +629,30 @@ class LeaderboardDB:
             boundaries = [start + timedelta(days=i) for i in range(8)]
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Get starting rating from daily_leaderboard_stats (1 day before start)
+                start_date = start.date()
+                start_date_prev = start_date - timedelta(days=1)
+
+                # First get the starting rating from daily_leaderboard_stats
+                cur.execute(
+                    f"""
+                    SELECT 
+                        d.rating as start_rating,
+                        p.player_name,
+                        d.region,
+                        d.player_id,
+                        d.game_mode
+                    FROM {DAILY_LEADERBOARD_STATS} d
+                    INNER JOIN {PLAYERS_TABLE} p ON d.player_id = p.player_id
+                    {where_clause.replace('ls.', 'd.').replace('p.player_name', 'p.player_name')}
+                    AND d.day_start = %s
+                """,
+                    query_params + (start_date_prev,),
+                )
+                start_ratings = {
+                    row["player_id"]: row["start_rating"] for row in cur.fetchall()
+                }
+
                 # OPTIMIZED: Single query with LEFT JOIN to get both snapshot data and ranks
                 cur.execute(
                     f"""
@@ -627,6 +679,10 @@ class LeaderboardDB:
                     query_params + (start, end),
                 )
                 rows = cur.fetchall()
+
+                # Add starting rating to each row
+                for row in rows:
+                    row["start_rating"] = start_ratings.get(row["player_id"])
 
             return self._summarize_progress(
                 rows,
@@ -733,7 +789,13 @@ class LeaderboardDB:
         timestamps = [r["snapshot_time"] for r in region_rows]
         player_name = region_rows[0]["player_name"]
         rank = region_rows[-1]["rank"] or "N/A"  # Handle NULL rank
-        start_rating, end_rating = ratings[0], ratings[-1]
+
+        # Use start_rating from daily_leaderboard_stats if available, otherwise use first snapshot rating
+        start_rating = region_rows[0].get("start_rating")
+        if start_rating is None:
+            start_rating = ratings[0]
+
+        end_rating = ratings[-1]
         total_delta = end_rating - start_rating
 
         # Add view link
@@ -760,6 +822,19 @@ class LeaderboardDB:
         if is_week:
             delta_by_day = defaultdict(int)
             delta_count = 0
+
+            # Handle the first delta from start_rating to first snapshot
+            if len(ratings) > 0:
+                first_delta = ratings[0] - start_rating
+                if first_delta != 0:
+                    first_ts = timestamps[0]
+                    for d in range(7):
+                        if day_boundaries[d] <= first_ts < day_boundaries[d + 1]:
+                            delta_by_day[d] += first_delta
+                            delta_count += 1
+                            break
+
+            # Handle subsequent deltas between snapshots
             for i in range(len(ratings) - 1):
                 delta = ratings[i + 1] - ratings[i]
                 ts = timestamps[i + 1]
@@ -787,11 +862,20 @@ class LeaderboardDB:
                     f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}: {day_deltas_str} {emote}{view_link}"
                 )
         else:
-            deltas = [
-                ratings[i + 1] - ratings[i]
-                for i in range(len(ratings) - 1)
-                if ratings[i + 1] != ratings[i]
-            ]
+            # Calculate deltas including the first delta from start_rating
+            deltas = []
+            if len(ratings) > 0 and ratings[0] != start_rating:
+                deltas.append(ratings[0] - start_rating)
+
+            # Add subsequent deltas between snapshots
+            deltas.extend(
+                [
+                    ratings[i + 1] - ratings[i]
+                    for i in range(len(ratings) - 1)
+                    if ratings[i + 1] != ratings[i]
+                ]
+            )
+
             deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
             rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
             return (
