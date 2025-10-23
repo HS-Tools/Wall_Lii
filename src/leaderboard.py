@@ -697,20 +697,6 @@ class LeaderboardDB:
             conn = self._get_connection()
             try:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                    # First get the snapshot data
-                    cur.execute(
-                        f"""
-                        SELECT DISTINCT ON (ls.region)
-                            ls.rating, p.player_name, ls.region, ls.player_id, ls.game_mode
-                        FROM {LEADERBOARD_SNAPSHOTS} ls
-                        INNER JOIN {PLAYERS_TABLE} p ON ls.player_id = p.player_id
-                        {where_clause}
-                        ORDER BY ls.region, ls.snapshot_time DESC;
-                    """,
-                        query_params,
-                    )
-                    snapshot_rows = cur.fetchall()
-
                     # OPTIMIZED: Get ranks in a single query using window function
                     cur.execute(
                         f"""
