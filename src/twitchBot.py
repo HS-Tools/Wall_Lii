@@ -3,7 +3,6 @@ from logger import setup_logger
 
 logger = setup_logger("TwitchBot")
 import psycopg2
-from psycopg2 import pool
 import sys
 import os
 import asyncio
@@ -43,7 +42,7 @@ class TwitchBot(commands.Bot):
                     self.last_patch_trigger[message.channel.name] = now
 
     priority_channels = (
-        {"liihs"}
+        {"liihs", "walliibot"}
         if "--test" in sys.argv
         else {
             "liihs",
