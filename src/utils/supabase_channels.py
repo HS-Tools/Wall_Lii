@@ -79,6 +79,33 @@ def get_all_live_channels():
         conn.close()
 
 
+def update_youtube(channel, youtube):
+    channel = channel.lower()
+    conn = get_db_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                # Try to update the youtube column only
+                cur.execute(
+                    "UPDATE channels SET youtube = %s WHERE channel = %s",
+                    (youtube, channel),
+                )
+                if cur.rowcount == 0:
+                    # If no rows were updated, insert a new row with current timestamp
+                    cur.execute(
+                        """INSERT INTO channels (channel, youtube, added_at)
+                               VALUES (%s, %s, %s)
+                               ON CONFLICT (channel) DO NOTHING
+                        """,
+                        (channel, youtube, datetime.utcnow()),
+                    )
+        return f"YouTube channel for {channel} set to {youtube}"
+    except Exception as e:
+        return f"Error updating YouTube channel: {e}"
+    finally:
+        conn.close()
+
+
 def get_all_channels():
     conn = get_db_connection()
     try:

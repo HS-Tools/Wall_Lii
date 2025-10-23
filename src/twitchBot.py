@@ -19,7 +19,12 @@ from utils.buddy import (
 )
 from utils.aws_dynamodb import DynamoDBClient
 from utils.regions import is_server
-from utils.supabase_channels import add_channel, delete_channel, update_player
+from utils.supabase_channels import (
+    add_channel,
+    delete_channel,
+    update_player,
+    update_youtube,
+)
 
 
 class TwitchBot(commands.Bot):
@@ -504,6 +509,20 @@ class TwitchBot(commands.Bot):
         username = ctx.author.name.lower()
         response = self.dynamo_client.add_alias(username, player_name)
         response = update_player(username, player_name)
+        await ctx.send(response)
+
+    @commands.command(name="addyoutube")
+    async def addyoutube_command(self, ctx, youtube_channel=None):
+        """Add/update YouTube channel for the current Twitch channel"""
+        if ctx.channel.name != "walliibot":
+            return
+
+        if not youtube_channel:
+            await ctx.send("Usage: !addyoutube <youtube_channel_name>")
+            return
+
+        username = ctx.author.name.lower()
+        response = update_youtube(username, youtube_channel)
         await ctx.send(response)
 
     @commands.command(name="deletechannel")
