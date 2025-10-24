@@ -58,10 +58,10 @@ jobs:
             --disable-rollback \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
-              "DB_HOST=${{ secrets.DB_HOST }}" \
-              "DB_NAME=${{ secrets.DB_NAME }}" \
-              "DB_USER=${{ secrets.DB_USER }}" \
-              "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
-              "DB_PORT=${{ secrets.DB_PORT }}" \
-              "TWITCH_LIVE_CHECK_CLIENT_ID=${{ secrets.TWITCH_LIVE_CHECK_CLIENT_ID }}" \
-              "TWITCH_LIVE_CHECK_SECRET=${{ secrets.TWITCH_LIVE_CHECK_SECRET }}"
+              "ParameterKey=DB_HOST,ParameterValue=${{ secrets.DB_HOST }}" \
+              "ParameterKey=DB_NAME,ParameterValue=${{ secrets.DB_NAME }}" \
+              "ParameterKey=DB_USER,ParameterValue=${{ secrets.DB_USER }}" \
+              "ParameterKey=DB_PASSWORD,ParameterValue=${{ secrets.DB_PASSWORD }}" \
+              "ParameterKey=DB_PORT,ParameterValue=${{ secrets.DB_PORT }}" \
+              "ParameterKey=TWITCH_LIVE_CHECK_CLIENT_ID,ParameterValue=${{ secrets.TWITCH_LIVE_CHECK_CLIENT_ID }}" \
+              "ParameterKey=TWITCH_LIVE_CHECK_SECRET,ParameterValue=${{ secrets.TWITCH_LIVE_CHECK_SECRET }}"
