@@ -56,4 +56,12 @@ jobs:
             --region us-east-1 \
             --no-confirm-changeset \
             --disable-rollback \
-            --no-fail-on-empty-changeset
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              DB_HOST=${{ secrets.DB_HOST }} \
+              DB_NAME=${{ secrets.DB_NAME }} \
+              DB_USER=${{ secrets.DB_USER }} \
+              DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              DB_PORT=${{ secrets.DB_PORT }} \
+              TWITCH_LIVE_CHECK_CLIENT_ID=${{ secrets.TWITCH_LIVE_CHECK_CLIENT_ID }} \
+              TWITCH_LIVE_CHECK_SECRET=${{ secrets.TWITCH_LIVE_CHECK_SECRET }}

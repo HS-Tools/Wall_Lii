@@ -3,6 +3,32 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Supabase-only Lambda stack for HSBG automation
 
+Parameters:
+  DB_HOST:
+    Type: String
+    Description: Database host
+  DB_NAME:
+    Type: String
+    Description: Database name
+  DB_USER:
+    Type: String
+    Description: Database user
+  DB_PASSWORD:
+    Type: String
+    Description: Database password
+    NoEcho: true
+  DB_PORT:
+    Type: String
+    Description: Database port
+    Default: "5432"
+  TWITCH_LIVE_CHECK_CLIENT_ID:
+    Type: String
+    Description: Twitch client ID
+  TWITCH_LIVE_CHECK_SECRET:
+    Type: String
+    Description: Twitch client secret
+    NoEcho: true
+
 Resources:
 
   CurrentLeaderboardFunction:
@@ -13,6 +39,15 @@ Resources:
       Runtime: python3.9
       Timeout: 900
       MemorySize: 256
+      Environment:
+        Variables:
+          DB_HOST: !Ref DB_HOST
+          DB_NAME: !Ref DB_NAME
+          DB_USER: !Ref DB_USER
+          DB_PASSWORD: !Ref DB_PASSWORD
+          DB_PORT: !Ref DB_PORT
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
+          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -27,6 +62,15 @@ Resources:
       Runtime: python3.9
       Timeout: 300
       MemorySize: 256
+      Environment:
+        Variables:
+          DB_HOST: !Ref DB_HOST
+          DB_NAME: !Ref DB_NAME
+          DB_USER: !Ref DB_USER
+          DB_PASSWORD: !Ref DB_PASSWORD
+          DB_PORT: !Ref DB_PORT
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
+          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -41,6 +85,15 @@ Resources:
       Runtime: python3.9
       Timeout: 300
       MemorySize: 256
+      Environment:
+        Variables:
+          DB_HOST: !Ref DB_HOST
+          DB_NAME: !Ref DB_NAME
+          DB_USER: !Ref DB_USER
+          DB_PASSWORD: !Ref DB_PASSWORD
+          DB_PORT: !Ref DB_PORT
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
+          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -55,6 +108,15 @@ Resources:
       Runtime: python3.9
       Timeout: 300
       MemorySize: 128
+      Environment:
+        Variables:
+          DB_HOST: !Ref DB_HOST
+          DB_NAME: !Ref DB_NAME
+          DB_USER: !Ref DB_USER
+          DB_PASSWORD: !Ref DB_PASSWORD
+          DB_PORT: !Ref DB_PORT
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
+          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -69,6 +131,15 @@ Resources:
       Runtime: python3.9
       Timeout: 900
       MemorySize: 512
+      Environment:
+        Variables:
+          DB_HOST: !Ref DB_HOST
+          DB_NAME: !Ref DB_NAME
+          DB_USER: !Ref DB_USER
+          DB_PASSWORD: !Ref DB_PASSWORD
+          DB_PORT: !Ref DB_PORT
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
+          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
       Events:
         ScheduledUpdate:
           Type: Schedule
