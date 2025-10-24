@@ -35,7 +35,7 @@ jobs:
       # Step 5: Build the SAM application
       - name: Build the Lambda application
         run: |
-          sam build --template-file ./lambda-loader/template.yaml
+          sam build --template-file ./lambda-functions/template.yaml
 
       # Step 6: Package the CloudFormation template
       - name: Package the CloudFormation template
