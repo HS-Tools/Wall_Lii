@@ -4,27 +4,27 @@ Description: >
   Supabase-only Lambda stack for HSBG automation
 
 Parameters:
-  DB_HOST:
+  DBHost:
     Type: String
     Description: Database host
-  DB_NAME:
+  DBName:
     Type: String
     Description: Database name
-  DB_USER:
+  DBUser:
     Type: String
     Description: Database user
-  DB_PASSWORD:
+  DBPassword:
     Type: String
     Description: Database password
     NoEcho: true
-  DB_PORT:
+  DBPort:
     Type: String
     Description: Database port
     Default: "5432"
-  TWITCH_LIVE_CHECK_CLIENT_ID:
+  TwitchLiveCheckClientId:
     Type: String
     Description: Twitch client ID
-  TWITCH_LIVE_CHECK_SECRET:
+  TwitchLiveCheckSecret:
     Type: String
     Description: Twitch client secret
     NoEcho: true
@@ -41,13 +41,13 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          DB_HOST: !Ref DB_HOST
-          DB_NAME: !Ref DB_NAME
-          DB_USER: !Ref DB_USER
-          DB_PASSWORD: !Ref DB_PASSWORD
-          DB_PORT: !Ref DB_PORT
-          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
-          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_PORT: !Ref DBPort
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
+          TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -64,13 +64,13 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          DB_HOST: !Ref DB_HOST
-          DB_NAME: !Ref DB_NAME
-          DB_USER: !Ref DB_USER
-          DB_PASSWORD: !Ref DB_PASSWORD
-          DB_PORT: !Ref DB_PORT
-          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
-          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_PORT: !Ref DBPort
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
+          TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -87,13 +87,13 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          DB_HOST: !Ref DB_HOST
-          DB_NAME: !Ref DB_NAME
-          DB_USER: !Ref DB_USER
-          DB_PASSWORD: !Ref DB_PASSWORD
-          DB_PORT: !Ref DB_PORT
-          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
-          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_PORT: !Ref DBPort
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
+          TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -110,13 +110,13 @@ Resources:
       MemorySize: 128
       Environment:
         Variables:
-          DB_HOST: !Ref DB_HOST
-          DB_NAME: !Ref DB_NAME
-          DB_USER: !Ref DB_USER
-          DB_PASSWORD: !Ref DB_PASSWORD
-          DB_PORT: !Ref DB_PORT
-          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
-          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_PORT: !Ref DBPort
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
+          TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
         ScheduledUpdate:
           Type: Schedule
@@ -133,13 +133,13 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
-          DB_HOST: !Ref DB_HOST
-          DB_NAME: !Ref DB_NAME
-          DB_USER: !Ref DB_USER
-          DB_PASSWORD: !Ref DB_PASSWORD
-          DB_PORT: !Ref DB_PORT
-          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TWITCH_LIVE_CHECK_CLIENT_ID
-          TWITCH_LIVE_CHECK_SECRET: !Ref TWITCH_LIVE_CHECK_SECRET
+          DB_HOST: !Ref DBHost
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUser
+          DB_PASSWORD: !Ref DBPassword
+          DB_PORT: !Ref DBPort
+          TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
+          TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
         ScheduledUpdate:
           Type: Schedule

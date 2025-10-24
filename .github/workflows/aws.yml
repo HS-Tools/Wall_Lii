@@ -66,10 +66,10 @@ jobs:
             --disable-rollback \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
-              "DB_HOST=${DB_HOST}" \
-              "DB_NAME=${DB_NAME}" \
-              "DB_USER=${DB_USER}" \
-              "DB_PASSWORD=${DB_PASSWORD}" \
-              "DB_PORT=${DB_PORT}" \
-              "TWITCH_LIVE_CHECK_CLIENT_ID=${TWITCH_LIVE_CHECK_CLIENT_ID}" \
-              "TWITCH_LIVE_CHECK_SECRET=${TWITCH_LIVE_CHECK_SECRET}"
+              DBHost=${DB_HOST} \
+              DBName=${DB_NAME} \
+              DBUser=${DB_USER} \
+              DBPassword=${DB_PASSWORD} \
+              DBPort=${DB_PORT} \
+              TwitchLiveCheckClientId=${TWITCH_LIVE_CHECK_CLIENT_ID} \
+              TwitchLiveCheckSecret=${TWITCH_LIVE_CHECK_SECRET}
