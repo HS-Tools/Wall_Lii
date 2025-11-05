@@ -28,6 +28,10 @@ Parameters:
     Type: String
     Description: Twitch client secret
     NoEcho: true
+  AlertEmail:
+    Type: String
+    Description: Email address for Lambda error alerts
+    Default: ""
 
 Resources:
 
@@ -145,3 +149,117 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: rate(4 hours)
+
+  # SNS Topic for Lambda Error Alerts
+  LambdaErrorTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Lambda Error Alerts
+      TopicName: hsbg-lambda-error-alerts
+
+  # SNS Subscription (only created if AlertEmail is provided)
+  LambdaErrorSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlertEmail
+    Properties:
+      Protocol: email
+      TopicArn: !Ref LambdaErrorTopic
+      Endpoint: !Ref AlertEmail
+
+  # CloudWatch Alarm for CurrentLeaderboardFunction
+  CurrentLeaderboardErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: CurrentLeaderboardFunction-Errors
+      AlarmDescription: Alert when CurrentLeaderboardFunction has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CurrentLeaderboardFunction
+      AlarmActions:
+        - !Ref LambdaErrorTopic
+
+  # CloudWatch Alarm for LeaderboardSnapshotsFunction
+  LeaderboardSnapshotsErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: LeaderboardSnapshotsFunction-Errors
+      AlarmDescription: Alert when LeaderboardSnapshotsFunction has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref LeaderboardSnapshotsFunction
+      AlarmActions:
+        - !Ref LambdaErrorTopic
+
+  # CloudWatch Alarm for FetchNewsFunction
+  FetchNewsErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: FetchNewsFunction-Errors
+      AlarmDescription: Alert when FetchNewsFunction has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref FetchNewsFunction
+      AlarmActions:
+        - !Ref LambdaErrorTopic
+
+  # CloudWatch Alarm for TwitchLiveCheckFunction
+  TwitchLiveCheckErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: TwitchLiveCheckFunction-Errors
+      AlarmDescription: Alert when TwitchLiveCheckFunction has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref TwitchLiveCheckFunction
+      AlarmActions:
+        - !Ref LambdaErrorTopic
+
+  # CloudWatch Alarm for UpdateEntitiesFunction
+  UpdateEntitiesErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: UpdateEntitiesFunction-Errors
+      AlarmDescription: Alert when UpdateEntitiesFunction has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref UpdateEntitiesFunction
+      AlarmActions:
+        - !Ref LambdaErrorTopic
+
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, ""]]
