@@ -56,6 +56,7 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           TWITCH_LIVE_CHECK_CLIENT_ID: ${{ secrets.TWITCH_LIVE_CHECK_CLIENT_ID }}
           TWITCH_LIVE_CHECK_SECRET: ${{ secrets.TWITCH_LIVE_CHECK_SECRET }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
         run: |
           sam deploy \
             --template-file packaged.yaml \
@@ -72,4 +73,5 @@ jobs:
               DBPassword=${DB_PASSWORD} \
               DBPort=${DB_PORT} \
               TwitchLiveCheckClientId=${TWITCH_LIVE_CHECK_CLIENT_ID} \
-              TwitchLiveCheckSecret=${TWITCH_LIVE_CHECK_SECRET}
+              TwitchLiveCheckSecret=${TWITCH_LIVE_CHECK_SECRET} \
+              AlertEmail=${ALERT_EMAIL}
