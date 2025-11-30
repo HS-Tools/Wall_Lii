@@ -6,12 +6,14 @@ import boto3
 from collections import defaultdict
 from dotenv import load_dotenv
 import requests
+import math
 from utils.queries import parse_rank_or_player_args
 from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
 from datetime import timedelta
 from psycopg2.extras import RealDictCursor
 from utils.constants import NON_CN_REGIONS, REGIONS, STATS_LIMIT
+from utils.placement_utils import calculate_average_placement, calculate_placements
 from typing import Optional, Tuple
 import aiohttp
 
@@ -750,6 +752,7 @@ class LeaderboardDB:
         # Just use the first region since we only need one result
         region = next(iter(regions.keys()))
         region_rows = regions[region]
+        is_cn = region.upper() == "CN"
 
         ratings = [r["rating"] for r in region_rows]
         timestamps = [r["snapshot_time"] for r in region_rows]
@@ -757,6 +760,16 @@ class LeaderboardDB:
         rank = region_rows[-1]["rank"] or "N/A"  # Handle NULL rank
         start_rating, end_rating = ratings[0], ratings[-1]
         total_delta = end_rating - start_rating
+
+        # Calculate average placement (skip for CN)
+        avg_placement_str = ""
+        if not is_cn:
+            avg_placement = calculate_average_placement(ratings)
+            avg_placement_str = (
+                f" with {avg_placement:.2f} average"
+                if not math.isnan(avg_placement)
+                else ""
+            )
 
         # Add view link
         view_link = (
@@ -806,21 +819,48 @@ class LeaderboardDB:
                 suffix = " last week" if offset > 0 else ""
                 return (
                     f"{player_name} {adjective} from {start_rating} to {end_rating} "
-                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}: {day_deltas_str} {emote}{view_link}"
+                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {delta_count} games{suffix}{avg_placement_str}: {day_deltas_str} {emote}{view_link}"
                 )
         else:
-            deltas = [
-                ratings[i + 1] - ratings[i]
-                for i in range(len(ratings) - 1)
-                if ratings[i + 1] != ratings[i]
-            ]
+            # For day: show placements instead of deltas (unless CN)
+            if is_cn:
+                # CN: use original delta-based format
+                deltas = [
+                    ratings[i + 1] - ratings[i]
+                    for i in range(len(ratings) - 1)
+                    if ratings[i + 1] != ratings[i]
+                ]
 
-            deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
-            rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
-            return (
-                f"{player_name} {adjective} from {start_rating} to {end_rating} "
-                f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}{view_link}"
-            )
+                deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
+                rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
+                return (
+                    f"{player_name} {adjective} from {start_rating} to {end_rating} "
+                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}{view_link}"
+                )
+            else:
+                # Non-CN: show placements
+                # Calculate placements for all rating changes
+                placements = calculate_placements(ratings)
+
+                # Filter to only show placements where rating changed
+                placements_with_changes = []
+                for i in range(len(ratings) - 1):
+                    if ratings[i + 1] != ratings[i]:
+                        placements_with_changes.append(placements[i])
+
+                # Format placements (show as integer if whole number, otherwise show decimal)
+                placements_str = ", ".join(
+                    [
+                        f"{int(p)}" if p == int(p) else f"{p:.1f}"
+                        for p in placements_with_changes
+                    ]
+                )
+
+                rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
+                return (
+                    f"{player_name} {adjective} from {start_rating} to {end_rating} "
+                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(placements_with_changes)} games{avg_placement_str}: {placements_str} {emote}{view_link}"
+                )
 
     def milestone(self, milestone_str: str, region: str = None) -> str:
         """
