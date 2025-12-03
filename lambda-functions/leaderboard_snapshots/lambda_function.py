@@ -2,7 +2,7 @@ import os
 import json
 import asyncio
 import aiohttp
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from psycopg2.extras import execute_values
 from logger import setup_logger
 from db_utils import get_db_connection
@@ -268,6 +268,52 @@ def write_to_postgres(players):
         conn = get_db_connection()
         with conn:
             with conn.cursor() as cur:
+                # Create or replace the estimate_placement PostgreSQL function
+                # This replicates the Python estimate_placement logic
+                cur.execute(
+                    """
+                    CREATE OR REPLACE FUNCTION estimate_placement(start_rating NUMERIC, end_rating NUMERIC)
+                    RETURNS NUMERIC
+                    LANGUAGE plpgsql
+                    IMMUTABLE
+                    AS $$
+                    DECLARE
+                        gain NUMERIC;
+                        dex_avg NUMERIC;
+                        placements NUMERIC[] := ARRAY[1, 2, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8];
+                        p NUMERIC;
+                        avg_opp NUMERIC;
+                        delta NUMERIC;
+                        best_placement NUMERIC := 1;
+                        best_delta NUMERIC := 'Infinity'::NUMERIC;
+                    BEGIN
+                        gain := end_rating - start_rating;
+                        
+                        -- Calculate dexAvg
+                        IF start_rating < 8200 THEN
+                            dex_avg := start_rating;
+                        ELSE
+                            dex_avg := start_rating - 0.85 * (start_rating - 8500);
+                        END IF;
+                        
+                        -- Find placement with smallest delta
+                        FOREACH p IN ARRAY placements
+                        LOOP
+                            -- avgOpp-formula
+                            avg_opp := start_rating - 148.1181435 * (100 - ((p - 1) * (200.0 / 7.0) + gain));
+                            delta := ABS(dex_avg - avg_opp);
+                            
+                            IF delta < best_delta THEN
+                                best_delta := delta;
+                                best_placement := p;
+                            END IF;
+                        END LOOP;
+                        
+                        RETURN best_placement;
+                    END;
+                    $$;
+                """
+                )
 
                 # Map player_name -> player_id (upsert players, then fetch ids)
                 unique_names = sorted({p["player_name"] for p in players})
@@ -318,9 +364,6 @@ def write_to_postgres(players):
 
                 # Process milestones after inserting player data
                 process_milestones(cur, players)
-
-                # Fully rewrite logic for handling the daily_leaderboard_stats table via UPSERT
-                from datetime import timedelta
 
                 pacific = pytz.timezone("America/Los_Angeles")
                 now_utc = datetime.now(timezone.utc)
@@ -380,16 +423,29 @@ def write_to_postgres(players):
                         WITH prev AS (
                           SELECT d.player_id, d.game_mode, d.region,
                                  d.rating AS prev_rating,
-                                 d.weekly_games_played AS prev_weekly
+                                 d.weekly_games_played AS prev_weekly,
+                                 d.day_avg AS prev_day_avg,
+                                 d.weekly_avg AS prev_weekly_avg,
+                                 d.games_played AS prev_games_played
                           FROM {DAILY_LEADERBOARD_STATS} d
                           WHERE d.day_start = %s
                         )
                         INSERT INTO {DAILY_LEADERBOARD_STATS}
-                          (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, updated_at)
+                          (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, day_avg, weekly_avg, updated_at)
                         SELECT t.player_id, t.game_mode, t.region, t.day_start, t.rating, t.rank,
                                CASE WHEN COALESCE(p.prev_rating, NULL) IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS games_played,
                                (CASE WHEN %s THEN 0 ELSE COALESCE(p.prev_weekly, 0) END)
                                  + CASE WHEN COALESCE(p.prev_rating, NULL) IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS weekly_games_played,
+                               CASE 
+                                 WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
+                                   estimate_placement(p.prev_rating, t.rating)
+                                 ELSE NULL
+                               END AS day_avg,
+                               CASE 
+                                 WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
+                                   estimate_placement(p.prev_rating, t.rating)
+                                 ELSE NULL
+                               END AS weekly_avg,
                                t.updated_at
                         FROM tmp_daily t
                         LEFT JOIN prev p
@@ -407,6 +463,30 @@ def write_to_postgres(players):
                           weekly_games_played = CASE
                             WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN {DAILY_LEADERBOARD_STATS}.weekly_games_played + 1
                             ELSE {DAILY_LEADERBOARD_STATS}.weekly_games_played
+                          END,
+                          day_avg = CASE
+                            WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN
+                              CASE
+                                WHEN {DAILY_LEADERBOARD_STATS}.games_played = 0 OR {DAILY_LEADERBOARD_STATS}.day_avg IS NULL THEN
+                                  estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating)
+                                ELSE
+                                  ({DAILY_LEADERBOARD_STATS}.day_avg * {DAILY_LEADERBOARD_STATS}.games_played 
+                                   + estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating))
+                                  / ({DAILY_LEADERBOARD_STATS}.games_played + 1.0)
+                              END
+                            ELSE {DAILY_LEADERBOARD_STATS}.day_avg
+                          END,
+                          weekly_avg = CASE
+                            WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN
+                              CASE
+                                WHEN {DAILY_LEADERBOARD_STATS}.weekly_games_played = 0 OR {DAILY_LEADERBOARD_STATS}.weekly_avg IS NULL THEN
+                                  estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating)
+                                ELSE
+                                  ({DAILY_LEADERBOARD_STATS}.weekly_avg * {DAILY_LEADERBOARD_STATS}.weekly_games_played 
+                                   + estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating))
+                                  / ({DAILY_LEADERBOARD_STATS}.weekly_games_played + 1.0)
+                              END
+                            ELSE {DAILY_LEADERBOARD_STATS}.weekly_avg
                           END,
                           updated_at = now()
                         """,
