@@ -43,6 +43,22 @@ BATCH_WRITE_SIZE = int(
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "40"))
 
 
+def get_max_pages(region: str, game_mode: int) -> int:
+    """
+    Get the maximum number of pages to fetch based on region and game mode.
+    Each page contains 25 players.
+    Returns:
+        - Non-China solo: 40 pages (1000 players)
+        - Non-China duos: 4 pages (100 players)
+        - China solo: 20 pages (500 players)
+        - China duos: 4 pages (100 players)
+    """
+    if region == "CN":
+        return 20 if game_mode == 0 else 4  # 500 for solo, 100 for duos
+    else:
+        return 40 if game_mode == 0 else 4  # 1000 for solo, 100 for duos
+
+
 async def fetch_page(session, params, sem, retries=3):
     """Fetch a single page of leaderboard data with retries and timeout"""
     backoff = 1
@@ -137,10 +153,13 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
         tasks = []
         for mode_api, mode_short in MODES:
             for api_region in REGIONS:
+                # Calculate max_pages based on region and game mode
+                mapped_region = REGION_MAPPING[api_region]
+                region_max_pages = get_max_pages(mapped_region, mode_short)
                 # Fetch pages for this region/mode until we get an empty page
                 tasks.append(
                     fetch_region_mode_pages(
-                        session, api_region, mode_api, mode_short, sem, max_pages
+                        session, api_region, mode_api, mode_short, sem, region_max_pages
                     )
                 )
 
@@ -158,9 +177,11 @@ async def fetch_leaderboards(max_pages=MAX_PAGES):
     ) as session:
         cn_tasks = []
         for mode_short, mode_name in [(0, "battlegrounds"), (1, "battlegroundsduo")]:
+            # Calculate max_pages based on region and game mode
+            cn_max_pages = get_max_pages("CN", mode_short)
             cn_tasks.append(
                 fetch_cn_region_mode_pages(
-                    session, mode_short, mode_name, sem, max_pages
+                    session, mode_short, mode_name, sem, cn_max_pages
                 )
             )
 
