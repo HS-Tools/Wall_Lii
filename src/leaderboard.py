@@ -10,7 +10,7 @@ import math
 from utils.queries import parse_rank_or_player_args
 from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
-from datetime import timedelta
+from datetime import timedelta, date
 from psycopg2.extras import RealDictCursor
 from utils.constants import NON_CN_REGIONS, REGIONS, STATS_LIMIT
 from utils.placement_utils import calculate_average_placement, calculate_placements
@@ -23,6 +23,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import SEASON
 
 load_dotenv()
+
+# Cutoff date for switching from deltas to placements in day/week commands
+# After this date, non-CN regions will use placements instead of deltas
+PLACEMENTS_CUTOFF_DATE = date(2025, 12, 3)
 
 # Table names
 CURRENT_LEADERBOARD = "current_leaderboard"
@@ -858,6 +862,9 @@ class LeaderboardDB:
                 )
         else:
             # For day: show placements instead of deltas (unless CN)
+            # Temporarily using deltas, will switch back to placements after cutoff date
+            use_placements = date.today() >= PLACEMENTS_CUTOFF_DATE
+
             if is_cn:
                 # CN: use original delta-based format
                 deltas = [
@@ -872,8 +879,8 @@ class LeaderboardDB:
                     f"{player_name} {adjective} from {start_rating} to {end_rating} "
                     f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}{view_link}"
                 )
-            else:
-                # Non-CN: show placements
+            elif use_placements:
+                # Non-CN: show placements (after cutoff date)
                 # Calculate placements for all rating changes
                 placements = calculate_placements(ratings)
 
@@ -895,6 +902,20 @@ class LeaderboardDB:
                 return (
                     f"{player_name} {adjective} from {start_rating} to {end_rating} "
                     f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(placements_with_changes)} games{avg_placement_str}: {placements_str} {emote}{view_link}"
+                )
+            else:
+                # Non-CN: temporarily use deltas (before cutoff date)
+                deltas = [
+                    ratings[i + 1] - ratings[i]
+                    for i in range(len(ratings) - 1)
+                    if ratings[i + 1] != ratings[i]
+                ]
+
+                deltas_str = ", ".join([f"{'+' if d > 0 else ''}{d}" for d in deltas])
+                rank_text = f"rank {rank}" if rank != "N/A" else "unranked"
+                return (
+                    f"{player_name} {adjective} from {start_rating} to {end_rating} "
+                    f"({'+' if total_delta >= 0 else ''}{total_delta}) in {region} over {len(deltas)} games: {deltas_str} {emote}{view_link}"
                 )
 
     def milestone(self, milestone_str: str, region: str = None) -> str:
