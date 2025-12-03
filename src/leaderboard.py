@@ -112,6 +112,13 @@ class LeaderboardDB:
             )
         return self._connection_pool.getconn()
 
+    def _get_stats_limit(self, game_mode: str) -> int:
+        """
+        Get the stats limit based on game mode.
+        Returns 1000 for solo (game_mode="0") and 100 for duos (game_mode="1").
+        """
+        return 100 if game_mode == "1" else 1000
+
     async def _fetch_patch_link(self) -> str:
         """Fetch patch link from Supabase news_posts table"""
         conn = self._get_connection()
@@ -467,13 +474,20 @@ class LeaderboardDB:
     def peak(self, arg1: str, arg2: str = None, game_mode: str = "0") -> str:
         conn = self._get_connection()
         try:
-            where_clause, query_params, _, _ = parse_rank_or_player_args(
+            where_clause, query_params, rank, _ = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
                 aliases=self.aliases,
                 db_cursor=conn.cursor(cursor_factory=RealDictCursor),
             )
+
+            limit = self._get_stats_limit(game_mode)
+
+            # Check rank limit if rank argument was provided
+            if rank is not None and rank > limit:
+                game_mode_name = "duos" if game_mode == "1" else "solo"
+                return f"This command is only supported for the top {limit} in {game_mode_name}."
 
             print(where_clause)
             print(query_params)
@@ -491,7 +505,7 @@ class LeaderboardDB:
                 rows = cur.fetchall()
 
                 if not rows:
-                    return f"{query_params[0]} is not in the top {STATS_LIMIT}."
+                    return f"{query_params[0]} is not in the top {limit}."
 
                 return " | ".join(
                     f"{row['player_name']}'s peak rating in {row['region']} this season: {row['rating']} on {row['snapshot_time'].astimezone(TimeRangeHelper.now_la().tzinfo).strftime('%B %d, %Y %I:%M %p')} PT"
@@ -508,7 +522,7 @@ class LeaderboardDB:
     ) -> str:
         conn = self._get_connection()
         try:
-            where_clause, query_params, _, _ = parse_rank_or_player_args(
+            where_clause, query_params, rank, _ = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
@@ -518,6 +532,13 @@ class LeaderboardDB:
 
             if len(query_params) > 3:
                 return "Enter a valid region with your command: like !day 1 NA"
+
+            limit = self._get_stats_limit(game_mode)
+
+            # Check rank limit if rank argument was provided
+            if rank is not None and rank > limit:
+                game_mode_name = "duos" if game_mode == "1" else "solo"
+                return f"This command is only supported for the top {limit} in {game_mode_name}."
 
             start_time = TimeRangeHelper.start_of_day_la(offset)
             end_time = TimeRangeHelper.start_of_day_la(offset - 1)
@@ -580,7 +601,10 @@ class LeaderboardDB:
                     rows.insert(0, start_row)
 
             return self._summarize_progress(
-                rows, offset, fallback_query=(where_clause, query_params)
+                rows,
+                offset,
+                fallback_query=(where_clause, query_params),
+                game_mode=game_mode,
             )
 
         except Exception as e:
@@ -593,7 +617,7 @@ class LeaderboardDB:
     ) -> str:
         conn = self._get_connection()
         try:
-            where_clause, query_params, _, _ = parse_rank_or_player_args(
+            where_clause, query_params, rank, _ = parse_rank_or_player_args(
                 arg1,
                 arg2,
                 game_mode,
@@ -603,6 +627,13 @@ class LeaderboardDB:
 
             if len(query_params) > 3:
                 return "Enter a valid region with your command: like !week 1 NA"
+
+            limit = self._get_stats_limit(game_mode)
+
+            # Check rank limit if rank argument was provided
+            if rank is not None and rank > limit:
+                game_mode_name = "duos" if game_mode == "1" else "solo"
+                return f"This command is only supported for the top {limit} in {game_mode_name}."
 
             start = TimeRangeHelper.start_of_week_la(offset)
             end = TimeRangeHelper.start_of_week_la(offset - 1)
@@ -673,6 +704,7 @@ class LeaderboardDB:
                 day_boundaries=boundaries,
                 labels=labels,
                 fallback_query=(where_clause, query_params),
+                game_mode=game_mode,
             )
 
         except Exception as e:
@@ -688,10 +720,13 @@ class LeaderboardDB:
         day_boundaries=None,
         labels=None,
         fallback_query=None,
+        game_mode: str = "0",
     ):
         regions = defaultdict(list)
         for row in rows:
             regions[row["region"]].append(row)
+
+        limit = self._get_stats_limit(game_mode)
 
         # If no regions and we have a fallback query, fetch latest snapshot
         if not regions and fallback_query:
@@ -728,7 +763,7 @@ class LeaderboardDB:
                 self._connection_pool.putconn(conn)
 
             if not fallback_rows:
-                return f"{query_params[0]} is not in the top {STATS_LIMIT}."
+                return f"{query_params[0]} is not in the top {limit}."
 
             # Just use the first row since we only need one result
             row = fallback_rows[0]

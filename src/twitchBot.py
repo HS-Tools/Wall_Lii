@@ -53,6 +53,8 @@ class TwitchBot(commands.Bot):
             "rdulive",
             "xqn_thesad",
             "terrytsang",
+            "hapabear",
+            "asmodaitv",
         }
     )  # These channels are always joined
 
