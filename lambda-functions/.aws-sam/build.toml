@@ -2,7 +2,7 @@
 
 [function_build_definitions.338de998-37ab-4391-aca1-34b3488f160d]
 codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/current_leaderboard"
-runtime = "python3.9"
+runtime = "python3.12"
 architecture = "x86_64"
 handler = "lambda_function.lambda_handler"
 manifest_hash = ""
@@ -11,7 +11,7 @@ functions = ["CurrentLeaderboardFunction"]
 
 [function_build_definitions.563e0f8e-4625-480f-9561-9e34fe061a67]
 codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/leaderboard_snapshots"
-runtime = "python3.9"
+runtime = "python3.12"
 architecture = "x86_64"
 handler = "lambda_function.lambda_handler"
 manifest_hash = ""
@@ -20,7 +20,7 @@ functions = ["LeaderboardSnapshotsFunction"]
 
 [function_build_definitions.04cf6b03-586a-4b20-aacc-7abb1d04d46e]
 codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/fetch_news"
-runtime = "python3.9"
+runtime = "python3.12"
 architecture = "x86_64"
 handler = "lambda_function.lambda_handler"
 manifest_hash = ""
@@ -29,7 +29,7 @@ functions = ["FetchNewsFunction"]
 
 [function_build_definitions.a06e9473-3b82-4e9f-ab3e-2a99c4a67a7e]
 codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/twitch_live_check"
-runtime = "python3.9"
+runtime = "python3.12"
 architecture = "x86_64"
 handler = "lambda_function.lambda_handler"
 manifest_hash = ""
@@ -38,7 +38,7 @@ functions = ["TwitchLiveCheckFunction"]
 
 [function_build_definitions.ff08ece6-1afa-4b3f-b6e6-c7035915f6c8]
 codeuri = "/Users/jimliu/Documents/git/HS-BG-Leaderboards-Bot/lambda-functions/update_entities"
-runtime = "python3.9"
+runtime = "python3.12"
 architecture = "x86_64"
 handler = "lambda_function.lambda_handler"
 manifest_hash = ""
