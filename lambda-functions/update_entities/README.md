@@ -32,7 +32,7 @@ The function checks for news posts created within the last 4 hours in the `news_
 
 - **Timeout**: 900 seconds (15 minutes)
 - **Memory**: 512 MB
-- **Runtime**: Python 3.12
+- **Runtime**: Python 3.11
 
 ## Environment Variables
 

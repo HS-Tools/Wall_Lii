@@ -21,11 +21,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
           aws-region: ${{ secrets.REGION }}
 
-      # Step 3: Install Python 3.12
-      - name: Set up Python 3.12
+      # Step 3: Install Python 3.11
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: 3.11
 
       # Step 4: Install AWS SAM CLI
       - name: Install AWS SAM CLI
