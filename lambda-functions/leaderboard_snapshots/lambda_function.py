@@ -454,9 +454,9 @@ def write_to_postgres(players):
                         INSERT INTO {DAILY_LEADERBOARD_STATS}
                           (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, day_avg, weekly_avg, updated_at)
                         SELECT t.player_id, t.game_mode, t.region, t.day_start, t.rating, t.rank,
-                               CASE WHEN COALESCE(p.prev_rating, NULL) IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS games_played,
+                               CASE WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS games_played,
                                (CASE WHEN %s THEN 0 ELSE COALESCE(p.prev_weekly, 0) END)
-                                 + CASE WHEN COALESCE(p.prev_rating, NULL) IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS weekly_games_played,
+                                 + CASE WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS weekly_games_played,
                                CASE 
                                  WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
                                    estimate_placement(p.prev_rating, t.rating)
