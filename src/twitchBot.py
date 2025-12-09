@@ -486,6 +486,24 @@ class TwitchBot(commands.Bot):
         response = self.db.patch_link
         await ctx.send(response)
 
+    @commands.command(name="addpatch")
+    async def addpatch_command(self, ctx, *args):
+        """Add an override patch link (only usable by liihs)"""
+        if ctx.author.name.lower() != "liihs":
+            return
+
+        if not args:
+            await ctx.send("Usage: !addpatch <link>")
+            return
+
+        link = " ".join(args).strip()
+        if self.db.set_override_patch_link(link):
+            await ctx.send(f"Override patch link set: {link}")
+        else:
+            await ctx.send(
+                "Failed: Current date must be greater than the most recent patch date."
+            )
+
     @commands.command(name="addchannel")
     async def addchannel_command(self, ctx, player_name=None):
         """Add the current channel to the channel list with optional player name"""

@@ -10,7 +10,7 @@ import math
 from utils.queries import parse_rank_or_player_args
 from utils.regions import parse_server
 from utils.time_range import TimeRangeHelper
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime, timezone
 from psycopg2.extras import RealDictCursor
 from utils.constants import NON_CN_REGIONS, REGIONS, STATS_LIMIT
 from utils.placement_utils import calculate_average_placement, calculate_placements
@@ -85,6 +85,10 @@ class LeaderboardDB:
             # Initialize with empty values that will be populated later
             self.aliases = {}
             self.patch_link = "Currently fetching patch link..."
+            self._most_recent_patch_date = None  # Cache the most recent patch date
+            self._override_patch_link = (
+                None  # Override patch link: (link, override_date)
+            )
             self._refresh_task: Optional[asyncio.Task] = None
 
             # Initial sync load
@@ -125,39 +129,65 @@ class LeaderboardDB:
 
     async def _fetch_patch_link(self) -> str:
         """Fetch patch link from Supabase news_posts table"""
+        # Check override first if it exists and is still valid
+        if self._override_patch_link:
+            override_link, override_date = self._override_patch_link
+            # Check if override is still valid (current date > most recent patch date)
+            if (
+                self._most_recent_patch_date is None
+                or override_date.date() > self._most_recent_patch_date.date()
+            ):
+                # Format override link with date in (Dec 09) format
+                date_str = override_date.strftime("%b %d")
+                return f"({date_str}) {override_link}"
+            else:
+                # Override is no longer valid, clear it
+                self._override_patch_link = None
+
         conn = self._get_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT title, slug, updated_at
+                    SELECT title, slug, updated_at, created_at
                     FROM news_posts
                     WHERE battlegrounds_relevant = true
                     ORDER BY created_at DESC
                     LIMIT 1;
                     """
                 )
-                rows = cur.fetchall()
+                row = cur.fetchone()
 
-                if not rows:
+                if not row:
                     return "Currently fetching patch link..."
 
-                links = []
-                for row in rows:
-                    # Format the date as "Jun 11" format
-                    if row["updated_at"]:
-                        date_str = row["updated_at"].strftime("%b %d")
-                    else:
-                        date_str = ""
-
-                    if date_str:
-                        links.append(
-                            f"{row['title']} ({date_str}) wallii.gg/news/{row['slug']}"
+                # Cache the most recent patch date for efficient override checking
+                patch_date = (
+                    row["updated_at"] if row["updated_at"] else row["created_at"]
+                )
+                if patch_date:
+                    if isinstance(patch_date, str):
+                        patch_date = datetime.fromisoformat(
+                            patch_date.replace("Z", "+00:00")
                         )
-                    else:
-                        links.append(f"{row['title']} wallii.gg/news/{row['slug']}")
+                    elif not isinstance(patch_date, datetime):
+                        patch_date = datetime.fromtimestamp(patch_date)
+                    if patch_date.tzinfo is None:
+                        patch_date = patch_date.replace(tzinfo=timezone.utc)
+                    self._most_recent_patch_date = patch_date
 
-                return " | ".join(links)
+                # Format the date as "Jun 11" format
+                if row["updated_at"]:
+                    date_str = row["updated_at"].strftime("%b %d")
+                else:
+                    date_str = ""
+
+                if date_str:
+                    link = f"{row['title']} ({date_str}) wallii.gg/news/{row['slug']}"
+                else:
+                    link = f"{row['title']} wallii.gg/news/{row['slug']}"
+
+                return link
         except Exception as e:
             print(f"Error fetching patch link: {e}")
             return "Currently fetching patch link..."
@@ -184,7 +214,7 @@ class LeaderboardDB:
                 self.aliases = await self._load_aliases()
                 print("Refreshed aliases")
 
-                # Refresh patch link
+                # Refresh patch link (override will be checked inside _fetch_patch_link)
                 self.patch_link = await self._fetch_patch_link()
                 print("Refreshed patch link")
 
@@ -193,6 +223,25 @@ class LeaderboardDB:
 
             # Wait for 1 minute before next refresh
             await asyncio.sleep(60)
+
+    def set_override_patch_link(self, link: str) -> bool:
+        """Set an override patch link. Returns True if successful, False otherwise."""
+        # Get current date in UTC
+        now = datetime.now(timezone.utc)
+
+        # Check if current date is greater than most recent patch date
+        # If no patch exists yet, allow override
+        if (
+            self._most_recent_patch_date is None
+            or now.date() > self._most_recent_patch_date.date()
+        ):
+            self._override_patch_link = (link, now)
+            # Update cached patch_link immediately with date formatted
+            date_str = now.strftime("%b %d")
+            self.patch_link = f"({date_str}) {link}"
+            return True
+
+        return False
 
     def top10(self, region: str = "global", game_mode: str = "0") -> str:
         """
