@@ -26,7 +26,7 @@ load_dotenv()
 
 # Cutoff date for switching from deltas to placements in day/week commands
 # After this date, non-CN regions will use placements instead of deltas
-PLACEMENTS_CUTOFF_DATE = date(2025, 12, 3)
+PLACEMENTS_CUTOFF_DATE = date(2025, 12, 5)
 
 # Table names
 CURRENT_LEADERBOARD = "current_leaderboard"
