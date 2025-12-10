@@ -290,8 +290,7 @@ def write_to_postgres(players):
         with conn:
             with conn.cursor() as cur:
                 # Create or replace the estimate_placement PostgreSQL function
-                # This replicates the Python estimate_placement logic (season ramp +
-                # high-MMR dampening).
+                # This replicates the Python estimate_placement logic
                 cur.execute(
                     """
                     CREATE OR REPLACE FUNCTION estimate_placement(start_rating NUMERIC, end_rating NUMERIC)
@@ -302,17 +301,6 @@ def write_to_postgres(players):
                     DECLARE
                         gain NUMERIC;
                         dex_avg NUMERIC;
-                        lobby_cap NUMERIC;
-                        dex_threshold NUMERIC;
-                        offset NUMERIC;
-                        damping NUMERIC;
-                        days_since_season_start INT;
-                        season_start DATE := DATE '2025-12-01';
-                        ramp_days INT := 30;
-                        season_lobby_cap NUMERIC := 8500.0;
-                        season_min_lobby_cap NUMERIC := 6800.0;
-                        season_dex_threshold_max NUMERIC := 8200.0;
-                        season_dex_threshold_min NUMERIC := 6800.0;
                         placements NUMERIC[] := ARRAY[1, 2, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8];
                         p NUMERIC;
                         avg_opp NUMERIC;
@@ -321,35 +309,12 @@ def write_to_postgres(players):
                         best_delta NUMERIC := 'Infinity'::NUMERIC;
                     BEGIN
                         gain := end_rating - start_rating;
-
-                        -- Days since season start (clamped to >= 0)
-                        days_since_season_start := GREATEST((CURRENT_DATE - season_start), 0);
-
-                        -- Season-adjusted lobby cap (linear ramp over ramp_days)
-                        IF days_since_season_start >= ramp_days THEN
-                            lobby_cap := season_lobby_cap;
-                        ELSE
-                            lobby_cap := season_min_lobby_cap
-                                + (days_since_season_start::NUMERIC / ramp_days::NUMERIC)
-                                  * (season_lobby_cap - season_min_lobby_cap);
-                        END IF;
-
-                        -- Season-adjusted threshold
-                        IF days_since_season_start >= ramp_days THEN
-                            dex_threshold := season_dex_threshold_max;
-                        ELSE
-                            dex_threshold := season_dex_threshold_min
-                                + (days_since_season_start::NUMERIC / ramp_days::NUMERIC)
-                                  * (season_dex_threshold_max - season_dex_threshold_min);
-                        END IF;
-
-                        -- Calculate dexAvg with high-MMR dampening above threshold
-                        IF start_rating <= dex_threshold THEN
+                        
+                        -- Calculate dexAvg
+                        IF start_rating < 8200 THEN
                             dex_avg := start_rating;
                         ELSE
-                            offset := start_rating - dex_threshold;
-                            damping := 1 / (1 + POWER(offset / 500.0, 1.3));
-                            dex_avg := lobby_cap + (start_rating - lobby_cap) * damping;
+                            dex_avg := start_rating - 0.85 * (start_rating - 8500);
                         END IF;
                         
                         -- Find placement with smallest delta
