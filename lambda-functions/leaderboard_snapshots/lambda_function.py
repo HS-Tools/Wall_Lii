@@ -323,8 +323,8 @@ def write_to_postgres(players):
                             -- avgOpp-formula
                             avg_opp := start_rating - 148.1181435 * (100 - ((p - 1) * (200.0 / 7.0) + gain));
                             
-                            -- Skip placements where avg_opp > 9000
-                            IF avg_opp > 9000 THEN
+                            -- Skip placements where avg_opp > 8500
+                            IF avg_opp > 8500 THEN
                                 CONTINUE;
                             END IF;
                             
