@@ -322,6 +322,12 @@ def write_to_postgres(players):
                         LOOP
                             -- avgOpp-formula
                             avg_opp := start_rating - 148.1181435 * (100 - ((p - 1) * (200.0 / 7.0) + gain));
+                            
+                            -- Skip placements where avg_opp > 9000
+                            IF avg_opp > 9000 THEN
+                                CONTINUE;
+                            END IF;
+                            
                             delta := ABS(dex_avg - avg_opp);
                             
                             IF delta < best_delta THEN

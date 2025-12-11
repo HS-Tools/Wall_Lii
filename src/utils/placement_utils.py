@@ -129,6 +129,8 @@ def estimate_placement(
     for p in placements:
         # avgOpp-formula
         avg_opp = start - 148.1181435 * (100 - ((p - 1) * (200 / 7) + gain))
+        if avg_opp > 9000:
+            continue
 
         delta = abs(dex_avg - avg_opp)
 
