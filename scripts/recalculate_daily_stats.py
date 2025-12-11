@@ -17,7 +17,7 @@ from db_utils import get_db_connection
 load_dotenv()
 
 # Configuration
-DRY_RUN = True  # Set to False to enable writes
+DRY_RUN = False  # Set to False to enable writes
 
 # Test configuration - set to None to process all players
 TEST_PLAYER_NAME = "gaiabot"  # Set to None to process all players
@@ -102,7 +102,7 @@ def ensure_estimate_placement_function(cursor):
 
 
 def recalculate_averages(
-    conn, dry_run=True, player_id=None, region=None, game_mode=None
+    conn, dry_run=False, player_id=None, region=None, game_mode=None
 ):
     """
     Recalculate day_avg and weekly_avg for all rows in daily_leaderboard_stats.
@@ -215,7 +215,7 @@ def recalculate_averages(
                     ORDER BY ls.snapshot_time
                 ) AS prev_rating,
                 -- Convert to PT timezone for day calculations
-                (ls.snapshot_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
+                (ls.snapshot_time AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
             FROM {LEADERBOARD_SNAPSHOTS} ls
             {snapshot_filter_clause}
         ),
@@ -318,7 +318,7 @@ def recalculate_averages(
                             PARTITION BY ls.player_id, ls.game_mode, ls.region 
                             ORDER BY ls.snapshot_time
                         ) AS prev_rating,
-                        (ls.snapshot_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
+                        (ls.snapshot_time AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
                     FROM {LEADERBOARD_SNAPSHOTS} ls
                     {snapshot_filter_clause}
                 ),
@@ -420,7 +420,7 @@ def recalculate_averages(
                             PARTITION BY ls.player_id, ls.game_mode, ls.region 
                             ORDER BY ls.snapshot_time
                         ) AS prev_rating,
-                        (ls.snapshot_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
+                                (ls.snapshot_time AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
                     FROM {LEADERBOARD_SNAPSHOTS} ls
                     {snapshot_filter_clause}
                 ),
@@ -559,7 +559,7 @@ def recalculate_averages(
                                     PARTITION BY ls.player_id, ls.game_mode, ls.region 
                                     ORDER BY ls.snapshot_time
                                 ) AS prev_rating,
-                                (ls.snapshot_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
+                                (ls.snapshot_time AT TIME ZONE 'America/Los_Angeles')::date AS day_start_pt
                             FROM {LEADERBOARD_SNAPSHOTS} ls
                             {snapshot_filter_clause}
                         ),
