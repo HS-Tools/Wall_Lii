@@ -444,36 +444,56 @@ def write_to_postgres(players):
 
                     # Single statement: insert new rows with correct initial counters,
                     # and update existing rows by incrementing when rating changes.
-                    # For inserts, we carry yesterday's weekly unless Monday.
+                    # Uses efficient incremental weighted average for weekly_avg.
                     cur.execute(
                         f"""
                         WITH prev AS (
+                          -- Get yesterday's data to continue weekly incremental calculation
                           SELECT d.player_id, d.game_mode, d.region,
                                  d.rating AS prev_rating,
-                                 d.weekly_games_played AS prev_weekly,
-                                 d.day_avg AS prev_day_avg,
+                                 d.weekly_games_played AS prev_weekly_games,
                                  d.weekly_avg AS prev_weekly_avg,
+                                 d.day_avg AS prev_day_avg,
                                  d.games_played AS prev_games_played
                           FROM {DAILY_LEADERBOARD_STATS} d
                           WHERE d.day_start = %s
                         )
                         INSERT INTO {DAILY_LEADERBOARD_STATS}
                           (player_id, game_mode, region, day_start, rating, rank, games_played, weekly_games_played, day_avg, weekly_avg, updated_at)
-                        SELECT t.player_id, t.game_mode, t.region, t.day_start, t.rating, t.rank,
-                               CASE WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS games_played,
-                               (CASE WHEN %s THEN 0 ELSE COALESCE(p.prev_weekly, 0) END)
-                                 + CASE WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS weekly_games_played,
-                               CASE 
-                                 WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
-                                   estimate_placement(p.prev_rating, t.rating)
-                                 ELSE NULL
-                               END AS day_avg,
-                               CASE 
-                                 WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
-                                   estimate_placement(p.prev_rating, t.rating)
-                                 ELSE NULL
-                               END AS weekly_avg,
-                               t.updated_at
+                        SELECT 
+                          t.player_id, 
+                          t.game_mode, 
+                          t.region, 
+                          t.day_start, 
+                          t.rating, 
+                          t.rank,
+                          CASE WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS games_played,
+                          -- Weekly games: reset on Monday, otherwise continue from yesterday + today's game if rating changed
+                          (CASE WHEN %s THEN 0 ELSE COALESCE(p.prev_weekly_games, 0) END)
+                            + CASE WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN 1 ELSE 0 END AS weekly_games_played,
+                          -- Day avg: incremental weighted average
+                          CASE 
+                            WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
+                              estimate_placement(p.prev_rating, t.rating)
+                            ELSE NULL
+                          END AS day_avg,
+                          -- Weekly avg: incremental weighted average (reset on Monday, otherwise continue from yesterday)
+                          CASE 
+                            WHEN p.prev_rating IS NOT NULL AND p.prev_rating IS DISTINCT FROM t.rating THEN
+                              -- Rating changed: calculate new placement and use incremental weighted average
+                              CASE
+                                -- Monday or no previous weekly data: start fresh with today's placement
+                                WHEN %s OR p.prev_weekly_games IS NULL OR p.prev_weekly_games = 0 OR p.prev_weekly_avg IS NULL THEN
+                                  estimate_placement(p.prev_rating, t.rating)
+                                -- Continue from previous week: weighted average
+                                ELSE
+                                  (p.prev_weekly_avg * p.prev_weekly_games + estimate_placement(p.prev_rating, t.rating))
+                                  / (p.prev_weekly_games + 1.0)
+                              END
+                            -- No rating change today: carry forward yesterday's weekly_avg (if exists)
+                            ELSE COALESCE(p.prev_weekly_avg, NULL)
+                          END AS weekly_avg,
+                          t.updated_at
                         FROM tmp_daily t
                         LEFT JOIN prev p
                           ON p.player_id = t.player_id
@@ -493,6 +513,7 @@ def write_to_postgres(players):
                           END,
                           day_avg = CASE
                             WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN
+                              -- Incremental weighted average for day_avg
                               CASE
                                 WHEN {DAILY_LEADERBOARD_STATS}.games_played = 0 OR {DAILY_LEADERBOARD_STATS}.day_avg IS NULL THEN
                                   estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating)
@@ -503,21 +524,25 @@ def write_to_postgres(players):
                               END
                             ELSE {DAILY_LEADERBOARD_STATS}.day_avg
                           END,
+                          -- Incremental weighted average for weekly_avg (only when rating changed)
                           weekly_avg = CASE
                             WHEN EXCLUDED.rating <> {DAILY_LEADERBOARD_STATS}.rating THEN
                               CASE
+                                -- First game of week: start fresh (weekly_games_played = 0 means no games yet this week)
                                 WHEN {DAILY_LEADERBOARD_STATS}.weekly_games_played = 0 OR {DAILY_LEADERBOARD_STATS}.weekly_avg IS NULL THEN
                                   estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating)
+                                -- Continue incremental update: weighted average
                                 ELSE
                                   ({DAILY_LEADERBOARD_STATS}.weekly_avg * {DAILY_LEADERBOARD_STATS}.weekly_games_played 
                                    + estimate_placement({DAILY_LEADERBOARD_STATS}.rating, EXCLUDED.rating))
                                   / ({DAILY_LEADERBOARD_STATS}.weekly_games_played + 1.0)
                               END
+                            -- No rating change: keep existing weekly_avg
                             ELSE {DAILY_LEADERBOARD_STATS}.weekly_avg
                           END,
                           updated_at = now()
                         """,
-                        (yesterday_pt, is_monday),
+                        (yesterday_pt, is_monday, is_monday),
                     )
                     logger.info(
                         f"Daily upsert (server-side): affected_rows={cur.rowcount}"
