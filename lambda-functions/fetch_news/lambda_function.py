@@ -7,7 +7,7 @@ from gpt_call import summarize_and_format_patch, check_battlegrounds_relevance
 
 BASE_FORUM_URL = "https://us.forums.blizzard.com/en/hearthstone"
 BLOG_APIS = (
-    "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=1",
+    "https://hearthstone.blizzard.com/en-us/api/blog/articleList/?page=1&pageSize=4",
 )
 
 TRACKER_APIS = (
@@ -32,12 +32,18 @@ def get_blog_patch_notes():
         for api in BLOG_APIS:
             response = requests.get(api)
             response.raise_for_status()
-            articles = response.json()
+            data = response.json()
+            # Handle both list response and object response formats
+            if isinstance(data, list):
+                articles = data
+            else:
+                # If it's an object, try common keys
+                articles = data.get("articles", data.get("data", data.get("items", [])))
             all_articles.extend(articles)
-        articles = response.json()
+        # Use all_articles instead of overwriting with the last response
         relevant = []
 
-        for article in articles:
+        for article in all_articles:
             content = article.get("content", "")
             if "battlegrounds" in content.lower():
                 relevant.append(
@@ -305,4 +311,4 @@ if __name__ == "__main__":
     print(lambda_handler({}, None))
     # Run test
     print("Running test insert_patch with tracker API")
-    test_insert_patch(use_blog=False)
+    test_insert_patch(use_blog=True)

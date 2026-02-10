@@ -17,7 +17,7 @@ from db_utils import get_db_connection
 load_dotenv()
 
 # Configuration
-DRY_RUN = True  # Set to False to enable writes
+DRY_RUN = False  # Set to False to enable writes
 
 # Test configuration - set to None to process all players
 TEST_PLAYER_NAME = None  # Set to None to process all players
