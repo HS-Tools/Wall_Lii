@@ -19,7 +19,6 @@ BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsDat
 REGIONS = ["US", "EU", "AP"]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
-CURRENT_SEASON = 16
 
 
 import os
@@ -45,7 +44,7 @@ REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "17"))
+CURRENT_SEASON = int(os.environ.get("CURRENT_SEASON", "18"))
 MILESTONE_START = int(os.environ.get("MILESTONE_START", "8000"))
 MILESTONE_INCREMENT = int(os.environ.get("MILESTONE_INCREMENT", "1000"))
 

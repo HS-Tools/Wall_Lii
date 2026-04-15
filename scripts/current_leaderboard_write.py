@@ -14,7 +14,7 @@ REGIONS = ["US", "EU", "AP"]
 MODES = [("battlegrounds", 0), ("battlegroundsduo", 1)]
 REGION_MAPPING = {"US": "NA", "EU": "EU", "AP": "AP"}
 BASE_URL = "https://hearthstone.blizzard.com/en-us/api/community/leaderboardsData"
-CURRENT_SEASON = 15
+CURRENT_SEASON = 18
 
 
 def get_db_connection():
@@ -102,9 +102,9 @@ def update_current_leaderboard(players):
         conn = get_db_connection()
         with conn:
             with conn.cursor() as cur:
-                cur.execute("TRUNCATE TABLE current_leaderboard_season15;")
+                cur.execute("TRUNCATE TABLE current_leaderboard_season18;")
                 insert_query = """
-                    INSERT INTO current_leaderboard_season15(player_name, game_mode, region, rank, rating)
+                    INSERT INTO current_leaderboard_season18(player_name, game_mode, region, rank, rating)
                     VALUES %s
                 """
                 values = [
