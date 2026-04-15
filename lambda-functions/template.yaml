@@ -21,6 +21,12 @@ Parameters:
     Type: String
     Description: Database port
     Default: "5432"
+  # Single source of truth for leaderboard Lambdas (CURRENT_SEASON env). Bump on season rollover.
+  CurrentSeason:
+    Type: String
+    Description: Hearthstone BG leaderboard season id (API seasonId)
+    Default: "18"
+
   TwitchLiveCheckClientId:
     Type: String
     Description: Twitch client ID
@@ -50,6 +56,7 @@ Resources:
           DB_USER: !Ref DBUser
           DB_PASSWORD: !Ref DBPassword
           DB_PORT: !Ref DBPort
+          CURRENT_SEASON: !Ref CurrentSeason
           TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
           TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
@@ -73,6 +80,7 @@ Resources:
           DB_USER: !Ref DBUser
           DB_PASSWORD: !Ref DBPassword
           DB_PORT: !Ref DBPort
+          CURRENT_SEASON: !Ref CurrentSeason
           TWITCH_LIVE_CHECK_CLIENT_ID: !Ref TwitchLiveCheckClientId
           TWITCH_LIVE_CHECK_SECRET: !Ref TwitchLiveCheckSecret
       Events:
@@ -150,12 +158,12 @@ Resources:
           Properties:
             Schedule: rate(4 hours)
 
-  # SNS Topic for Lambda Error Alerts
+  # SNS Topic for Lambda Error Alerts (name includes stack to avoid cross-stack collisions)
   LambdaErrorTopic:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: Lambda Error Alerts
-      TopicName: hsbg-lambda-error-alerts
+      TopicName: !Sub "${AWS::StackName}-hsbg-lambda-error-alerts"
 
   # SNS Subscription (only created if AlertEmail is provided)
   LambdaErrorSubscription:
@@ -170,7 +178,7 @@ Resources:
   CurrentLeaderboardErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: CurrentLeaderboardFunction-Errors
+      AlarmName: !Sub "${AWS::StackName}-CurrentLeaderboardFunction-Errors"
       AlarmDescription: Alert when CurrentLeaderboardFunction has errors
       MetricName: Errors
       Namespace: AWS/Lambda
@@ -189,7 +197,7 @@ Resources:
   LeaderboardSnapshotsErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: LeaderboardSnapshotsFunction-Errors
+      AlarmName: !Sub "${AWS::StackName}-LeaderboardSnapshotsFunction-Errors"
       AlarmDescription: Alert when LeaderboardSnapshotsFunction has errors
       MetricName: Errors
       Namespace: AWS/Lambda
@@ -208,7 +216,7 @@ Resources:
   FetchNewsErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: FetchNewsFunction-Errors
+      AlarmName: !Sub "${AWS::StackName}-FetchNewsFunction-Errors"
       AlarmDescription: Alert when FetchNewsFunction has errors
       MetricName: Errors
       Namespace: AWS/Lambda
@@ -227,7 +235,7 @@ Resources:
   TwitchLiveCheckErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: TwitchLiveCheckFunction-Errors
+      AlarmName: !Sub "${AWS::StackName}-TwitchLiveCheckFunction-Errors"
       AlarmDescription: Alert when TwitchLiveCheckFunction has errors
       MetricName: Errors
       Namespace: AWS/Lambda
@@ -246,7 +254,7 @@ Resources:
   UpdateEntitiesErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: UpdateEntitiesFunction-Errors
+      AlarmName: !Sub "${AWS::StackName}-UpdateEntitiesFunction-Errors"
       AlarmDescription: Alert when UpdateEntitiesFunction has errors
       MetricName: Errors
       Namespace: AWS/Lambda
