@@ -25,7 +25,7 @@ Parameters:
   CurrentSeason:
     Type: String
     Description: Hearthstone BG leaderboard season id (API seasonId)
-    Default: "18"
+    Default: "19"
 
   TwitchLiveCheckClientId:
     Type: String
