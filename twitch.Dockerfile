@@ -9,4 +9,5 @@ RUN ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
 RUN pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir -r requirements.txt
 WORKDIR ${PROJECT_DIR}/src
+EXPOSE 8787
 CMD ["python", "-u", "twitchBot.py"]

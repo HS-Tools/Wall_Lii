@@ -71,6 +71,8 @@ class TwitchBot(commands.Bot):
         self.bg_task = None
         self.news_task = None
         self.connection_watchdog_task = None
+        self.health_server = None
+        self.health_server_task = None
         self.dynamo_client = DynamoDBClient()
 
         # Track joined channels to avoid duplicate join/leave attempts
@@ -91,6 +93,72 @@ class TwitchBot(commands.Bot):
             connection
             and connection.is_alive
             and connection.is_ready.is_set()
+        )
+
+    def _liihs_membership_ok(self):
+        """Return whether this bot is present in the monitored Twitch chat."""
+        if not self._connection_is_ready():
+            return False
+
+        channel = self.get_channel("liihs")
+        if channel is None:
+            return False
+
+        return channel.get_chatter("walliibot") is not None
+
+    async def _health_client(self, reader, writer):
+        """Serve a minimal readiness response for UptimeRobot."""
+        try:
+            request = await asyncio.wait_for(reader.readline(), timeout=5)
+            path = request.decode("ascii", errors="ignore").split(" ")[1]
+            if path != "/health/twitch":
+                status = "404 Not Found"
+                body = b'{"status":"not_found"}\n'
+            elif self._liihs_membership_ok():
+                status = "200 OK"
+                body = b'{"status":"ok","channel":"liihs","user":"walliibot"}\n'
+            else:
+                status = "503 Service Unavailable"
+                body = b'{"status":"unhealthy","channel":"liihs","user":"walliibot"}\n'
+
+            headers = (
+                f"HTTP/1.1 {status}\r\n"
+                "Content-Type: application/json\r\n"
+                f"Content-Length: {len(body)}\r\n"
+                "Connection: close\r\n\r\n"
+            ).encode("ascii")
+            writer.write(headers + body)
+            await writer.drain()
+        except (
+            asyncio.TimeoutError,
+            ConnectionResetError,
+            BrokenPipeError,
+            IndexError,
+            UnicodeError,
+        ):
+            pass
+        finally:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except AttributeError:
+                pass
+
+    async def start_health_server(self):
+        """Start the internal readiness endpoint once per process."""
+        if self.health_server is not None:
+            return
+
+        host = os.environ.get("HEALTH_HOST", "0.0.0.0")
+        port = int(os.environ.get("HEALTH_PORT", "8787"))
+        self.health_server = await asyncio.start_server(
+            self._health_client,
+            host,
+            port,
+        )
+        logger.info("Health endpoint listening on %s:%s/health/twitch", host, port)
+        self.health_server_task = asyncio.create_task(
+            self.health_server.serve_forever()
         )
 
     def _handle_loop_exception(self, loop, context):
@@ -154,6 +222,8 @@ class TwitchBot(commands.Bot):
             self.news_task = asyncio.create_task(self.news_announcer())
         if self.connection_watchdog_task is None or self.connection_watchdog_task.done():
             self.connection_watchdog_task = asyncio.create_task(self.connection_watchdog())
+        if self.health_server_task is None or self.health_server_task.done():
+            await self.start_health_server()
 
     async def event_reconnect(self):
         logger.warning("Twitch requested a reconnect; TwitchIO will reconnect automatically")
