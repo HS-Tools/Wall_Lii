@@ -16,7 +16,7 @@ docker rm $(docker ps -a -q)
 # Run containers with volume mounts
 docker run --restart always -d \
   --name hs_twitch \
-  -p 8787:8787 \
+  -p 127.0.0.1:8787:8787 \
   hs_leaderboards_twitch
 
 docker run --restart always -d \
