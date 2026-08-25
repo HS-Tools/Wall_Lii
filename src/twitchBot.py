@@ -7,6 +7,7 @@ import sys
 import os
 import asyncio
 import time
+import signal
 from twitchio.ext import commands
 from leaderboard import LeaderboardDB
 from managers.channel_manager import ChannelManager
@@ -68,6 +69,8 @@ class TwitchBot(commands.Bot):
         self.channel_manager = ChannelManager(self.priority_channels)
         self.db = LeaderboardDB()
         self.bg_task = None
+        self.news_task = None
+        self.connection_watchdog_task = None
         self.dynamo_client = DynamoDBClient()
 
         # Track joined channels to avoid duplicate join/leave attempts
@@ -76,6 +79,66 @@ class TwitchBot(commands.Bot):
         # Global dictionary to track posted news: {created_at: {"title": ..., "slug": ..., "first_post_time": datetime, "last_sent": {channel: datetime}}}
         self.posted_news = {}
         self.latest_news_seen = datetime.datetime.now(datetime.timezone.utc)
+        self.connection_lost_at = None
+        self.reconnect_grace_period = 300
+        self._previous_loop_exception_handler = self.loop.get_exception_handler()
+        self.loop.set_exception_handler(self._handle_loop_exception)
+
+    def _connection_is_ready(self):
+        """Return whether TwitchIO currently has a usable IRC websocket."""
+        connection = getattr(self, "_connection", None)
+        return bool(
+            connection
+            and connection.is_alive
+            and connection.is_ready.is_set()
+        )
+
+    def _handle_loop_exception(self, loop, context):
+        """Handle connection errors from TwitchIO's untracked background tasks."""
+        exception = context.get("exception")
+        if isinstance(exception, (ConnectionError, ConnectionResetError, BrokenPipeError)):
+            logger.warning("TwitchIO background task stopped with connection error: %s", exception)
+            return
+        if isinstance(exception, AttributeError) and "_ws" in str(exception):
+            logger.warning("TwitchIO background task raced websocket shutdown: %s", exception)
+            return
+        if self._previous_loop_exception_handler:
+            self._previous_loop_exception_handler(loop, context)
+        else:
+            loop.default_exception_handler(context)
+
+    async def join_channels(self, channels):
+        """Join channels only while the IRC websocket is usable."""
+        if not self._connection_is_ready():
+            logger.info("Skipping JOIN while Twitch websocket is unavailable")
+            return
+
+        await super().join_channels(channels)
+
+    async def connection_watchdog(self):
+        """Let TwitchIO reconnect transiently, but fail hard if it stays down."""
+        while True:
+            if self._connection_is_ready():
+                self.connection_lost_at = None
+            else:
+                if self.connection_lost_at is None:
+                    self.connection_lost_at = time.monotonic()
+                    # TwitchIO 2.x retains its channel cache across a socket loss.
+                    # Drop it so the first healthy reconciliation after reconnect
+                    # treats dynamic channels as needing to be joined again.
+                    try:
+                        self._connection._cache.clear()
+                    except AttributeError:
+                        pass
+                    logger.warning("Twitch websocket is unavailable; waiting for reconnect")
+                elif time.monotonic() - self.connection_lost_at > self.reconnect_grace_period:
+                    logger.error(
+                        "Twitch websocket did not recover within %s seconds; exiting",
+                        self.reconnect_grace_period,
+                    )
+                    os.kill(os.getpid(), signal.SIGTERM)
+                    return
+            await asyncio.sleep(10)
 
     async def event_ready(self):
         logger.info(
@@ -83,9 +146,20 @@ class TwitchBot(commands.Bot):
         )
         logger.info(f"Initial channel list: {self.channel_manager.all_channels}")
         # Start the background task to check live channels
-        self.bg_task = asyncio.create_task(self.channel_check_loop())
+        self.connection_lost_at = None
+        if self.bg_task is None or self.bg_task.done():
+            self.bg_task = asyncio.create_task(self.channel_check_loop())
         # Start the news announcer background task
-        self.news_task = asyncio.create_task(self.news_announcer())
+        if self.news_task is None or self.news_task.done():
+            self.news_task = asyncio.create_task(self.news_announcer())
+        if self.connection_watchdog_task is None or self.connection_watchdog_task.done():
+            self.connection_watchdog_task = asyncio.create_task(self.connection_watchdog())
+
+    async def event_reconnect(self):
+        logger.warning("Twitch requested a reconnect; TwitchIO will reconnect automatically")
+
+    async def event_error(self, error, data=None):
+        logger.error("TwitchIO event error: %s", error)
 
     async def channel_check_loop(self):
         """Background task to periodically check for live channels"""
@@ -94,6 +168,11 @@ class TwitchBot(commands.Bot):
             return
 
         while True:
+            if not self._connection_is_ready():
+                logger.info("Skipping channel reconciliation while Twitch websocket is unavailable")
+                await asyncio.sleep(10)
+                continue
+
             logger.info(
                 f"channel_check_loop iteration start at {datetime.datetime.now().isoformat()}"
             )
@@ -120,6 +199,9 @@ class TwitchBot(commands.Bot):
                         f"Attempting to join {len(to_join)} channels: {', '.join(to_join)}"
                     )
                     for channel in to_join:
+                        if not self._connection_is_ready():
+                            logger.warning("Stopping JOIN reconciliation because Twitch websocket closed")
+                            break
                         try:
                             # Join channels one by one to better handle errors
                             await self.join_channels([channel])
@@ -150,6 +232,9 @@ class TwitchBot(commands.Bot):
                             f"Leaving {len(to_leave_non_priority)} channels: {', '.join(to_leave_non_priority)}"
                         )
                         for channel in to_leave_non_priority:
+                            if not self._connection_is_ready():
+                                logger.warning("Stopping PART reconciliation because Twitch websocket closed")
+                                break
                             try:
                                 await self.part_channels([channel])
                                 # self.currently_joined.remove(channel)  # Now handled by refresh at top of loop
@@ -172,11 +257,13 @@ class TwitchBot(commands.Bot):
                 f"Confirmed bot joined channel: {channel.name} at {datetime.datetime.now().isoformat()}"
             )
 
-    async def event_part(self, channel, user):
+    async def event_part(self, user):
         """Log when the bot has successfully left a channel."""
         if user.name.lower() == self.nick.lower():
+            channel = user.channel
             logger.info(
-                f"Confirmed bot left channel: {channel.name} at {datetime.datetime.now().isoformat()}"
+                f"Confirmed bot left channel: {channel.name if channel else '<unknown>'} "
+                f"at {datetime.datetime.now().isoformat()}"
             )
 
     # --- News Announcer Background Task ---
@@ -276,6 +363,9 @@ class TwitchBot(commands.Bot):
                         msg = f"BGs update: {post['title']} — https://wallii.gg/news/{post['slug']}"
                         # Determine channels to send
                         for channel in self.channel_manager.hearthstone_channels:
+                            if not self._connection_is_ready():
+                                logger.warning("Stopping news delivery because Twitch websocket closed")
+                                break
                             last = post["last_sent"].get(channel)
                             # Send if never sent or more than 2h since last send
                             if last is None or (now - last).total_seconds() >= 2 * 3600:
