@@ -71,4 +71,7 @@ venv/
 # Logs
 logs/
 
+# Database export backups
+backups/
+
 *~
