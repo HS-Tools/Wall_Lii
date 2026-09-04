@@ -1,24 +1,22 @@
 #!/bin/bash
+set -euo pipefail
 
-# Remove all images
 git pull
 
-docker system prune -f
-docker rmi $(docker images -a -q)
+# Keep the base-image and dependency layers cached. If a build fails, the
+# currently running bots also remain available until a successful build.
+docker build --pull=false -t hs_leaderboards_twitch -f ./twitch.Dockerfile .
+docker build --pull=false -t hs_leaderboards_discord -f ./discord.Dockerfile .
 
-docker build -t hs_leaderboards_twitch -f ./twitch.Dockerfile .
-docker build -t hs_leaderboards_discord -f ./discord.Dockerfile .
+# Remove only these containers after both images have built successfully so
+# their old image references cannot block replacement.
+docker rm -f hs_twitch hs_discord 2>/dev/null || true
 
-# Kill all images after building updated ones
-docker kill $(docker ps -q)
-docker rm $(docker ps -a -q)
-
-# Run containers with volume mounts
-docker run --restart always -d \
+docker run --restart unless-stopped -d \
   --name hs_twitch \
   -p 127.0.0.1:8787:8787 \
   hs_leaderboards_twitch
 
-docker run --restart always -d \
+docker run --restart unless-stopped -d \
   --name hs_discord \
   hs_leaderboards_discord

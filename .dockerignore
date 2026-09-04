@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+src/venv/
+backups/
+.DS_Store

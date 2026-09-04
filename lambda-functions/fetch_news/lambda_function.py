@@ -12,6 +12,7 @@ BLOG_APIS = (
 
 TRACKER_APIS = (
     "https://us.forums.blizzard.com/en/hearthstone/groups/blizzard-tracker/posts.json",
+    "https://us.forums.blizzard.com/en/hearthstone/groups/cs-support-sse/posts.json",
 )
 
 
