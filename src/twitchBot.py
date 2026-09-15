@@ -104,7 +104,7 @@ class TwitchBot(commands.Bot):
         if channel is None:
             return False
 
-        return channel.get_chatter("walliibot") is not None
+        return channel.get_chatter(self.nick) is not None
 
     async def _health_client(self, reader, writer):
         """Serve a minimal readiness response for UptimeRobot."""
@@ -186,7 +186,7 @@ class TwitchBot(commands.Bot):
     async def connection_watchdog(self):
         """Let TwitchIO reconnect transiently, but fail hard if it stays down."""
         while True:
-            if self._connection_is_ready():
+            if self._liihs_membership_ok():
                 self.connection_lost_at = None
             else:
                 if self.connection_lost_at is None:
@@ -195,13 +195,14 @@ class TwitchBot(commands.Bot):
                     # Drop it so the first healthy reconciliation after reconnect
                     # treats dynamic channels as needing to be joined again.
                     try:
-                        self._connection._cache.clear()
+                        if not self._connection_is_ready():
+                            self._connection._cache.clear()
                     except AttributeError:
                         pass
-                    logger.warning("Twitch websocket is unavailable; waiting for reconnect")
+                    logger.warning("Twitch connection or liihs membership is unhealthy; waiting for recovery")
                 elif time.monotonic() - self.connection_lost_at > self.reconnect_grace_period:
                     logger.error(
-                        "Twitch websocket did not recover within %s seconds; exiting",
+                        "Twitch connection or membership did not recover within %s seconds; exiting",
                         self.reconnect_grace_period,
                     )
                     os.kill(os.getpid(), signal.SIGTERM)
@@ -249,6 +250,7 @@ class TwitchBot(commands.Bot):
             # Refresh the currently_joined set from Twitch's actual connection state
             actual_connected = {
                 ch.name for ch in getattr(self, "connected_channels", [])
+                if ch.get_chatter(self.nick) is not None
             }
             logger.debug(f"Fetched connected_channels from library: {actual_connected}")
             self.currently_joined = set(actual_connected)
@@ -277,7 +279,7 @@ class TwitchBot(commands.Bot):
                             await self.join_channels([channel])
                             # self.currently_joined.add(channel)  # Now handled by refresh at top of loop
                             # Small delay to avoid rate limits
-                            await asyncio.sleep(0.5)
+                            await asyncio.sleep(1.6)
                         except Exception as e:
                             logger.error(f"Error joining {channel}: {e}")
                     # Debug/log: Currently joined after join

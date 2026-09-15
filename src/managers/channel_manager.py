@@ -29,8 +29,7 @@ class ChannelManager:
         self.dynamodb = boto3.resource("dynamodb", **aws_kwargs)
         self.channel_table = self.dynamodb.Table("channel-table")
 
-        # Load channels immediately
-        self.load_channels()
+        # The reconciliation loop retries database failures after startup.
 
     def load_channels(self):
         try:
@@ -38,13 +37,14 @@ class ChannelManager:
             logger.info(f"Loaded {len(self.all_channels)} channels from Supabase")
         except Exception as e:
             logger.error(f"Failed to load channels from Supabase: {e}")
-            self.all_channels = {"liihs"}
+            raise
 
     async def get_live_channels(self) -> Set[str]:
-        # Reload channels from DynamoDB to get any new additions
-        self.load_channels()
+        # Keep blocking database I/O off the IRC event loop.
+        await asyncio.to_thread(self.load_channels)
 
         if not self.all_channels:
+            self.hearthstone_channels = set()
             return set()
 
         try:
@@ -54,11 +54,12 @@ class ChannelManager:
             }
         except KeyError as e:
             logger.error(f"Missing environment variable: {e}")
-            return set()
+            raise
 
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             live_channels = set()
-            self.hearthstone_channels = set()
+            hearthstone_channels = set()
             channel_list = [c for c in list(self.all_channels) if c and c.strip()]
 
             for i in range(0, len(channel_list), 50):
@@ -78,18 +79,18 @@ class ChannelManager:
                                     or stream.get("game_name", "").lower()
                                     == "hearthstone"
                                 ):
-                                    self.hearthstone_channels.add(channel_name)
+                                    hearthstone_channels.add(channel_name)
                         else:
-                            error_text = await response.text()
-                            logger.warning(
-                                f"Batch failed: {response.status} - {error_text}"
-                            )
+                            raise RuntimeError(f"Twitch streams lookup failed: HTTP {response.status}")
                 except Exception as e:
                     logger.error(f"Batch error: {e}")
+                    # Never treat a failed or partial lookup as channels going offline.
+                    raise
 
                 # Add a delay between batches to avoid rate limits
                 await asyncio.sleep(0.5)
 
+        self.hearthstone_channels = hearthstone_channels
         logger.info(f"Live channels: {live_channels}")
         logger.info(f"Hearthstone channels: {self.hearthstone_channels}")
         return live_channels

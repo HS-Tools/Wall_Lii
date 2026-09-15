@@ -73,8 +73,6 @@ def get_all_live_channels():
             with conn.cursor() as cur:
                 cur.execute("SELECT channel FROM channels WHERE live = TRUE")
                 return {row[0].strip().lower() for row in cur.fetchall()}
-    except Exception as e:
-        return {"liihs"}
     finally:
         conn.close()
 
