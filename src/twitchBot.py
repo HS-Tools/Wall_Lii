@@ -31,17 +31,6 @@ class TwitchBot(commands.Bot):
     async def event_message(self, message):
         await self.handle_commands(message)
 
-        if message.channel.name == "dogdog" and not message.content.lower().startswith(
-            "!patch"
-        ):
-            words = message.content.lower().split()
-            if "patch" in words:
-                now = time.time()
-                last_trigger = self.last_patch_trigger.get(message.channel.name, 0)
-                if now - last_trigger >= 30:
-                    await message.channel.send(self.db.patch_link)
-                    self.last_patch_trigger[message.channel.name] = now
-
     priority_channels = (
         {"liihs", "walliibot"}
         if "--test" in sys.argv
@@ -77,7 +66,6 @@ class TwitchBot(commands.Bot):
 
         # Track joined channels to avoid duplicate join/leave attempts
         self.currently_joined = set(self.priority_channels)
-        self.last_patch_trigger = {}
         # Global dictionary to track posted news: {created_at: {"title": ..., "slug": ..., "first_post_time": datetime, "last_sent": {channel: datetime}}}
         self.posted_news = {}
         self.latest_news_seen = datetime.datetime.now(datetime.timezone.utc)
@@ -642,12 +630,6 @@ class TwitchBot(commands.Bot):
         message = get_buddy_gold_tier_message(args[1])
         await ctx.send(message)
 
-    @commands.command(name="patch")
-    async def patch_command(self, ctx):
-        """Get the current patch link"""
-        response = self.db.patch_link
-        await ctx.send(response)
-
     @commands.command(name="addpatch")
     async def addpatch_command(self, ctx, *args):
         """Add an override patch link (only usable by liihs)"""
@@ -719,7 +701,7 @@ class TwitchBot(commands.Bot):
     async def help_command(self, ctx, command_name=None):
         """Display help info"""
         await ctx.send(
-            "Use !rank, !day, !week, !top, !patch + more — day resets on 00:00 PST, week resets on Mon. More info: wallii.gg/help"
+            "Use !rank, !day, !week, !top + more — day resets on 00:00 PST, week resets on Mon. More info: wallii.gg/help"
         )
 
     @commands.command(name="goodbot")

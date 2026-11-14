@@ -182,17 +182,11 @@ class DiscordBot(commands.Bot):
         async def duotop_command(ctx, *args):
             await self.process_top(ctx.send, args, game_mode="1")
 
-        @self.command(name="patch")
-        async def patch_command(ctx):
-            response = self.db.patch_link
-            response = response.replace("wallii.gg", "https://wallii.gg")
-            await ctx.send(response)
-
         # Renamed from 'help' to 'commands' to avoid conflict
         @self.command(name="commands", aliases=["cmds", "commandlist"])
         async def commands_command(ctx):
             await ctx.send(
-                "Use !rank, !day, !week, !top, !patch + more — day resets on 00:00 PST, week resets on Mon. More info: https://wallii.gg/help"
+                "Use !rank, !day, !week, !top + more — day resets on 00:00 PST, week resets on Mon. More info: https://wallii.gg/help"
             )
 
         # Admin commands for alias and channel management
