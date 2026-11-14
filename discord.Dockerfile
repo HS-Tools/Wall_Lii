@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install --disable-pip-version-check --upgrade pip setuptools wheel \
   && python -m pip install --disable-pip-version-check --retries 5 --timeout 60 --no-build-isolation -r requirements.txt
 RUN apt-get purge -y gcc libpq-dev \
+  && apt-get install -y --no-install-recommends libpq5 \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
 COPY . ${PROJECT_DIR}/
