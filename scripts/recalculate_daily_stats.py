@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Recalculate day_avg and weekly_avg in daily_leaderboard_stats table
-using the updated estimate_placement function (with 10000 threshold) and data from leaderboard_snapshots.
+using the updated estimate_placement function (with 12500 threshold) and data from leaderboard_snapshots.
 
 This script processes all rows in daily_leaderboard_stats and recalculates:
 - day_avg: Average placement for rating changes within each day (PT timezone)
@@ -81,7 +81,7 @@ def ensure_estimate_placement_function(cursor):
                 avg_opp := start_rating - 148.1181435 * (100 - ((p - 1) * (200.0 / 7.0) + gain));
                 
                 -- Skip placements where avg_opp > 10000
-                IF avg_opp > 10000 THEN
+                IF avg_opp > 12500 THEN
                     CONTINUE;
                 END IF;
                 
